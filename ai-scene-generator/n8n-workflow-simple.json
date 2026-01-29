@@ -1,0 +1,270 @@
+{
+  "name": "AI场景图生成 - 简化版",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "scene-generate",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-main",
+      "name": "Webhook接收",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1.1,
+      "position": [240, 400],
+      "webhookId": "scene-generate-id"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "source",
+              "name": "source",
+              "value": "={{ $json.source || 'frontend' }}",
+              "type": "string"
+            },
+            {
+              "id": "prompt",
+              "name": "prompt",
+              "value": "={{ $json.prompt }}",
+              "type": "string"
+            },
+            {
+              "id": "aspectRatio",
+              "name": "aspectRatio",
+              "value": "={{ $json.aspectRatio || '1:1' }}",
+              "type": "string"
+            },
+            {
+              "id": "productImage",
+              "name": "productImage",
+              "value": "={{ $binary.productImage }}",
+              "type": "object"
+            },
+            {
+              "id": "sceneImage",
+              "name": "sceneImage",
+              "value": "={{ $binary.sceneImage }}",
+              "type": "object"
+            }
+          ]
+        }
+      },
+      "id": "set-input",
+      "name": "准备输入数据",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [460, 400]
+    },
+    {
+      "parameters": {
+        "url": "=https://api.deerapi.com/v1/models/gemini-2.0-flash-exp-image-generation:generateContent",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "contents",
+              "value": "={{ [{ parts: [{ inlineData: { mimeType: 'image/png', data: $json.productImage.data.toString('base64') } }, { inlineData: { mimeType: 'image/png', data: $json.sceneImage.data.toString('base64') } }, { text: $json.prompt } ] }] }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "gemini-api",
+      "name": "调用Gemini生成图片",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [680, 400],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "1",
+          "name": "DEERAPI API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "imageUrl",
+              "name": "imageUrl",
+              "value": "=data:image/png;base64,{{ $json.candidates[0].content.parts[0].inlineData.data }}",
+              "type": "string"
+            },
+            {
+              "id": "source-keep",
+              "name": "source",
+              "value": "={{ $('准备输入数据').item.json.source }}",
+              "type": "string"
+            },
+            {
+              "id": "prompt-keep",
+              "name": "prompt",
+              "value": "={{ $('准备输入数据').item.json.prompt }}",
+              "type": "string"
+            }
+          ]
+        }
+      },
+      "id": "set-result",
+      "name": "提取生成结果",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [900, 400]
+    },
+    {
+      "parameters": {
+        "operation": "create",
+        "tableId": {
+          "__rl": true,
+          "value": "YOUR_MULTI_TABLE_ID",
+          "mode": "id"
+        },
+        "data": "={{ JSON.stringify({ 图片: $json.imageUrl, 提示词: $json.prompt, 来源: $json.source, 创建时间: $now.toISO() }, null, 2) }}",
+        "options": {}
+      },
+      "id": "feishu-save",
+      "name": "保存到飞书多维表格",
+      "type": "@n8n/n8n-nodes-langchain.feishuBitable",
+      "typeVersion": 1,
+      "position": [1120, 400],
+      "credentials": {
+        "feishuApi": {
+          "id": "2",
+          "name": "飞书 account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "frontend-check",
+              "leftValue": "={{ $json.source }}",
+              "rightValue": "frontend",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "if-frontend",
+      "name": "是否前端请求",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [1340, 400]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { imageUrl: $json.imageUrl, success: true, message: '图片生成成功' } }}"
+      },
+      "id": "respond-webhook",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [1560, 300]
+    }
+  ],
+  "connections": {
+    "Webhook接收": {
+      "main": [
+        [
+          {
+            "node": "准备输入数据",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "准备输入数据": {
+      "main": [
+        [
+          {
+            "node": "调用Gemini生成图片",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "调用Gemini生成图片": {
+      "main": [
+        [
+          {
+            "node": "提取生成结果",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "提取生成结果": {
+      "main": [
+        [
+          {
+            "node": "保存到飞书多维表格",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "保存到飞书多维表格": {
+      "main": [
+        [
+          {
+            "node": "是否前端请求",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "是否前端请求": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 1,
+  "updatedAt": "2025-01-26T00:00:00.000Z",
+  "versionId": "1"
+}
