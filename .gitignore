@@ -1,1 +1,10 @@
 node_modules
+
+# macOS
+.DS_Store
+
+# Vite cache
+.vite
+
+# Claude Code settings
+.claude
