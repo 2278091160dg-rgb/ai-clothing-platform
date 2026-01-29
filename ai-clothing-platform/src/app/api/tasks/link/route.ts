@@ -43,10 +43,7 @@ export async function GET(req: NextRequest) {
       const task = await taskRepo.findById(taskId);
 
       if (!task) {
-        return NextResponse.json(
-          { error: 'Task not found', taskId },
-          { status: 404 }
-        );
+        return NextResponse.json({ error: 'Task not found', taskId }, { status: 404 });
       }
 
       // 如果任务没有关联飞书记录
@@ -164,10 +161,7 @@ export async function GET(req: NextRequest) {
       }
     }
 
-    return NextResponse.json(
-      { error: 'Invalid request' },
-      { status: 400 }
-    );
+    return NextResponse.json({ error: 'Invalid request' }, { status: 400 });
   } catch (error) {
     console.error('[API] Failed to query task link:', error);
     return NextResponse.json(
@@ -211,10 +205,7 @@ export async function POST(req: NextRequest) {
     // 验证任务存在
     const task = await taskRepo.findById(taskId);
     if (!task) {
-      return NextResponse.json(
-        { error: 'Task not found', taskId },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: 'Task not found', taskId }, { status: 404 });
     }
 
     // 验证飞书记录存在

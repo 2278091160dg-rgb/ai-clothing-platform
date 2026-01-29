@@ -25,10 +25,7 @@ export async function POST(req: NextRequest, context: RouteContext) {
 
     // 验证必填字段
     if (!body.content) {
-      return NextResponse.json(
-        { error: 'Missing required field: content' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Missing required field: content' }, { status: 400 });
     }
 
     const conversationRepo = getConversationRepository();
@@ -36,14 +33,11 @@ export async function POST(req: NextRequest, context: RouteContext) {
 
     if (!conversation) {
       console.error('[API] Conversation not found:', id);
-      return NextResponse.json(
-        { error: 'Conversation not found' },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: 'Conversation not found' }, { status: 404 });
     }
 
     // 1. 获取对话历史
-    const messages = (conversation.messages as unknown) as ConversationMessage[];
+    const messages = conversation.messages as unknown as ConversationMessage[];
 
     // 2. 添加当前用户消息到对话历史（用于AI上下文）
     const messagesWithNewUserMessage = [
@@ -96,9 +90,6 @@ export async function POST(req: NextRequest, context: RouteContext) {
     });
   } catch (error) {
     console.error('[API] Failed to send message:', error);
-    return NextResponse.json(
-      { error: 'Failed to send message' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Failed to send message' }, { status: 500 });
   }
 }

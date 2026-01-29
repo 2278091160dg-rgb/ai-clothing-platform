@@ -58,9 +58,7 @@ export function DeleteConfirmDialog({
       <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle>确认删除任务？</DialogTitle>
-          <DialogDescription>
-            此操作无法撤销，请谨慎操作
-          </DialogDescription>
+          <DialogDescription>此操作无法撤销，请谨慎操作</DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4">
@@ -83,9 +81,7 @@ export function DeleteConfirmDialog({
           <Alert variant="destructive">
             <AlertTriangle className="h-4 w-4" />
             <AlertDescription>
-              {confirmed
-                ? '请再次确认删除操作！'
-                : '删除后无法恢复，请谨慎操作'}
+              {confirmed ? '请再次确认删除操作！' : '删除后无法恢复，请谨慎操作'}
             </AlertDescription>
           </Alert>
 
@@ -93,16 +89,14 @@ export function DeleteConfirmDialog({
           {task.hasFeishuRecord && (
             <Alert>
               <AlertTriangle className="h-4 w-4" />
-              <AlertDescription>
-                此任务已关联飞书记录
-              </AlertDescription>
+              <AlertDescription>此任务已关联飞书记录</AlertDescription>
             </Alert>
           )}
 
           {/* 删除范围选择 */}
           <div className="space-y-3">
             <Label>删除范围</Label>
-            <RadioGroup value={scope} onValueChange={(v) => setScope(v as DeleteScope)}>
+            <RadioGroup value={scope} onValueChange={v => setScope(v as DeleteScope)}>
               <div className="flex items-center gap-3 p-3 border rounded-lg hover:bg-accent cursor-pointer">
                 <RadioGroupItem value="both" id="both" />
                 <div className="flex-1">
@@ -146,9 +140,7 @@ export function DeleteConfirmDialog({
           {confirmed && (
             <Alert variant="destructive">
               <AlertTriangle className="h-4 w-4" />
-              <AlertDescription>
-                请再次确认：您确定要删除此任务吗？
-              </AlertDescription>
+              <AlertDescription>请再次确认：您确定要删除此任务吗？</AlertDescription>
             </Alert>
           )}
         </div>
@@ -210,25 +202,19 @@ export function BatchDeleteConfirmDialog({
       <DialogContent className="max-w-lg">
         <DialogHeader>
           <DialogTitle>确认批量删除 {tasks.length} 个任务？</DialogTitle>
-          <DialogDescription>
-            此操作无法撤销，请谨慎操作
-          </DialogDescription>
+          <DialogDescription>此操作无法撤销，请谨慎操作</DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4">
           {/* 任务列表预览 */}
           <div className="max-h-60 overflow-y-auto p-3 bg-muted rounded-lg">
-            <div className="text-sm text-muted-foreground mb-2">
-              将删除以下任务：
-            </div>
+            <div className="text-sm text-muted-foreground mb-2">将删除以下任务：</div>
             <div className="space-y-1">
               {tasks.slice(0, 5).map(task => (
                 <div key={task.id} className="text-sm p-2 bg-background rounded">
                   {task.prompt || '无提示词'}
                   {task.feishuRecordId && (
-                    <span className="ml-2 text-xs text-blue-600">
-                      (已关联飞书)
-                    </span>
+                    <span className="ml-2 text-xs text-blue-600">(已关联飞书)</span>
                   )}
                 </div>
               ))}
@@ -253,7 +239,7 @@ export function BatchDeleteConfirmDialog({
           {/* 删除范围选择 */}
           <div className="space-y-3">
             <Label>删除范围</Label>
-            <RadioGroup value={scope} onValueChange={(v) => setScope(v as DeleteScope)}>
+            <RadioGroup value={scope} onValueChange={v => setScope(v as DeleteScope)}>
               <div className="flex items-center gap-3 p-3 border rounded-lg hover:bg-accent cursor-pointer">
                 <RadioGroupItem value="both" id="batch-both" />
                 <div className="flex-1">

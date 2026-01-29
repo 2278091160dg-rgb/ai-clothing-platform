@@ -36,11 +36,7 @@ export const eventPublisher = {
    *任务失败事件
    * 同步失败状态到飞书
    */
-  taskFailed: async (data: {
-    taskId: string;
-    userId: string;
-    errorMessage: string;
-  }) => {
+  taskFailed: async (data: { taskId: string; userId: string; errorMessage: string }) => {
     console.log('[Event] Task failed:', data.taskId);
     const eventBus = getEventBus();
     await eventBus.emitAsync('task.failed', data);

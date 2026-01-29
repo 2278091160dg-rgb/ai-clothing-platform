@@ -51,9 +51,10 @@ export interface CreateTaskRequestBody {
   callbackUrl?: string;
 }
 
-export function validateCreateTaskRequest(
-  body: Partial<CreateTaskRequestBody>
-): { valid: boolean; error?: string } {
+export function validateCreateTaskRequest(body: Partial<CreateTaskRequestBody>): {
+  valid: boolean;
+  error?: string;
+} {
   if (!body.productImageUrl || !body.prompt) {
     return { valid: false, error: 'Missing required fields: productImageUrl, prompt' };
   }
@@ -91,15 +92,15 @@ export function parseTaskQueryParams(searchParams: URLSearchParams): TaskQueryPa
  * 格式化错误响应
  */
 export function formatErrorResponse(error: unknown, includeStack = false) {
-  const errorObj =
-    error instanceof Error ? error : new Error(String(error));
+  const errorObj = error instanceof Error ? error : new Error(String(error));
 
   const errorResponse = {
     error: errorObj.message,
     type: errorObj.constructor.name,
-    ...(includeStack && process.env.NODE_ENV === 'development' && {
-      stack: errorObj.stack,
-    }),
+    ...(includeStack &&
+      process.env.NODE_ENV === 'development' && {
+        stack: errorObj.stack,
+      }),
   };
 
   console.log('[API] 返回错误响应:', errorResponse);

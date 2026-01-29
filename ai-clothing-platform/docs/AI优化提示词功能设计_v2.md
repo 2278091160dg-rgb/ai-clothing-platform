@@ -3,6 +3,7 @@
 ## 核心原则：并列选择，而非强制流程
 
 用户可以自由选择使用哪种提示词来生成图片：
+
 - **选项A**：直接使用原始提示词（用户输入）
 - **选项B**：使用AI优化后的提示词
 
@@ -13,6 +14,7 @@
 ## 1. 业务场景分析
 
 ### 场景1：专业用户（不需要AI优化）
+
 ```
 用户：专业设计师
 需求：已经有明确的提示词描述
@@ -29,6 +31,7 @@
 ```
 
 ### 场景2：普通用户（需要AI优化）
+
 ```
 用户：普通用户
 需求：只有简单描述，希望AI帮助优化
@@ -47,6 +50,7 @@
 ```
 
 ### 场景3：对比用户（想看两种效果）
+
 ```
 用户：对比测试用户
 需求：想看原始和优化两种效果
@@ -93,13 +97,13 @@ enum PromptSource {
 
 ### 2.2 关键区别
 
-| 字段 | 旧设计（前后关系） | 新设计（并列关系） |
-|------|------------------|------------------|
-| `prompt` | 保存优化后的提示词 | 保存最终选择使用的提示词 |
-| `originalPrompt` | 用户输入 | 用户输入 |
-| `optimizedPrompt` | 优化结果 | 优化结果（可选） |
-| `promptSource` | USER/AI/FEISHU | USER（用原始）/ AI_OPTIMIZED（用优化）/ FEISHU |
-| `promptOptimizationEnabled` | 无 | 用户是否选择了AI优化（boolean） |
+| 字段                        | 旧设计（前后关系） | 新设计（并列关系）                             |
+| --------------------------- | ------------------ | ---------------------------------------------- |
+| `prompt`                    | 保存优化后的提示词 | 保存最终选择使用的提示词                       |
+| `originalPrompt`            | 用户输入           | 用户输入                                       |
+| `optimizedPrompt`           | 优化结果           | 优化结果（可选）                               |
+| `promptSource`              | USER/AI/FEISHU     | USER（用原始）/ AI_OPTIMIZED（用优化）/ FEISHU |
+| `promptOptimizationEnabled` | 无                 | 用户是否选择了AI优化（boolean）                |
 
 ---
 
@@ -472,13 +476,13 @@ export function Sidebar() {
 
 ### 4.1 字段配置
 
-| 字段名 | 类型 | 说明 | 是否可编辑 |
-|--------|------|------|-----------|
-| 提示词 | 文本 | 用户输入的提示词 | 可编辑 |
-| AI优化按钮 | 按钮 | 点击调用AI优化 | 可点击 |
-| 优化后提示词 | 文本 | AI优化的结果 | 只读 |
-| 使用哪个版本 | 单选 | 原始/优化后 | 可选择 |
-| 最终提示词 | 公式 | 根据选择自动计算 | 只读 |
+| 字段名       | 类型 | 说明             | 是否可编辑 |
+| ------------ | ---- | ---------------- | ---------- |
+| 提示词       | 文本 | 用户输入的提示词 | 可编辑     |
+| AI优化按钮   | 按钮 | 点击调用AI优化   | 可点击     |
+| 优化后提示词 | 文本 | AI优化的结果     | 只读       |
+| 使用哪个版本 | 单选 | 原始/优化后      | 可选择     |
+| 最终提示词   | 公式 | 根据选择自动计算 | 只读       |
 
 ### 4.2 飞书表格界面
 
@@ -565,11 +569,7 @@ export function Sidebar() {
 
 ```javascript
 // "最终提示词"字段的公式
-IF(
-  {使用版本} = "优化后",
-  {优化后提示词},
-  {提示词}
-)
+IF(({ 使用版本 } = '优化后'), { 优化后提示词 }, { 提示词 });
 ```
 
 ---
@@ -583,27 +583,24 @@ IF(
 
 export class TaskCreationService {
   async createTask(params: {
-    prompt: string;              // 用户输入
-    optimizedPrompt?: string;     // AI优化结果（可选）
-    useOptimized: boolean;        // 用户选择使用哪个
+    prompt: string; // 用户输入
+    optimizedPrompt?: string; // AI优化结果（可选）
+    useOptimized: boolean; // 用户选择使用哪个
     // ... 其他参数
   }) {
     // 确定最终使用的提示词
-    const finalPrompt = params.useOptimized && params.optimizedPrompt
-      ? params.optimizedPrompt
-      : params.prompt;
+    const finalPrompt =
+      params.useOptimized && params.optimizedPrompt ? params.optimizedPrompt : params.prompt;
 
     // 确定提示词来源
-    const promptSource = params.useOptimized && params.optimizedPrompt
-      ? 'AI_OPTIMIZED'
-      : 'USER';
+    const promptSource = params.useOptimized && params.optimizedPrompt ? 'AI_OPTIMIZED' : 'USER';
 
     // 创建任务
     const task = await taskRepo.create({
-      prompt: finalPrompt,           // 最终使用的提示词
-      originalPrompt: params.prompt,  // 用户输入
+      prompt: finalPrompt, // 最终使用的提示词
+      originalPrompt: params.prompt, // 用户输入
       optimizedPrompt: params.optimizedPrompt, // AI优化结果（如果有）
-      promptSource: promptSource,     // 来源标识
+      promptSource: promptSource, // 来源标识
       promptOptimizationEnabled: params.optimizedPrompt ? true : false,
       // ... 其他字段
     });
@@ -632,9 +629,9 @@ export async function POST(req: NextRequest) {
   const body = await req.json();
 
   const {
-    prompt,              // 必填：用户输入
-    optimizedPrompt,     // 可选：AI优化后的提示词
-    useOptimized,        // 必填：是否使用优化版
+    prompt, // 必填：用户输入
+    optimizedPrompt, // 可选：AI优化后的提示词
+    useOptimized, // 必填：是否使用优化版
     // ... 其他参数
   } = body;
 
@@ -710,13 +707,13 @@ export async function POST(req: NextRequest) {
 
 ## 7. 关键代码文件清单
 
-| 文件 | 说明 |
-|------|------|
+| 文件                                                                                             | 说明                       |
+| ------------------------------------------------------------------------------------------------ | -------------------------- |
 | [src/components/PromptInputWithOptimization.tsx](src/components/PromptInputWithOptimization.tsx) | 提示词输入组件（并列选择） |
-| [src/components/PromptComparisonModal.tsx](src/components/PromptComparisonModal.tsx) | 对比模态框 |
-| [src/lib/services/task-creation.service.ts](src/lib/services/task-creation.service.ts) | 任务创建服务 |
-| [prisma/schema.prisma](prisma/schema.prisma) | 数据库模型 |
-| [docs/AI优化提示词功能设计_v2.md](docs/AI优化提示词功能设计_v2.md) | 本文档 |
+| [src/components/PromptComparisonModal.tsx](src/components/PromptComparisonModal.tsx)             | 对比模态框                 |
+| [src/lib/services/task-creation.service.ts](src/lib/services/task-creation.service.ts)           | 任务创建服务               |
+| [prisma/schema.prisma](prisma/schema.prisma)                                                     | 数据库模型                 |
+| [docs/AI优化提示词功能设计\_v2.md](docs/AI优化提示词功能设计_v2.md)                              | 本文档                     |
 
 ---
 
@@ -724,12 +721,12 @@ export async function POST(req: NextRequest) {
 
 ### 核心改变
 
-| 方面 | 旧设计（前后关系） | 新设计（并列关系） |
-|------|------------------|------------------|
-| 业务逻辑 | 必须先优化再生成 | 可选择是否优化 |
-| 用户选择 | 被动接受优化结果 | 主动选择使用哪个版本 |
-| 飞书体验 | 强制优化流程 | 可选优化，保持原有工作流 |
-| 提示词字段 | 保存优化后的 | 保存最终选择使用的 |
+| 方面       | 旧设计（前后关系） | 新设计（并列关系）       |
+| ---------- | ------------------ | ------------------------ |
+| 业务逻辑   | 必须先优化再生成   | 可选择是否优化           |
+| 用户选择   | 被动接受优化结果   | 主动选择使用哪个版本     |
+| 飞书体验   | 强制优化流程       | 可选优化，保持原有工作流 |
+| 提示词字段 | 保存优化后的       | 保存最终选择使用的       |
 
 ### 用户体验
 

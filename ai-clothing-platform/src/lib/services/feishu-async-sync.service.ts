@@ -20,18 +20,18 @@ import type { TaskSyncStatus } from '@prisma/client';
  * Circuit Breaker States (熔断器状态)
  */
 enum CircuitBreakerState {
-  CLOSED = 'closed',    // 正常工作
-  OPEN = 'open',        // 熔断开启，拒绝请求
-  HALF_OPEN = 'half_open',  // 半开状态，尝试恢复
+  CLOSED = 'closed', // 正常工作
+  OPEN = 'open', // 熔断开启，拒绝请求
+  HALF_OPEN = 'half_open', // 半开状态，尝试恢复
 }
 
 /**
  * Circuit Breaker Configuration (熔断器配置)
  */
 interface CircuitBreakerConfig {
-  failureThreshold: number;     // 失败阈值
-  recoveryTimeoutMs: number;    // 恢复超时时间
-  halfOpenMaxCalls: number;     // 半开状态最大调用次数
+  failureThreshold: number; // 失败阈值
+  recoveryTimeoutMs: number; // 恢复超时时间
+  halfOpenMaxCalls: number; // 半开状态最大调用次数
 }
 
 /**
@@ -147,19 +147,16 @@ export class FeishuAsyncSyncService {
 
   constructor() {
     this.circuitBreaker = new CircuitBreaker({
-      failureThreshold: 5,           // 5次失败后熔断
-      recoveryTimeoutMs: 60000,      // 60秒后尝试恢复
-      halfOpenMaxCalls: 3,           // 半开状态允许3次尝试
+      failureThreshold: 5, // 5次失败后熔断
+      recoveryTimeoutMs: 60000, // 60秒后尝试恢复
+      halfOpenMaxCalls: 3, // 半开状态允许3次尝试
     });
   }
 
   /**
    * 异步创建飞书记录（非阻塞）
    */
-  async createTaskRecordAsync(
-    task: Task,
-    params: CreateTaskRecordParams
-  ): Promise<void> {
+  async createTaskRecordAsync(task: Task, params: CreateTaskRecordParams): Promise<void> {
     // 添加到同步队列
     this.syncQueue.push({
       type: 'create',
@@ -179,10 +176,7 @@ export class FeishuAsyncSyncService {
   /**
    * 异步更新飞书记录（非阻塞）
    */
-  async updateTaskRecordAsync(
-    task: Task,
-    updates: TaskRecordUpdate
-  ): Promise<void> {
+  async updateTaskRecordAsync(task: Task, updates: TaskRecordUpdate): Promise<void> {
     if (!task.feishuRecordId) {
       console.warn('[FeishuAsyncSync] No feishuRecordId, skipping update');
       return;
@@ -208,9 +202,7 @@ export class FeishuAsyncSyncService {
   /**
    * 异步删除飞书记录（非阻塞）
    */
-  async deleteTaskRecordAsync(
-    task: Task
-  ): Promise<void> {
+  async deleteTaskRecordAsync(task: Task): Promise<void> {
     if (!task.feishuRecordId) {
       console.warn('[FeishuAsyncSync] No feishuRecordId, skipping delete');
       return;

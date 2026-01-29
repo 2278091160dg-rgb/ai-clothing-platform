@@ -18,10 +18,7 @@ export async function GET(req: NextRequest, context: RouteContext) {
     const conversation = await conversationRepo.findById(id);
 
     if (!conversation) {
-      return NextResponse.json(
-        { error: 'Conversation not found' },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: 'Conversation not found' }, { status: 404 });
     }
 
     return NextResponse.json({
@@ -30,9 +27,6 @@ export async function GET(req: NextRequest, context: RouteContext) {
     });
   } catch (error) {
     console.error('[API] Failed to get conversation:', error);
-    return NextResponse.json(
-      { error: 'Failed to get conversation' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Failed to get conversation' }, { status: 500 });
   }
 }

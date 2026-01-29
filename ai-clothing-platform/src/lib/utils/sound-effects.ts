@@ -55,9 +55,9 @@ export class SoundEffects {
    * 成功音效
    */
   playSuccess() {
-    this.playTone(523, 0.1, 'sine');  // C5
-    setTimeout(() => this.playTone(659, 0.1, 'sine'), 100);  // E5
-    setTimeout(() => this.playTone(784, 0.2, 'sine'), 200);  // G5
+    this.playTone(523, 0.1, 'sine'); // C5
+    setTimeout(() => this.playTone(659, 0.1, 'sine'), 100); // E5
+    setTimeout(() => this.playTone(784, 0.2, 'sine'), 200); // G5
   }
 
   /**

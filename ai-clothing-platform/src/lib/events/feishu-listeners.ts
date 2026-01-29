@@ -163,12 +163,7 @@ export function initializeFeishuListeners(): void {
    */
   eventBus.on(
     'task.progress',
-    async (data: {
-      taskId: string;
-      userId: string;
-      progress: number;
-      status: string;
-    }) => {
+    async (data: { taskId: string; userId: string; progress: number; status: string }) => {
       try {
         const task = await taskRepo.findById(data.taskId);
 

@@ -97,7 +97,7 @@ export async function createTaskAndStartPolling(
     // 4. 更新任务 ID（使用服务端返回的真实 ID）
     updateTasks(prev =>
       prev.map(t =>
-        t.id === tempTaskId ? { ...t, id: response.task.id, status: ('generating' as const) } : t
+        t.id === tempTaskId ? { ...t, id: response.task.id, status: 'generating' as const } : t
       )
     );
 
@@ -110,7 +110,7 @@ export async function createTaskAndStartPolling(
 
     // 标记任务失败
     updateTasks(prev =>
-      prev.map(t => (t.id === tempTaskId ? { ...t, status: ('failed' as const) } : t))
+      prev.map(t => (t.id === tempTaskId ? { ...t, status: 'failed' as const } : t))
     );
   }
 }

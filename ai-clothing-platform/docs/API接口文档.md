@@ -9,17 +9,20 @@
 ## 基础信息
 
 ### Base URL
+
 ```
 开发环境: http://localhost:3000
 生产环境: https://your-app.vercel.app
 ```
 
 ### 认证
+
 ```
 Header: x-api-key: <your-api-key>
 ```
 
 ### 响应格式
+
 ```typescript
 {
   success: boolean,
@@ -40,6 +43,7 @@ Header: x-api-key: <your-api-key>
 **描述**: 创建新的AI服装生成任务，支持AI优化提示词
 
 **请求体**:
+
 ```typescript
 {
   // 必填
@@ -66,6 +70,7 @@ Header: x-api-key: <your-api-key>
 ```
 
 **响应**:
+
 ```typescript
 {
   success: true,
@@ -90,6 +95,7 @@ Header: x-api-key: <your-api-key>
 ```
 
 **错误响应**:
+
 ```typescript
 // 400 - 参数错误
 {
@@ -113,14 +119,17 @@ Header: x-api-key: <your-api-key>
 **描述**: 获取任务详情，包括同步状态和冲突信息
 
 **路径参数**:
+
 - `id`: 任务ID
 
 **查询参数**:
+
 - `include`: 额外包含的信息（可选）
   - `feishu`: 包含飞书记录信息
   - `history`: 包含修改历史
 
 **响应**:
+
 ```typescript
 {
   success: true,
@@ -197,6 +206,7 @@ Header: x-api-key: <your-api-key>
 **描述**: 更新任务信息，使用乐观锁检测冲突
 
 **请求体**:
+
 ```typescript
 {
   version: number;              // 必填：当前版本号（乐观锁）
@@ -222,6 +232,7 @@ Header: x-api-key: <your-api-key>
 ```
 
 **响应**:
+
 ```typescript
 // 200 - 成功
 {
@@ -257,11 +268,13 @@ Header: x-api-key: <your-api-key>
 **描述**: 删除任务，支持选择是否同步删除飞书记录
 
 **查询参数**:
+
 - `scope`: 删除范围（可选）
   - `both`: 同时删除本地和飞书记录（默认）
   - `local`: 仅删除本地记录
 
 **请求体**（可选）:
+
 ```typescript
 {
   scope?: 'both' | 'local';     // 删除范围
@@ -270,6 +283,7 @@ Header: x-api-key: <your-api-key>
 ```
 
 **响应**:
+
 ```typescript
 {
   success: true,
@@ -289,6 +303,7 @@ Header: x-api-key: <your-api-key>
 **端点**: `GET /api/tasks`
 
 **查询参数**:
+
 ```
 ?page=1                      // 页码（默认：1）
 ?limit=20                    // 每页数量（默认：20）
@@ -300,6 +315,7 @@ Header: x-api-key: <your-api-key>
 ```
 
 **响应**:
+
 ```typescript
 {
   success: true,
@@ -324,12 +340,14 @@ Header: x-api-key: <your-api-key>
 **端点**: `GET /api/tasks/link`
 
 **查询参数**:
+
 ```
 ?taskId=xxx              // 通过任务ID查询飞书记录
 ?feishuRecordId=xxx      // 通过飞书记录ID查询任务
 ```
 
 **响应**:
+
 ```typescript
 // 通过 taskId 查询
 {
@@ -384,14 +402,16 @@ Header: x-api-key: <your-api-key>
 **描述**: 手动关联本地任务与飞书记录
 
 **请求体**:
+
 ```typescript
 {
-  taskId: string;            // 本地任务ID
-  feishuRecordId: string;     // 飞书记录ID
+  taskId: string; // 本地任务ID
+  feishuRecordId: string; // 飞书记录ID
 }
 ```
 
 **响应**:
+
 ```typescript
 {
   success: true,
@@ -416,6 +436,7 @@ Header: x-api-key: <your-api-key>
 **描述**: 解决版本冲突，选择使用哪个版本的数据
 
 **请求体**:
+
 ```typescript
 {
   strategy: 'use_local' | 'use_remote' | 'merge';
@@ -429,6 +450,7 @@ Header: x-api-key: <your-api-key>
 ```
 
 **响应**:
+
 ```typescript
 {
   success: true,
@@ -450,6 +472,7 @@ Header: x-api-key: <your-api-key>
 **描述**: 获取任务与飞书的同步状态
 
 **响应**:
+
 ```typescript
 {
   success: true,
@@ -474,6 +497,7 @@ Header: x-api-key: <your-api-key>
 **描述**: 手动触发任务与飞书的同步
 
 **请求体**（可选）:
+
 ```typescript
 {
   force?: boolean;   // 强制同步（忽略错误）
@@ -481,6 +505,7 @@ Header: x-api-key: <your-api-key>
 ```
 
 **响应**:
+
 ```typescript
 {
   success: true,
@@ -499,11 +524,13 @@ Header: x-api-key: <your-api-key>
 **端点**: `GET /api/sync/batch`
 
 **查询参数**:
+
 ```
 ?taskIds=xxx,yyy,zzz     // 任务ID列表（逗号分隔）
 ```
 
 **响应**:
+
 ```typescript
 {
   success: true,
@@ -535,6 +562,7 @@ Header: x-api-key: <your-api-key>
 **描述**: 使用AI优化用户输入的提示词
 
 **请求体**:
+
 ```typescript
 {
   prompt: string;           // 原始提示词
@@ -547,6 +575,7 @@ Header: x-api-key: <your-api-key>
 ```
 
 **响应**:
+
 ```typescript
 {
   success: true,
@@ -569,6 +598,7 @@ Header: x-api-key: <your-api-key>
 **描述**: 批量优化多个提示词
 
 **请求体**:
+
 ```typescript
 {
   prompts: {
@@ -578,6 +608,7 @@ Header: x-api-key: <your-api-key>
 ```
 
 **响应**:
+
 ```typescript
 {
   success: true,
@@ -611,6 +642,7 @@ Header: x-api-key: <your-api-key>
 **描述**: 获取飞书同步服务的断路器状态
 
 **响应**:
+
 ```typescript
 {
   success: true,
@@ -632,11 +664,13 @@ Header: x-api-key: <your-api-key>
 **端点**: `GET /api/monitoring/active-users`
 
 **查询参数**:
+
 ```
 ?taskId=xxx      // 可选：指定任务的活跃用户
 ```
 
 **响应**:
+
 ```typescript
 {
   success: true,
@@ -665,11 +699,13 @@ Header: x-api-key: <your-api-key>
 **端点**: `POST /api/webhooks/n8n/callback`
 
 **请求头**:
+
 ```
 x-n8n-api-key: <api-key>
 ```
 
 **请求体**:
+
 ```typescript
 {
   taskId: string;
@@ -682,9 +718,10 @@ x-n8n-api-key: <api-key>
 ```
 
 **响应**:
+
 ```typescript
 {
-  success: true
+  success: true;
 }
 ```
 
@@ -692,16 +729,16 @@ x-n8n-api-key: <api-key>
 
 ## 错误码
 
-| 错误码 | 说明 |
-|-------|------|
-| 400 | 请求参数错误 |
-| 401 | 未授权 |
-| 403 | 权限不足 |
-| 404 | 资源不存在 |
-| 409 | 版本冲突 |
-| 429 | 请求过于频繁 |
-| 500 | 服务器内部错误 |
-| 503 | 服务暂时不可用 |
+| 错误码 | 说明           |
+| ------ | -------------- |
+| 400    | 请求参数错误   |
+| 401    | 未授权         |
+| 403    | 权限不足       |
+| 404    | 资源不存在     |
+| 409    | 版本冲突       |
+| 429    | 请求过于频繁   |
+| 500    | 服务器内部错误 |
+| 503    | 服务暂时不可用 |
 
 ---
 
@@ -710,7 +747,9 @@ x-n8n-api-key: <api-key>
 系统通过事件总线发布以下事件，可以订阅监听：
 
 ### task.created
+
 任务创建时触发
+
 ```typescript
 {
   taskId: string;
@@ -725,7 +764,9 @@ x-n8n-api-key: <api-key>
 ```
 
 ### task.completed
+
 任务完成时触发
+
 ```typescript
 {
   taskId: string;
@@ -737,7 +778,9 @@ x-n8n-api-key: <api-key>
 ```
 
 ### task.failed
+
 任务失败时触发
+
 ```typescript
 {
   taskId: string;
@@ -747,7 +790,9 @@ x-n8n-api-key: <api-key>
 ```
 
 ### task.progress
+
 任务进度更新时触发
+
 ```typescript
 {
   taskId: string;
@@ -758,7 +803,9 @@ x-n8n-api-key: <api-key>
 ```
 
 ### task.conflict
+
 检测到冲突时触发
+
 ```typescript
 {
   taskId: string;
@@ -767,7 +814,9 @@ x-n8n-api-key: <api-key>
 ```
 
 ### sync.completed
+
 同步完成时触发
+
 ```typescript
 {
   taskId: string;

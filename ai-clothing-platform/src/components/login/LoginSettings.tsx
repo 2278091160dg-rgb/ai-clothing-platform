@@ -55,8 +55,8 @@ export function LoginSettings({ isOpen, onClose, onSave, currentConfig }: LoginS
           if (!response.ok) throw new Error('上传失败');
 
           const data = await response.json();
-          if (data.success && data.url) {
-            setConfig({ ...config, logoUrl: data.url });
+          if (data.success && data.dataUrl) {
+            setConfig({ ...config, logoUrl: data.dataUrl });
           }
         } catch (error) {
           console.error('Logo upload error:', error);
@@ -89,8 +89,8 @@ export function LoginSettings({ isOpen, onClose, onSave, currentConfig }: LoginS
           if (!response.ok) throw new Error('上传失败');
 
           const data = await response.json();
-          if (data.success && data.url) {
-            setConfig({ ...config, backgroundImageUrl: data.url, backgroundStyle: 'custom' });
+          if (data.success && data.dataUrl) {
+            setConfig({ ...config, backgroundImageUrl: data.dataUrl, backgroundStyle: 'custom' });
           }
         } catch (error) {
           console.error('Background upload error:', error);

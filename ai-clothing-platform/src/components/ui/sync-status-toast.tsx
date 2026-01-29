@@ -5,13 +5,7 @@
 
 import { useEffect } from 'react';
 import { cn } from '@/lib/utils';
-import {
-  Alert,
-  AlertCircle,
-  AlertTriangle,
-  CheckCircle,
-  Loader2,
-} from '@/components/ui/alert';
+import { Alert, AlertCircle, AlertTriangle, CheckCircle, Loader2 } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
 
@@ -47,9 +41,7 @@ export function useSyncStatusToast() {
       case 'synced':
         toast({
           title: '✅ 已同步到飞书',
-          description: syncState.feishuRecordId
-            ? `飞书记录已创建`
-            : '数据已同步到飞书多维表格',
+          description: syncState.feishuRecordId ? `飞书记录已创建` : '数据已同步到飞书多维表格',
           duration: 3000,
         });
         break;
@@ -150,9 +142,7 @@ export function SyncStatusAlert({ syncState, onRetry }: SyncStatusToastProps) {
 
         <div className="flex-1 space-y-1">
           <div className="font-medium">{getSyncTitle()}</div>
-          <div className="text-sm text-muted-foreground">
-            {getSyncDescription()}
-          </div>
+          <div className="text-sm text-muted-foreground">{getSyncDescription()}</div>
 
           {syncState.status === 'failed' && syncState.error && (
             <details className="mt-2">
@@ -220,7 +210,12 @@ export function SyncStatusBadge({ syncState }: { syncState: SyncState }) {
   };
 
   return (
-    <div className={cn('inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-xs font-medium', getBadgeVariant())}>
+    <div
+      className={cn(
+        'inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-xs font-medium',
+        getBadgeVariant()
+      )}
+    >
       {getBadgeIcon()}
       <span>{getBadgeText()}</span>
     </div>

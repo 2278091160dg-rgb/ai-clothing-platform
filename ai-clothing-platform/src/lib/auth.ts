@@ -6,9 +6,9 @@
 
 export const authOptions = {
   providers: [],
-}
+};
 
 // Type stub for compatibility
 export function getServerSession() {
-  return null
+  return null;
 }

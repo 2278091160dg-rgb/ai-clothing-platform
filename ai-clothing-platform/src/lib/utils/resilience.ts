@@ -60,17 +60,11 @@ export async function withRetry<T>(
       const isRetryable = isRetryableError(lastError, finalConfig.retryableErrors || []);
 
       if (attempt === finalConfig.maxAttempts || !isRetryable) {
-        console.error(
-          `[Retry] Failed after ${attempt} attempt(s):`,
-          lastError.message
-        );
+        console.error(`[Retry] Failed after ${attempt} attempt(s):`, lastError.message);
         throw lastError;
       }
 
-      console.warn(
-        `[Retry] Attempt ${attempt} failed, retrying in ${delay}ms:`,
-        lastError.message
-      );
+      console.warn(`[Retry] Attempt ${attempt} failed, retrying in ${delay}ms:`, lastError.message);
 
       await sleep(delay);
       delay = Math.min(delay * finalConfig.backoffMultiplier, finalConfig.maxDelayMs);
@@ -83,10 +77,7 @@ export async function withRetry<T>(
 /**
  * 带降级的异步函数执行
  */
-export async function withFallback<T>(
-  fn: () => Promise<T>,
-  fallback: FallbackConfig
-): Promise<T> {
+export async function withFallback<T>(fn: () => Promise<T>, fallback: FallbackConfig): Promise<T> {
   if (!fallback.enabled) {
     return fn();
   }
@@ -213,9 +204,7 @@ export class CircuitBreaker {
 
     if (this.failureCount >= this.config.failureThreshold) {
       this.state = CircuitState.OPEN;
-      console.error(
-        `[CircuitBreaker] Circuit opened after ${this.failureCount} failures`
-      );
+      console.error(`[CircuitBreaker] Circuit opened after ${this.failureCount} failures`);
     }
   }
 

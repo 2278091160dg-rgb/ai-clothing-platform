@@ -30,44 +30,39 @@ export function TypewriterText({
   useEffect(() => {
     const currentText = texts[textIndex];
 
-    const timeout = setTimeout(() => {
-      if (isPaused) {
-        // 暂停结束，开始删除
-        setIsPaused(false);
-        setIsDeleting(true);
-        return;
-      }
+    const timeout = setTimeout(
+      () => {
+        if (isPaused) {
+          // 暂停结束，开始删除
+          setIsPaused(false);
+          setIsDeleting(true);
+          return;
+        }
 
-      if (!isDeleting) {
-        // 打字中
-        if (displayText.length < currentText.length) {
-          setDisplayText(currentText.slice(0, displayText.length + 1));
+        if (!isDeleting) {
+          // 打字中
+          if (displayText.length < currentText.length) {
+            setDisplayText(currentText.slice(0, displayText.length + 1));
+          } else {
+            // 完成，暂停
+            setIsPaused(true);
+          }
         } else {
-          // 完成，暂停
-          setIsPaused(true);
+          // 删除中
+          if (displayText.length > 0) {
+            setDisplayText(displayText.slice(0, -1));
+          } else {
+            // 删除完成，切换到下一句
+            setIsDeleting(false);
+            setTextIndex(prev => (prev + 1) % texts.length);
+          }
         }
-      } else {
-        // 删除中
-        if (displayText.length > 0) {
-          setDisplayText(displayText.slice(0, -1));
-        } else {
-          // 删除完成，切换到下一句
-          setIsDeleting(false);
-          setTextIndex((prev) => (prev + 1) % texts.length);
-        }
-      }
-    }, isDeleting ? deleteSpeed : speed);
+      },
+      isDeleting ? deleteSpeed : speed
+    );
 
     return () => clearTimeout(timeout);
-  }, [
-    displayText,
-    textIndex,
-    isDeleting,
-    isPaused,
-    texts,
-    speed,
-    deleteSpeed,
-  ]);
+  }, [displayText, textIndex, isDeleting, isPaused, texts, speed, deleteSpeed]);
 
   return (
     <span className={`typing-text ${className}`}>

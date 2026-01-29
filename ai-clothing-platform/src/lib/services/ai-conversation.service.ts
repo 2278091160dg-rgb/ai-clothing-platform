@@ -41,18 +41,18 @@ export class AIConversationService {
   /**
    * 发送消息到AI并获取回复
    */
-  async chat(messages: AIMessage[], context?: {
-    originalPrompt?: string;
-    currentPrompt?: string;
-  }): Promise<AIResponse> {
+  async chat(
+    messages: AIMessage[],
+    context?: {
+      originalPrompt?: string;
+      currentPrompt?: string;
+    }
+  ): Promise<AIResponse> {
     // 构建系统提示
     const systemPrompt = this.buildSystemPrompt(context);
 
     // 添加系统消息到对话历史
-    const fullMessages: AIMessage[] = [
-      { role: 'system', content: systemPrompt },
-      ...messages,
-    ];
+    const fullMessages: AIMessage[] = [{ role: 'system', content: systemPrompt }, ...messages];
 
     try {
       // 调用AI API
@@ -84,10 +84,7 @@ export class AIConversationService {
   /**
    * 构建系统提示
    */
-  private buildSystemPrompt(context?: {
-    originalPrompt?: string;
-    currentPrompt?: string;
-  }): string {
+  private buildSystemPrompt(context?: { originalPrompt?: string; currentPrompt?: string }): string {
     let systemPrompt = `你是一个专业的AI绘画提示词优化助手。你的任务是帮助用户改进和优化他们的AI绘画提示词。
 
 工作流程：
@@ -127,7 +124,7 @@ export class AIConversationService {
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${this.config.apiKey}`,
+        Authorization: `Bearer ${this.config.apiKey}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
@@ -150,15 +147,18 @@ export class AIConversationService {
   /**
    * 解析AI响应
    */
-  private parseAIResponse(response: string, context?: {
-    originalPrompt?: string;
-    currentPrompt?: string;
-  }): AIResponse {
+  private parseAIResponse(
+    response: string,
+    context?: {
+      originalPrompt?: string;
+      currentPrompt?: string;
+    }
+  ): AIResponse {
     // 检查是否包含优化版本标记
-    const optimizedVersionMatch = response.match(/【优化版本】[\s\S]*?[:：]\s*([\s\S]+?)(?=\n\n|$)/);
-    const suggestedPrompt = optimizedVersionMatch
-      ? optimizedVersionMatch[1].trim()
-      : undefined;
+    const optimizedVersionMatch = response.match(
+      /【优化版本】[\s\S]*?[:：]\s*([\s\S]+?)(?=\n\n|$)/
+    );
+    const suggestedPrompt = optimizedVersionMatch ? optimizedVersionMatch[1].trim() : undefined;
 
     return {
       message: response,
@@ -194,10 +194,13 @@ export function getAIConversationService(): AIConversationService | MockAIConver
  * Mock AI Conversation Service (用于测试)
  */
 class MockAIConversationService {
-  async chat(messages: AIMessage[], context?: {
-    originalPrompt?: string;
-    currentPrompt?: string;
-  }): Promise<AIResponse> {
+  async chat(
+    messages: AIMessage[],
+    context?: {
+      originalPrompt?: string;
+      currentPrompt?: string;
+    }
+  ): Promise<AIResponse> {
     console.log('[MockAI] Received chat request:', {
       messageCount: messages.length,
       context,
@@ -218,7 +221,7 @@ class MockAIConversationService {
     const isInitialRequest = lastUserMessage.content.includes('请帮我优化这个提示词：');
     const promptToOptimize = isInitialRequest
       ? lastUserMessage.content.replace('请帮我优化这个提示词：', '').trim()
-      : (context?.originalPrompt || lastUserMessage.content);
+      : context?.originalPrompt || lastUserMessage.content;
 
     // 生成详细的Mock响应
     const response = `我已经分析了你的提示词："${promptToOptimize}"
@@ -249,7 +252,9 @@ class MockAIConversationService {
   }
 
   async quickOptimize(prompt: string): Promise<string> {
-    const response = await this.chat([{ role: 'user', content: `请帮我优化这个提示词：${prompt}` }]);
+    const response = await this.chat([
+      { role: 'user', content: `请帮我优化这个提示词：${prompt}` },
+    ]);
     return response.suggestedPrompt || response.message;
   }
 }

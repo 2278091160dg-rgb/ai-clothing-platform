@@ -364,9 +364,7 @@ export default function AIChatPage() {
                 )}
               </Button>
             </div>
-            <p className="text-xs text-white/40 mt-2">
-              Enter 发送，Shift+Enter 换行
-            </p>
+            <p className="text-xs text-white/40 mt-2">Enter 发送，Shift+Enter 换行</p>
           </div>
         </div>
       </div>

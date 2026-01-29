@@ -126,7 +126,7 @@ class ApiService {
       }
     }
 
-    // 回退到本地上传（需要实现 /api/upload 路由）
+    // 回退到本地上传（Vercel 兼容 - 返回 Base64 dataUrl）
     const response = await fetch(`${this.baseUrl}/upload`, {
       method: 'POST',
       body: formData,
@@ -137,7 +137,8 @@ class ApiService {
     }
 
     const data = await response.json();
-    return data.url;
+    // 新版 API 返回 dataUrl (Base64 格式，Vercel 兼容)
+    return data.dataUrl || data.url;
   }
 
   /**

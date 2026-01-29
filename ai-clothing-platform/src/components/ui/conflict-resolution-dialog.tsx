@@ -42,7 +42,9 @@ export function ConflictResolutionDialog({
   onResolve,
   onDismiss,
 }: ConflictResolutionDialogProps) {
-  const [selectedStrategy, setSelectedStrategy] = useState<'use_local' | 'use_remote' | 'merge'>('use_local');
+  const [selectedStrategy, setSelectedStrategy] = useState<'use_local' | 'use_remote' | 'merge'>(
+    'use_local'
+  );
 
   const formatModifierLabel = (modifier: string) => {
     if (modifier === 'web') return '🌐 Web前端用户';
@@ -71,9 +73,7 @@ export function ConflictResolutionDialog({
       <DialogContent className="max-w-3xl">
         <DialogHeader>
           <DialogTitle>⚠️ 检测到数据冲突</DialogTitle>
-          <DialogDescription>
-            其他用户也在修改此任务，请选择处理方式
-          </DialogDescription>
+          <DialogDescription>其他用户也在修改此任务，请选择处理方式</DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4">
@@ -127,9 +127,7 @@ export function ConflictResolutionDialog({
                   </div>
 
                   <div className="p-3 bg-blue-50 dark:bg-blue-950 rounded-lg border-2 border-blue-200">
-                    <div className="text-xs text-blue-700 dark:text-blue-400 mb-1">
-                      对方版本
-                    </div>
+                    <div className="text-xs text-blue-700 dark:text-blue-400 mb-1">对方版本</div>
                     <div className="text-sm font-mono line-clamp-3">
                       {typeof remoteValue === 'string'
                         ? remoteValue
@@ -151,9 +149,7 @@ export function ConflictResolutionDialog({
                 className={cn(
                   'w-full p-4 text-left rounded-lg border-2 transition-all',
                   'hover:bg-accent',
-                  selectedStrategy === 'use_local'
-                    ? 'border-primary bg-primary/5'
-                    : 'border-border'
+                  selectedStrategy === 'use_local' ? 'border-primary bg-primary/5' : 'border-border'
                 )}
               >
                 <div className="flex items-start justify-between">
@@ -201,9 +197,7 @@ export function ConflictResolutionDialog({
                 className={cn(
                   'w-full p-4 text-left rounded-lg border-2 transition-all',
                   'hover:bg-accent',
-                  selectedStrategy === 'merge'
-                    ? 'border-primary bg-primary/5'
-                    : 'border-border'
+                  selectedStrategy === 'merge' ? 'border-primary bg-primary/5' : 'border-border'
                 )}
               >
                 <div className="flex items-start justify-between">
@@ -228,9 +222,7 @@ export function ConflictResolutionDialog({
           <Button variant="outline" onClick={onDismiss}>
             取消
           </Button>
-          <Button onClick={handleResolve}>
-            确认解决
-          </Button>
+          <Button onClick={handleResolve}>确认解决</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

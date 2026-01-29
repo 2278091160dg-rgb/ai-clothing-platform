@@ -28,10 +28,7 @@ export async function POST(req: NextRequest, context: RouteContext) {
 
     // 验证必填字段
     if (!body.strategy) {
-      return NextResponse.json(
-        { error: 'Missing required field: strategy' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Missing required field: strategy' }, { status: 400 });
     }
 
     // 验证策略值
@@ -49,18 +46,12 @@ export async function POST(req: NextRequest, context: RouteContext) {
     const task = await taskRepo.findById(id);
 
     if (!task) {
-      return NextResponse.json(
-        { error: 'Task not found' },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: 'Task not found' }, { status: 404 });
     }
 
     // 检查是否有冲突
     if (!task.conflictDetected) {
-      return NextResponse.json(
-        { error: 'No conflict detected for this task' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'No conflict detected for this task' }, { status: 400 });
     }
 
     console.log('[ConflictResolution] Resolving conflict:', {
@@ -77,7 +68,7 @@ export async function POST(req: NextRequest, context: RouteContext) {
           id,
           {
             conflictDetected: false,
-            syncStatus: 'PENDING',  // 需要重新同步
+            syncStatus: 'PENDING', // 需要重新同步
           },
           task.version,
           modifier as 'web' | 'feishu' | 'api'
@@ -119,7 +110,7 @@ export async function POST(req: NextRequest, context: RouteContext) {
           {
             ...body.mergedFields,
             conflictDetected: false,
-            syncStatus: 'PENDING',  // 需要重新同步
+            syncStatus: 'PENDING', // 需要重新同步
           },
           task.version,
           modifier as 'web' | 'feishu' | 'api'
@@ -133,10 +124,7 @@ export async function POST(req: NextRequest, context: RouteContext) {
       }
 
       default:
-        return NextResponse.json(
-          { error: 'Invalid strategy' },
-          { status: 400 }
-        );
+        return NextResponse.json({ error: 'Invalid strategy' }, { status: 400 });
     }
   } catch (error) {
     console.error('[ConflictResolution] Failed to resolve conflict:', error);
@@ -153,10 +141,7 @@ export async function POST(req: NextRequest, context: RouteContext) {
       );
     }
 
-    return NextResponse.json(
-      { error: 'Failed to resolve conflict' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Failed to resolve conflict' }, { status: 500 });
   }
 }
 
@@ -172,10 +157,7 @@ export async function GET(req: NextRequest, context: RouteContext) {
     const task = await taskRepo.findById(id);
 
     if (!task) {
-      return NextResponse.json(
-        { error: 'Task not found' },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: 'Task not found' }, { status: 404 });
     }
 
     // 检查是否有冲突
@@ -190,7 +172,7 @@ export async function GET(req: NextRequest, context: RouteContext) {
     // 获取冲突详情
     const conflictInfo: ConflictInfo = {
       taskId: task.id,
-      conflicts: [],  // 需要从版本历史中获取实际冲突的字段
+      conflicts: [], // 需要从版本历史中获取实际冲突的字段
       localVersion: task.version,
       lastModifiedBy: task.lastModifiedBy || 'unknown',
       lastModifiedAt: task.lastModifiedAt,
@@ -203,9 +185,6 @@ export async function GET(req: NextRequest, context: RouteContext) {
     });
   } catch (error) {
     console.error('[ConflictResolution] Failed to get conflict info:', error);
-    return NextResponse.json(
-      { error: 'Failed to get conflict info' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Failed to get conflict info' }, { status: 500 });
   }
 }

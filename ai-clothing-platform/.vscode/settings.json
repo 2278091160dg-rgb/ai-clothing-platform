@@ -80,10 +80,7 @@
     "typescript": "html",
     "typescriptreact": "html"
   },
-  "auto-rename-tag.activationOnLanguage": [
-    "typescript",
-    "typescriptreact"
-  ],
+  "auto-rename-tag.activationOnLanguage": ["typescript", "typescriptreact"],
 
   // ===== 快速建议 =====
   "typescript.suggest.autoImports": true,

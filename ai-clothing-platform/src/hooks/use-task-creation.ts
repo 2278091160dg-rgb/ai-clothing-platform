@@ -46,83 +46,86 @@ export function useTaskCreation(options?: TaskCreationOptions): TaskCreationResu
   /**
    * 创建任务
    */
-  const createTask = useCallback(async (input: CreateTaskInput) => {
-    try {
-      // 初始化应用
-      initializeApp();
+  const createTask = useCallback(
+    async (input: CreateTaskInput) => {
+      try {
+        // 初始化应用
+        initializeApp();
 
-      // 创建任务（数据库）
-      const taskRepo = getTaskRepository();
-      const task = await taskRepo.create({
-        ...input,
-        syncStatus: 'PENDING',
-      });
+        // 创建任务（数据库）
+        const taskRepo = getTaskRepository();
+        const task = await taskRepo.create({
+          ...input,
+          syncStatus: 'PENDING',
+        });
 
-      console.log('[TaskCreation] Task created:', task.id);
+        console.log('[TaskCreation] Task created:', task.id);
 
-      // 显示同步状态
-      setSyncStatus('syncing');
+        // 显示同步状态
+        setSyncStatus('syncing');
 
-      // TODO: 触发飞书同步（异步）
-      // 这将触发事件系统中的飞书监听器
-      // const feishuService = getFeishuService();
-      // try {
-      //   const record = await feishuService.createTaskRecord({
-      //     userId: task.userId,
-      //     productImageToken: extractToken(input.productImageUrl),
-      //     prompt: input.prompt || '',
-      //     // ...
-      //   });
-      //   await taskRepo.update(task.id, {
-      //     feishuRecordId: record.record_id,
-      //     syncStatus: 'SYNCED',
-      //   });
-      //   setSyncStatus('synced');
-      // } catch (error) {
-      //   setSyncStatus('failed');
-      // }
+        // TODO: 触发飞书同步（异步）
+        // 这将触发事件系统中的飞书监听器
+        // const feishuService = getFeishuService();
+        // try {
+        //   const record = await feishuService.createTaskRecord({
+        //     userId: task.userId,
+        //     productImageToken: extractToken(input.productImageUrl),
+        //     prompt: input.prompt || '',
+        //     // ...
+        //   });
+        //   await taskRepo.update(task.id, {
+        //     feishuRecordId: record.record_id,
+        //     syncStatus: 'SYNCED',
+        //   });
+        //   setSyncStatus('synced');
+        // } catch (error) {
+        //   setSyncStatus('failed');
+        // }
 
-      // 触发N8N工作流
-      const n8nService = getN8nService();
-      await n8nService.triggerGeneration({
-        taskId: task.id,
-        userId: task.userId,
-        productImageUrl: input.productImageUrl!,
-        sceneImageUrl: input.sceneImageUrl,
-        prompt: input.prompt || '',
-        aiModel: input.aiModel || 'FLUX.1',
-        aspectRatio: input.aspectRatio || '1:1',
-        imageCount: input.imageCount || 4,
-        quality: input.quality || 'high',
-      });
+        // 触发N8N工作流
+        const n8nService = getN8nService();
+        await n8nService.triggerGeneration({
+          taskId: task.id,
+          userId: task.userId,
+          productImageUrl: input.productImageUrl!,
+          sceneImageUrl: input.sceneImageUrl,
+          prompt: input.prompt || '',
+          aiModel: input.aiModel || 'FLUX.1',
+          aspectRatio: input.aspectRatio || '1:1',
+          imageCount: input.imageCount || 4,
+          quality: input.quality || 'high',
+        });
 
-      // 模拟同步成功（实际应等待飞书同步完成）
-      setTimeout(() => setSyncStatus('synced'), 1000);
+        // 模拟同步成功（实际应等待飞书同步完成）
+        setTimeout(() => setSyncStatus('synced'), 1000);
 
-      // 显示同步状态提示
-      showSyncStatus({
-        status: syncStatus,
-        feishuRecordId: task.feishuRecordId ?? undefined,
-      });
+        // 显示同步状态提示
+        showSyncStatus({
+          status: syncStatus,
+          feishuRecordId: task.feishuRecordId ?? undefined,
+        });
 
-      options?.onSuccess?.(task);
-      return task;
-    } catch (error) {
-      console.error('[TaskCreation] Failed to create task:', error);
+        options?.onSuccess?.(task);
+        return task;
+      } catch (error) {
+        console.error('[TaskCreation] Failed to create task:', error);
 
-      // 检查是否是版本冲突错误
-      if (error instanceof Error && error.name === 'VersionConflictError') {
-        const conflictError = error as any;
-        setConflictInfo(conflictError.conflict);
-        setShowConflictDialog(true);
-      } else {
-        setSyncStatus('failed');
-        options?.onError?.(error as Error);
+        // 检查是否是版本冲突错误
+        if (error instanceof Error && error.name === 'VersionConflictError') {
+          const conflictError = error as any;
+          setConflictInfo(conflictError.conflict);
+          setShowConflictDialog(true);
+        } else {
+          setSyncStatus('failed');
+          options?.onError?.(error as Error);
+        }
+
+        throw error;
       }
-
-      throw error;
-    }
-  }, [options, showSyncStatus, syncStatus]);
+    },
+    [options, showSyncStatus, syncStatus]
+  );
 
   /**
    * 删除任务

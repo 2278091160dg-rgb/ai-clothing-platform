@@ -409,10 +409,10 @@ export class TaskRepository {
    */
   private mapFeishuStatus(feishuStatus: string): TaskStatus {
     const statusMap: Record<string, TaskStatus> = {
-      'Pending': TaskStatus.PENDING,
-      'Processing': TaskStatus.PROCESSING,
-      'Completed': TaskStatus.COMPLETED,
-      'Failed': TaskStatus.FAILED,
+      Pending: TaskStatus.PENDING,
+      Processing: TaskStatus.PROCESSING,
+      Completed: TaskStatus.COMPLETED,
+      Failed: TaskStatus.FAILED,
     };
     return statusMap[feishuStatus] || TaskStatus.PENDING;
   }

@@ -41,18 +41,18 @@ export class DeerAPIConversationService {
   /**
    * 发送消息到DeerAPI并获取回复
    */
-  async chat(messages: DeerAPIMessage[], context?: {
-    originalPrompt?: string;
-    currentPrompt?: string;
-  }): Promise<{ message: string; suggestedPrompt?: string }> {
+  async chat(
+    messages: DeerAPIMessage[],
+    context?: {
+      originalPrompt?: string;
+      currentPrompt?: string;
+    }
+  ): Promise<{ message: string; suggestedPrompt?: string }> {
     // 构建系统提示
     const systemPrompt = this.buildSystemPrompt(context);
 
     // 添加系统消息到对话历史
-    const fullMessages: DeerAPIMessage[] = [
-      { role: 'system', content: systemPrompt },
-      ...messages,
-    ];
+    const fullMessages: DeerAPIMessage[] = [{ role: 'system', content: systemPrompt }, ...messages];
 
     try {
       // 调用DeerAPI
@@ -60,7 +60,7 @@ export class DeerAPIConversationService {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${this.config.apiKey}`,
+          Authorization: `Bearer ${this.config.apiKey}`,
         },
         body: JSON.stringify({
           messages: fullMessages,
@@ -105,10 +105,7 @@ export class DeerAPIConversationService {
   /**
    * 构建系统提示
    */
-  private buildSystemPrompt(context?: {
-    originalPrompt?: string;
-    currentPrompt?: string;
-  }): string {
+  private buildSystemPrompt(context?: { originalPrompt?: string; currentPrompt?: string }): string {
     let systemPrompt = `你是一个专业的AI绘画提示词优化助手。你的任务是帮助用户改进和优化他们的AI绘画提示词。
 
 工作流程：
@@ -142,15 +139,18 @@ export class DeerAPIConversationService {
   /**
    * 解析AI响应
    */
-  private parseAIResponse(response: string, context?: {
-    originalPrompt?: string;
-    currentPrompt?: string;
-  }): { message: string; suggestedPrompt?: string } {
+  private parseAIResponse(
+    response: string,
+    context?: {
+      originalPrompt?: string;
+      currentPrompt?: string;
+    }
+  ): { message: string; suggestedPrompt?: string } {
     // 检查是否包含优化版本标记
-    const optimizedVersionMatch = response.match(/【优化版本】[\s\S]*?[:：]\s*([\s\S]+?)(?=\n\n|$)/);
-    const suggestedPrompt = optimizedVersionMatch
-      ? optimizedVersionMatch[1].trim()
-      : undefined;
+    const optimizedVersionMatch = response.match(
+      /【优化版本】[\s\S]*?[:：]\s*([\s\S]+?)(?=\n\n|$)/
+    );
+    const suggestedPrompt = optimizedVersionMatch ? optimizedVersionMatch[1].trim() : undefined;
 
     return {
       message: response,

@@ -111,7 +111,9 @@ export class VersionConflictError extends Error {
     actualData: Task;
     conflict: ConflictInfo;
   }) {
-    super(`Version conflict for task ${details.taskId}: expected version ${details.expectedVersion}, got ${details.currentVersion}`);
+    super(
+      `Version conflict for task ${details.taskId}: expected version ${details.expectedVersion}, got ${details.currentVersion}`
+    );
     this.name = 'VersionConflictError';
     this.conflict = details.conflict;
   }
@@ -123,11 +125,11 @@ export class VersionConflictError extends Error {
  */
 export interface ConflictInfo {
   taskId: string;
-  conflicts: string[];  // 冲突的字段列表
+  conflicts: string[]; // 冲突的字段列表
   localVersion: number;
   lastModifiedBy: string;
   lastModifiedAt: Date;
-  remoteChanges?: Record<string, any>;  // 远程的修改内容
+  remoteChanges?: Record<string, any>; // 远程的修改内容
 }
 
 /**

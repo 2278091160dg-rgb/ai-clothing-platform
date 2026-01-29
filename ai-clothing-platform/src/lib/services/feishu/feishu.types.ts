@@ -27,7 +27,13 @@ export interface BitableRecord {
   last_modified_time: number;
 }
 
-export type TaskStatus = 'Pending' | 'Uploading' | 'Processing' | 'Generating' | 'Completed' | 'Failed';
+export type TaskStatus =
+  | 'Pending'
+  | 'Uploading'
+  | 'Processing'
+  | 'Generating'
+  | 'Completed'
+  | 'Failed';
 
 export interface TaskRecordUpdate {
   status?: TaskStatus;

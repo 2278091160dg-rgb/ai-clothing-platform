@@ -40,7 +40,7 @@ const RadioGroupItem = React.forwardRef<
       id={id}
       value={value}
       checked={context.value === value}
-      onChange={(e) => context.onChange(e.target.value)}
+      onChange={e => context.onChange(e.target.value)}
       className={cn('h-4 w-4 text-primary', className)}
       {...props}
     />

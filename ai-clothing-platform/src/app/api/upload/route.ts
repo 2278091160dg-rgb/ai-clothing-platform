@@ -1,15 +1,13 @@
 /**
  * Upload API Route
- * 处理图片上传到本地临时存储
+ * 处理图片上传并返回 Base64 编码
+ * Vercel 兼容：不使用本地文件系统
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { writeFile, mkdir } from 'fs/promises';
-import { join } from 'path';
-import { existsSync } from 'fs';
 
 /**
- * POST /api/upload - 上传图片
+ * POST /api/upload - 上传图片并返回 Base64
  */
 export async function POST(req: NextRequest) {
   try {
@@ -30,34 +28,38 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'File too large' }, { status: 400 });
     }
 
-    // 创建上传目录
-    const uploadDir = join(process.cwd(), 'public', 'uploads', 'temp');
-    if (!existsSync(uploadDir)) {
-      await mkdir(uploadDir, { recursive: true });
-    }
-
-    // 生成唯一文件名
-    const timestamp = Date.now();
-    const randomStr = Math.random().toString(36).substring(2, 15);
-    const extension = file.name.split('.').pop();
-    const fileName = `${timestamp}-${randomStr}.${extension}`;
-    const filePath = join(uploadDir, fileName);
-
-    // 保存文件
+    // 将文件转换为 Base64
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
-    await writeFile(filePath, buffer);
+    const base64 = buffer.toString('base64');
 
-    // 返回可访问的 URL
-    const url = `/uploads/temp/${fileName}`;
+    // 返回 Base64 数据 URI
+    const dataUrl = `data:${file.type};base64,${base64}`;
 
     return NextResponse.json({
       success: true,
-      url,
-      fileName,
+      dataUrl,
+      fileName: file.name,
+      size: file.size,
+      type: file.type,
     });
   } catch (error) {
     console.error('[API] Failed to upload file:', error);
-    return NextResponse.json({ error: 'Failed to upload file' }, { status: 500 });
+    return NextResponse.json(
+      { error: 'Failed to upload file', details: error instanceof Error ? error.message : 'Unknown error' },
+      { status: 500 }
+    );
   }
+}
+
+/**
+ * GET /api/upload - 健康检查
+ */
+export async function GET() {
+  return NextResponse.json({
+    status: 'ok',
+    service: 'upload-api',
+    version: '2.0',
+    description: '图片上传 API - 返回 Base64 格式（Vercel 兼容）',
+  });
 }

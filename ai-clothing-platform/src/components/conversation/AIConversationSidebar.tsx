@@ -232,10 +232,7 @@ export function AIConversationSidebar({
             <p className="text-xs text-gray-500">多轮优化提示词</p>
           </div>
         </div>
-        <button
-          onClick={onClose}
-          className="text-gray-400 hover:text-gray-600 transition-colors"
-        >
+        <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-colors">
           ✕
         </button>
       </div>
@@ -252,17 +249,12 @@ export function AIConversationSidebar({
         {messages.map(message => (
           <div
             key={message.id}
-            className={cn(
-              'flex',
-              message.role === 'user' ? 'justify-end' : 'justify-start'
-            )}
+            className={cn('flex', message.role === 'user' ? 'justify-end' : 'justify-start')}
           >
             <div
               className={cn(
                 'max-w-[80%] rounded-2xl px-4 py-2',
-                message.role === 'user'
-                  ? 'bg-blue-500 text-white'
-                  : 'bg-gray-100 text-gray-900',
+                message.role === 'user' ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-900',
                 message.role === 'system' && 'bg-yellow-50 text-yellow-800 text-sm'
               )}
             >
@@ -302,12 +294,7 @@ export function AIConversationSidebar({
             {suggestedPrompt}
           </div>
           <div className="flex gap-2">
-            <Button
-              onClick={handleApply}
-              disabled={isLoading}
-              size="sm"
-              className="flex-1"
-            >
+            <Button onClick={handleApply} disabled={isLoading} size="sm" className="flex-1">
               {isLoading ? (
                 <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -320,11 +307,7 @@ export function AIConversationSidebar({
                 </>
               )}
             </Button>
-            <Button
-              onClick={() => setSuggestedPrompt(null)}
-              variant="outline"
-              size="sm"
-            >
+            <Button onClick={() => setSuggestedPrompt(null)} variant="outline" size="sm">
               重新优化
             </Button>
           </div>
@@ -361,9 +344,7 @@ export function AIConversationSidebar({
             )}
           </Button>
         </div>
-        <p className="text-xs text-gray-400 mt-2">
-          Enter 发送，Shift+Enter 换行
-        </p>
+        <p className="text-xs text-gray-400 mt-2">Enter 发送，Shift+Enter 换行</p>
       </div>
     </div>
   );

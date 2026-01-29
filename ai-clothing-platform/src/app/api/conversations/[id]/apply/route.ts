@@ -20,10 +20,7 @@ export async function PUT(req: NextRequest, context: RouteContext) {
 
     // 验证必填字段
     if (!body.finalPrompt) {
-      return NextResponse.json(
-        { error: 'Missing required field: finalPrompt' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Missing required field: finalPrompt' }, { status: 400 });
     }
 
     // 初始化应用
@@ -33,10 +30,7 @@ export async function PUT(req: NextRequest, context: RouteContext) {
     const conversation = await conversationRepo.findById(id);
 
     if (!conversation) {
-      return NextResponse.json(
-        { error: 'Conversation not found' },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: 'Conversation not found' }, { status: 404 });
     }
 
     // 1. 更新对话状态
@@ -103,9 +97,6 @@ export async function PUT(req: NextRequest, context: RouteContext) {
     });
   } catch (error) {
     console.error('[API] Failed to apply conversation:', error);
-    return NextResponse.json(
-      { error: 'Failed to apply conversation' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Failed to apply conversation' }, { status: 500 });
   }
 }

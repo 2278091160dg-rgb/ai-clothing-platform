@@ -5,7 +5,8 @@
 
 /* 渐变背景动画 - 赛博朋克风格 */
 @keyframes gradientShift {
-  0%, 100% {
+  0%,
+  100% {
     background-position: 0% 50%;
   }
   50% {
@@ -15,7 +16,8 @@
 
 /* 神经网络脉冲效果 */
 @keyframes neuralPulse {
-  0%, 100% {
+  0%,
+  100% {
     opacity: 0.3;
     transform: scale(1);
   }
@@ -37,7 +39,8 @@
 
 /* 粒子浮动效果 */
 @keyframes particleFloat {
-  0%, 100% {
+  0%,
+  100% {
     transform: translateY(0px) translateX(0px);
     opacity: 0;
   }
@@ -65,10 +68,18 @@
 
 /* 霓虹灯闪烁 */
 @keyframes neonFlicker {
-  0%, 18%, 22%, 25%, 53%, 57%, 100% {
+  0%,
+  18%,
+  22%,
+  25%,
+  53%,
+  57%,
+  100% {
     opacity: 1;
   }
-  20%, 24%, 55% {
+  20%,
+  24%,
+  55% {
     opacity: 0.4;
   }
 }
@@ -109,12 +120,7 @@
   left: 0;
   right: 0;
   height: 2px;
-  background: linear-gradient(
-    90deg,
-    transparent,
-    rgba(99, 102, 241, 0.5),
-    transparent
-  );
+  background: linear-gradient(90deg, transparent, rgba(99, 102, 241, 0.5), transparent);
   animation: scanline 4s linear infinite;
   pointer-events: none;
 }
@@ -266,10 +272,12 @@
 }
 
 @keyframes blink {
-  0%, 50% {
+  0%,
+  50% {
     opacity: 1;
   }
-  51%, 100% {
+  51%,
+  100% {
     opacity: 0;
   }
 }

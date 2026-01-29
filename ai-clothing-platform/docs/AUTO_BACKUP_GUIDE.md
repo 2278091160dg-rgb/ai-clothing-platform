@@ -1,6 +1,7 @@
 # 自动化备份使用指南
 
 ## 备份脚本位置
+
 ```
 scripts/auto-backup.sh
 ```
@@ -17,11 +18,13 @@ cd /Users/denggui/Documents/trae_projects/PENCILTEST/ai-clothing-platform
 ### 方式 2：设置快捷命令
 
 在 `~/.zshrc` 中添加：
+
 ```bash
 alias backup='cd /Users/denggui/Documents/trae_projects/PENCILTEST/ai-clothing-platform && ./scripts/auto-backup.sh'
 ```
 
 使用时只需输入：
+
 ```bash
 backup
 ```
@@ -29,12 +32,14 @@ backup
 ### 方式 3：macOS 定时任务（自动化）
 
 创建定时任务配置文件：
+
 ```bash
 # 编辑 launchd 配置
 nano ~/Library/LaunchAgents/com.aiclothing.backup.plist
 ```
 
 添加以下内容：
+
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -62,16 +67,19 @@ nano ~/Library/LaunchAgents/com.aiclothing.backup.plist
 ```
 
 加载定时任务：
+
 ```bash
 launchctl load ~/Library/LaunchAgents/com.aiclothing.backup.plist
 ```
 
 查看任务状态：
+
 ```bash
 launchctl list | grep aiclothing
 ```
 
 卸载定时任务：
+
 ```bash
 launchctl unload ~/Library/LaunchAgents/com.aiclothing.backup.plist
 ```
@@ -87,12 +95,12 @@ launchctl unload ~/Library/LaunchAgents/com.aiclothing.backup.plist
 
 ## 备份频率建议
 
-| 场景 | 建议 |
-|------|------|
-| 每日结束 | 定时任务自动执行 |
+| 场景     | 建议              |
+| -------- | ----------------- |
+| 每日结束 | 定时任务自动执行  |
 | 完成功能 | 手动执行 `backup` |
-| 重构前 | 手动执行 `backup` |
-| 发布前 | 手动执行 `backup` |
+| 重构前   | 手动执行 `backup` |
+| 发布前   | 手动执行 `backup` |
 
 ## 注意事项
 
@@ -104,6 +112,7 @@ launchctl unload ~/Library/LaunchAgents/com.aiclothing.backup.plist
 ## 手动备份流程（不使用脚本）
 
 如果脚本不可用，可以手动执行：
+
 ```bash
 cd /Users/denggui/Documents/trae_projects/PENCILTEST/ai-clothing-platform
 git add .

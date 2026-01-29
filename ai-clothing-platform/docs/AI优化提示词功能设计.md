@@ -337,10 +337,7 @@ export async function POST(req: NextRequest) {
     const { prompt, context } = await req.json();
 
     if (!prompt || typeof prompt !== 'string') {
-      return NextResponse.json(
-        { error: 'Invalid prompt' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Invalid prompt' }, { status: 400 });
     }
 
     // 调用GEMINI文本模型
@@ -374,10 +371,7 @@ export async function POST(req: NextRequest) {
     });
   } catch (error) {
     console.error('提示词优化失败:', error);
-    return NextResponse.json(
-      { error: '优化失败', message: error.message },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: '优化失败', message: error.message }, { status: 500 });
   }
 }
 ```
@@ -444,13 +438,13 @@ export class PromptOptimizationService {
 
 ### 4.1 新增字段
 
-| 字段名 | 类型 | 说明 | 是否可编辑 | 默认值 |
-|--------|------|------|-----------|--------|
-| 提示词 | 文本 | 当前使用的提示词 | 可编辑 | - |
-| 原始提示词 | 文本 | 用户输入的原始提示词 | 可编辑 | - |
-| 优化后提示词 | 文本 | AI优化后的提示词 | 只读 | - |
-| 提示词来源 | 单选 | 用户/AI优化/飞书 | 只读 | 用户 |
-| AI优化按钮 | 按钮 | 点击调用AI优化 | 可点击 | - |
+| 字段名       | 类型 | 说明                 | 是否可编辑 | 默认值 |
+| ------------ | ---- | -------------------- | ---------- | ------ |
+| 提示词       | 文本 | 当前使用的提示词     | 可编辑     | -      |
+| 原始提示词   | 文本 | 用户输入的原始提示词 | 可编辑     | -      |
+| 优化后提示词 | 文本 | AI优化后的提示词     | 只读       | -      |
+| 提示词来源   | 单选 | 用户/AI优化/飞书     | 只读       | 用户   |
+| AI优化按钮   | 按钮 | 点击调用AI优化       | 可点击     | -      |
 
 ### 4.2 飞书自动化配置
 
@@ -779,21 +773,25 @@ export function QuickGenerate() {
 ## 9. 实施步骤
 
 ### 阶段1：数据库和API（第1周）
+
 - [ ] 添加数据库字段
 - [ ] 实现优化API
 - [ ] 更新任务创建逻辑
 
 ### 阶段2：前端UI（第1周）
+
 - [ ] 实现PromptOptimizer组件
 - [ ] 添加对比显示
 - [ ] 优化左侧栏布局
 
 ### 阶段3：飞书集成（第2周）
+
 - [ ] 添加飞书表格字段
 - [ ] 配置自动化规则
 - [ ] 测试双向同步
 
 ### 阶段4：N8N适配（第2周）
+
 - [ ] 更新工作流输入
 - [ ] 添加提示词选择逻辑
 - [ ] 测试完整流程
@@ -802,12 +800,12 @@ export function QuickGenerate() {
 
 ## 10. 关键代码文件清单
 
-| 文件 | 说明 |
-|------|------|
-| [src/components/PromptOptimizer.tsx](src/components/PromptOptimizer.tsx) | 提示词优化组件 |
-| [src/app/api/optimize-prompt/route.ts](src/app/api/optimize-prompt/route.ts) | 优化API |
-| [src/lib/services/prompt-optimization.service.ts](src/lib/services/prompt-optimization.service.ts) | 优化服务 |
-| [prisma/schema.prisma](prisma/schema.prisma) | 数据库模型 |
+| 文件                                                                                               | 说明           |
+| -------------------------------------------------------------------------------------------------- | -------------- |
+| [src/components/PromptOptimizer.tsx](src/components/PromptOptimizer.tsx)                           | 提示词优化组件 |
+| [src/app/api/optimize-prompt/route.ts](src/app/api/optimize-prompt/route.ts)                       | 优化API        |
+| [src/lib/services/prompt-optimization.service.ts](src/lib/services/prompt-optimization.service.ts) | 优化服务       |
+| [prisma/schema.prisma](prisma/schema.prisma)                                                       | 数据库模型     |
 
 ---
 
@@ -822,6 +820,7 @@ export function QuickGenerate() {
 5. **业务逻辑**：统一处理，优化后的提示词优先
 
 **用户体验**：
+
 - Web用户：可预览对比，选择是否应用
 - 飞书用户：一键优化，自动应用
 - 最终都使用优化后的提示词调用生图模型

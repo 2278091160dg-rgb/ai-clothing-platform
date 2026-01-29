@@ -14,11 +14,11 @@ import { initializeApp } from '@/lib/app-initialization';
 interface N8NCallbackBody {
   taskId: string;
   status: 'pending' | 'processing' | 'completed' | 'failed';
-  resultImageUrls?: string | string[];  // 可能是JSON字符串或数组
-  resultImageTokens?: string | string[];  // 可选字段，N8N可能不发送
-  error?: string;  // 可选字段，N8N可能不发送
+  resultImageUrls?: string | string[]; // 可能是JSON字符串或数组
+  resultImageTokens?: string | string[]; // 可选字段，N8N可能不发送
+  error?: string; // 可选字段，N8N可能不发送
   progress?: number;
-  [key: string]: any;  // 允许额外字段
+  [key: string]: any; // 允许额外字段
 }
 
 /**
@@ -132,7 +132,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const body = await req.json() as N8NCallbackBody;
+    const body = (await req.json()) as N8NCallbackBody;
 
     // 验证必填字段
     if (!body.taskId || !body.status) {

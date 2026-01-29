@@ -115,11 +115,7 @@ async function getSession(req: Request): Promise<Session | null> {
  * 权限装饰器 - 用于服务层
  */
 export function RequirePermission(permission: Permission) {
-  return function (
-    target: object,
-    propertyKey: string,
-    descriptor: PropertyDescriptor
-  ) {
+  return function (target: object, propertyKey: string, descriptor: PropertyDescriptor) {
     const originalMethod = descriptor.value;
 
     descriptor.value = async function (...args: unknown[]) {

@@ -51,10 +51,7 @@ export async function checkDatabaseHealth(): Promise<boolean> {
 /**
  * 服务健康检查映射
  */
-export const HEALTH_CHECKERS: Record<
-  ServiceType,
-  () => Promise<boolean>
-> = {
+export const HEALTH_CHECKERS: Record<ServiceType, () => Promise<boolean>> = {
   feishu: checkFeishuHealth,
   n8n: checkN8nHealth,
   database: checkDatabaseHealth,

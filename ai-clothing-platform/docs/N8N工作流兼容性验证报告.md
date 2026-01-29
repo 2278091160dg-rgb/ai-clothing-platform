@@ -1,9 +1,11 @@
 # N8N工作流兼容性验证报告
 
 ## 验证日期
+
 2026-01-29
 
 ## 工作流文件
+
 - `n8n-workflow-frontend-v3.json` - 前端触发工作流
 - `n8n-workflow-feishu-v3.json` - 飞书触发工作流
 
@@ -14,6 +16,7 @@
 ### 1.1 前端工作流输入参数
 
 **当前支持的参数**:
+
 ```json
 {
   "taskId": "string",
@@ -33,6 +36,7 @@
 ### 1.2 新增字段支持
 
 **需要新增的字段**（用于提示词优化和同步）:
+
 ```json
 {
   // 原有字段
@@ -49,10 +53,10 @@
   "deerApiKey": "string",
 
   // 新增字段（向后兼容，可选）
-  "originalPrompt": "string (可选)",      // 原始提示词
-  "optimizedPrompt": "string (可选)",     // AI优化后的提示词
-  "promptSource": "string (可选)",        // 提示词来源
-  "feishuRecordId": "string (可选)"       // 飞书记录ID
+  "originalPrompt": "string (可选)", // 原始提示词
+  "optimizedPrompt": "string (可选)", // AI优化后的提示词
+  "promptSource": "string (可选)", // 提示词来源
+  "feishuRecordId": "string (可选)" // 飞书记录ID
 }
 ```
 
@@ -69,6 +73,7 @@
 ### 2.1 当前回调格式
 
 **N8N → 前端回调**:
+
 ```json
 {
   "taskId": "string",
@@ -79,6 +84,7 @@
 ```
 
 **前端 API 期望格式**:
+
 ```typescript
 {
   taskId: string;
@@ -92,14 +98,14 @@
 
 ### 2.2 验证结果
 
-| 字段 | N8N发送 | API期望 | 兼容性 | 说明 |
-|------|---------|---------|--------|------|
-| taskId | ✅ | ✅ | ✅ | 完全兼容 |
-| status | ✅ | ✅ | ✅ | 值匹配 |
-| resultImageUrls | ✅ | ✅ | ✅ | 完全兼容 |
-| resultImageTokens | ❌ | ✅ | ⚠️ | 需要添加 |
-| error | ❌ | ✅ | ⚠️ | 需要添加 |
-| progress | ✅ | ✅ | ✅ | 完全兼容 |
+| 字段              | N8N发送 | API期望 | 兼容性 | 说明     |
+| ----------------- | ------- | ------- | ------ | -------- |
+| taskId            | ✅      | ✅      | ✅     | 完全兼容 |
+| status            | ✅      | ✅      | ✅     | 值匹配   |
+| resultImageUrls   | ✅      | ✅      | ✅     | 完全兼容 |
+| resultImageTokens | ❌      | ✅      | ⚠️     | 需要添加 |
+| error             | ❌      | ✅      | ⚠️     | 需要添加 |
+| progress          | ✅      | ✅      | ✅     | 完全兼容 |
 
 **验证结果**: ⚠️ **部分兼容，需要小修改**
 
@@ -112,6 +118,7 @@
 **修改回调节点配置**:
 
 当前配置（line 409）:
+
 ```json
 "jsonBody": "={
   \"taskId\": \"{{ $('解析请求参数').item.json.taskId }}\",
@@ -122,6 +129,7 @@
 ```
 
 **建议修改为**:
+
 ```json
 "jsonBody": "={
   \"taskId\": \"{{ $('解析请求参数').item.json.taskId }}\",
@@ -134,6 +142,7 @@
 ```
 
 **改动说明**:
+
 1. ✅ 添加 `resultImageTokens` 字段
 2. ✅ 添加 `error` 字段
 3. ✅ 使用动态 `status` 而不是硬编码 `completed`
@@ -144,6 +153,7 @@
 如果不想修改N8N工作流，可以在前端API层做适配：
 
 **前端 API 适配层** (`src/app/api/webhooks/n8n/callback/route.ts`):
+
 ```typescript
 export async function POST(req: NextRequest) {
   const body = await req.json();
@@ -245,20 +255,22 @@ async triggerGeneration(request: GenerationRequest): Promise<void> {
 
 ### 6.1 修改方案
 
-| 方案 | N8N改动 | 前端改动 | 复杂度 | 推荐度 |
-|------|---------|---------|--------|--------|
-| **方案A**: 修改N8N回调 | ⚠️ 小 | 无 | 低 | ⭐⭐⭐ |
-| **方案B**: 前端适配 | ✅ 无 | ⚠️ 小 | 低 | ⭐⭐⭐⭐⭐ |
+| 方案                   | N8N改动 | 前端改动 | 复杂度 | 推荐度     |
+| ---------------------- | ------- | -------- | ------ | ---------- |
+| **方案A**: 修改N8N回调 | ⚠️ 小   | 无       | 低     | ⭐⭐⭐     |
+| **方案B**: 前端适配    | ✅ 无   | ⚠️ 小    | 低     | ⭐⭐⭐⭐⭐ |
 
 ### 6.2 推荐：方案B（前端适配）
 
 **理由**:
+
 1. ✅ 无需修改N8N工作流
 2. ✅ 风险最小
 3. ✅ 实现简单
 4. ✅ 向后兼容
 
 **实施步骤**:
+
 1. 在前端API层添加参数适配
 2. 支持新增的可选参数
 3. 测试端到端流程
@@ -379,10 +391,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('[Webhook] Failed to handle n8n callback:', error);
-    return NextResponse.json(
-      { error: 'Failed to process callback' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Failed to process callback' }, { status: 500 });
   }
 }
 ```
@@ -393,12 +402,12 @@ export async function POST(req: NextRequest) {
 
 ### 8.1 兼容性评估
 
-| 方面 | 状态 | 说明 |
-|------|------|------|
+| 方面     | 状态        | 说明               |
+| -------- | ----------- | ------------------ |
 | 输入参数 | ✅ 完全兼容 | 新增字段都是可选的 |
-| 输出格式 | ⚠️ 需适配 | 使用适配层处理 |
-| 回调处理 | ✅ 可用 | 现有格式基本兼容 |
-| 整体评估 | ✅ 可用 | 无需修改N8N工作流 |
+| 输出格式 | ⚠️ 需适配   | 使用适配层处理     |
+| 回调处理 | ✅ 可用     | 现有格式基本兼容   |
+| 整体评估 | ✅ 可用     | 无需修改N8N工作流  |
 
 ### 8.2 建议行动
 
@@ -408,12 +417,12 @@ export async function POST(req: NextRequest) {
 
 ### 8.3 风险评估
 
-| 风险 | 概率 | 影响 | 缓解措施 |
-|------|------|------|---------|
-| N8N格式变更 | 低 | 中 | 使用适配层，与N8N解耦 |
-| 参数缺失 | 低 | 低 | 提供默认值 |
-| 类型不匹配 | 低 | 低 | 类型转换和验证 |
-| 回调失败 | 中 | 中 | 重试机制 + 错误日志 |
+| 风险        | 概率 | 影响 | 缓解措施              |
+| ----------- | ---- | ---- | --------------------- |
+| N8N格式变更 | 低   | 中   | 使用适配层，与N8N解耦 |
+| 参数缺失    | 低   | 低   | 提供默认值            |
+| 类型不匹配  | 低   | 低   | 类型转换和验证        |
+| 回调失败    | 中   | 中   | 重试机制 + 错误日志   |
 
 ---
 

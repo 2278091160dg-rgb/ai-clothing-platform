@@ -15,11 +15,7 @@ interface ApiConfigFormProps {
   onConfigChange: (field: string, value: string) => void;
 }
 
-export function ApiConfigForm({
-  config,
-  autoDetectedUrl,
-  onConfigChange,
-}: ApiConfigFormProps) {
+export function ApiConfigForm({ config, autoDetectedUrl, onConfigChange }: ApiConfigFormProps) {
   return (
     <div className="space-y-4">
       {/* 回调 URL 配置 */}
@@ -62,9 +58,7 @@ export function ApiConfigForm({
 
       {/* DeerAPI 配置 */}
       <div className="space-y-2">
-        <label className="text-xs font-semibold text-muted-foreground">
-          🦌 DeerAPI（可选）
-        </label>
+        <label className="text-xs font-semibold text-muted-foreground">🦌 DeerAPI（可选）</label>
         <Input
           placeholder="DeerAPI Endpoint (可选)"
           value={config.deerApiEndpoint || ''}

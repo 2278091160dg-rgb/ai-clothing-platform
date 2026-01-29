@@ -99,12 +99,7 @@ export function useMouseParticles() {
       gradient.addColorStop(1, 'rgba(139, 92, 246, 0)');
 
       ctx.fillStyle = gradient;
-      ctx.fillRect(
-        mouseRef.current.x - 50,
-        mouseRef.current.y - 50,
-        100,
-        100
-      );
+      ctx.fillRect(mouseRef.current.x - 50, mouseRef.current.y - 50, 100, 100);
 
       animationRef.current = requestAnimationFrame(animate);
     };

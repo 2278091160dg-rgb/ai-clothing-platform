@@ -3,7 +3,17 @@
  */
 
 import { Button } from '@/components/ui/button';
-import { Sparkles, Palette, Download, RefreshCw, Database, Zap, Coins, Clock, Loader2 } from 'lucide-react';
+import {
+  Sparkles,
+  Palette,
+  Download,
+  RefreshCw,
+  Database,
+  Zap,
+  Coins,
+  Clock,
+  Loader2,
+} from 'lucide-react';
 import type { ImageModel, TaskData } from '@/lib/types';
 
 interface ResultPanelProps {
@@ -79,10 +89,7 @@ export function ResultPanel({ tasks, imageModel }: ResultPanelProps) {
           </div>
         ) : (
           <div className="relative text-center">
-            <Palette
-              size={64}
-              className="mx-auto mb-5 float-animation opacity-30 text-primary"
-            />
+            <Palette size={64} className="mx-auto mb-5 float-animation opacity-30 text-primary" />
             <h3 className="text-2xl font-bold text-foreground mb-3">等待生成</h3>
             <p className="text-sm text-muted-foreground max-w-md">
               上传商品图片并填写提示词后，点击生成按钮开始创作

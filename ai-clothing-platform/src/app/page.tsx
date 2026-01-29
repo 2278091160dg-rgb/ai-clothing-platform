@@ -116,7 +116,18 @@ export default function HomePage() {
     if (result?.needConfig) {
       setShowConfig(true);
     }
-  }, [productName, prompt, productImage, sceneImage, textModel, imageModel, aspectRatio, quality, handleGenerate, resetImages]);
+  }, [
+    productName,
+    prompt,
+    productImage,
+    sceneImage,
+    textModel,
+    imageModel,
+    aspectRatio,
+    quality,
+    handleGenerate,
+    resetImages,
+  ]);
 
   return (
     <div className="min-h-screen bg-grid-pattern">
