@@ -56,6 +56,12 @@ export class N8nService {
     };
 
     try {
+      console.log('[N8n] Triggering workflow:', {
+        url: this.config.webhookUrl,
+        taskId: request.taskId,
+        callbackUrl,
+      });
+
       const response = await fetch(this.config.webhookUrl, {
         method: 'POST',
         headers: {
@@ -64,17 +70,38 @@ export class N8nService {
         body: JSON.stringify(payload),
       });
 
+      console.log('[N8n] Response status:', response.status, response.statusText);
+
       if (!response.ok) {
-        throw new Error(`n8n webhook failed: ${response.statusText}`);
+        // 尝试读取错误响应体
+        const errorText = await response.text();
+        console.error('[N8n] Webhook error response:', errorText);
+        throw new Error(`n8n webhook failed: ${response.statusText} - ${errorText}`);
       }
 
-      const data = await response.json();
+      // 处理空响应（N8N 可能是 "Fire and Forget" 模式）
+      const text = await response.text();
+      if (!text || text.trim() === '') {
+        console.log('[N8n] ✅ Webhook accepted (empty response - fire-and-forget mode)');
+        return;
+      }
+
+      // 解析 JSON 响应
+      let data;
+      try {
+        data = JSON.parse(text);
+      } catch (parseError) {
+        console.error('[N8n] Failed to parse response:', text);
+        throw new Error(`n8n returned invalid JSON: ${text.substring(0, 200)}`);
+      }
 
       if (!data.success) {
         throw new Error(`n8n workflow error: ${data.error || 'Unknown error'}`);
       }
+
+      console.log('[N8n] ✅ Workflow triggered successfully:', data);
     } catch (error) {
-      console.error('[N8n] Failed to trigger generation:', error);
+      console.error('[N8n] ❌ Failed to trigger generation:', error);
       throw error;
     }
   }
