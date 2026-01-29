@@ -1,0 +1,612 @@
+{
+  "name": "AI场景图生成工作流-前端触发-v3",
+  "tags": ["v3", "dynamic-deerapi-key", "frontend-config"],
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "ai-clothing-generation",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "node-webhook-trigger",
+      "name": "Webhook触发器",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [240, 300],
+      "webhookId": "ai-clothing-frontend-v2"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "field-taskId",
+              "name": "taskId",
+              "value": "={{ $json.taskId }}",
+              "type": "string"
+            },
+            {
+              "id": "field-userId",
+              "name": "userId",
+              "value": "={{ $json.userId }}",
+              "type": "string"
+            },
+            {
+              "id": "field-productImageUrl",
+              "name": "productImageUrl",
+              "value": "={{ $json.productImageUrl }}",
+              "type": "string"
+            },
+            {
+              "id": "field-sceneImageUrl",
+              "name": "sceneImageUrl",
+              "value": "={{ $json.sceneImageUrl }}",
+              "type": "string"
+            },
+            {
+              "id": "field-prompt",
+              "name": "prompt",
+              "value": "={{ $json.prompt }}",
+              "type": "string"
+            },
+            {
+              "id": "field-aiModel",
+              "name": "aiModel",
+              "value": "={{ $json.aiModel }}",
+              "type": "string"
+            },
+            {
+              "id": "field-aspectRatio",
+              "name": "aspectRatio",
+              "value": "={{ $json.aspectRatio }}",
+              "type": "string"
+            },
+            {
+              "id": "field-imageCount",
+              "name": "imageCount",
+              "value": "={{ $json.imageCount }}",
+              "type": "number"
+            },
+            {
+              "id": "field-quality",
+              "name": "quality",
+              "value": "={{ $json.quality }}",
+              "type": "string"
+            },
+            {
+              "id": "field-callbackUrl",
+              "name": "callbackUrl",
+              "value": "={{ $json.callbackUrl }}",
+              "type": "string"
+            },
+            {
+              "id": "field-deerApiKey",
+              "name": "deerApiKey",
+              "value": "={{ $json.deerApiKey }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "node-parse-params",
+      "name": "解析请求参数",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "field-aspectRatio-clean",
+              "name": "aspectRatioClean",
+              "value": "={{ $json.aspectRatio.trim().replace(/：/g, ':').replace(/，/g, ',') }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "node-clean-aspect",
+      "name": "标准化尺寸参数",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [680, 300]
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.aspectRatioClean }}",
+                    "rightValue": "1:1",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "1to1"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.aspectRatioClean }}",
+                    "rightValue": "3:4",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "3to4"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.aspectRatioClean }}",
+                    "rightValue": "16:9",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "16to9"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.aspectRatioClean }}",
+                    "rightValue": "9:16",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "9to16"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "node-switch-ratio",
+      "name": "判断尺寸比例",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3,
+      "position": [900, 300]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "width-1to1",
+              "name": "width",
+              "value": "1024",
+              "type": "number"
+            },
+            {
+              "id": "height-1to1",
+              "name": "height",
+              "value": "1024",
+              "type": "number"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "node-size-1to1",
+      "name": "1:1尺寸",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [1120, 200]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "width-3to4",
+              "name": "width",
+              "value": "768",
+              "type": "number"
+            },
+            {
+              "id": "height-3to4",
+              "name": "height",
+              "value": "1024",
+              "type": "number"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "node-size-3to4",
+      "name": "3:4尺寸",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [1120, 280]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "width-16to9",
+              "name": "width",
+              "value": "1344",
+              "type": "number"
+            },
+            {
+              "id": "height-16to9",
+              "name": "height",
+              "value": "768",
+              "type": "number"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "node-size-16to9",
+      "name": "16:9尺寸",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [1120, 360]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "width-9to16",
+              "name": "width",
+              "value": "768",
+              "type": "number"
+            },
+            {
+              "id": "height-9to16",
+              "name": "height",
+              "value": "1344",
+              "type": "number"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "node-size-9to16",
+      "name": "9:16尺寸",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [1120, 440]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "width-default",
+              "name": "width",
+              "value": "768",
+              "type": "number"
+            },
+            {
+              "id": "height-default",
+              "name": "height",
+              "value": "1024",
+              "type": "number"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "node-size-default",
+      "name": "默认尺寸(3:4)",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [1120, 520]
+    },
+    {
+      "parameters": {
+        "url": "=https://api.deerapi.com/v1/ai/generate",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"{{ $('解析请求参数').item.json.aiModel }}\",\n  \"prompt\": \"{{ $('解析请求参数').item.json.prompt }}\",\n  \"image\": \"{{ $('解析请求参数').item.json.productImageUrl }}\",\n  \"image2\": \"{{ $('解析请求参数').item.json.sceneImageUrl }}\",\n  \"width\": {{ $json.width }},\n  \"height\": {{ $json.height }},\n  \"num_images\": {{ $('解析请求参数').item.json.imageCount }}\n}\n",
+        "options": {},
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer {{ $('解析请求参数').item.json.deerApiKey }}"
+            }
+          ]
+        }
+      },
+      "id": "node-ai-generate",
+      "name": "AI图片生成",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1360, 320]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "result-images",
+              "name": "resultImageUrls",
+              "value": "={{ $json.data.images }}",
+              "type": "array"
+            },
+            {
+              "id": "status",
+              "name": "status",
+              "value": "completed",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "node-format-result",
+      "name": "格式化结果",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [1580, 320]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('解析请求参数').item.json.callbackUrl }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"taskId\": \"{{ $('解析请求参数').item.json.taskId }}\",\n  \"status\": \"completed\",\n  \"resultImageUrls\": \"{{ $json.resultImageUrls }}\",\n  \"progress\": 100\n}\n",
+        "options": {},
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-n8n-api-key",
+              "value": "={{ $('解析请求参数').item.json.apiKey }}"
+            }
+          ]
+        }
+      },
+      "id": "node-callback",
+      "name": "回调后端API",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1800, 320]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"success\": true,\n  \"taskId\": \"{{ $('解析请求参数').item.json.taskId }}\",\n  \"message\": \"图片生成成功\"\n}\n",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "id": "node-webhook-response",
+      "name": "返回成功响应",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [2020, 320]
+    }
+  ],
+  "connections": {
+    "Webhook触发器": {
+      "main": [
+        [
+          {
+            "node": "解析请求参数",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "解析请求参数": {
+      "main": [
+        [
+          {
+            "node": "标准化尺寸参数",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "标准化尺寸参数": {
+      "main": [
+        [
+          {
+            "node": "判断尺寸比例",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "判断尺寸比例": {
+      "main": [
+        [
+          {
+            "node": "1:1尺寸",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "3:4尺寸",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "16:9尺寸",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "9:16尺寸",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "默认尺寸(3:4)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "1:1尺寸": {
+      "main": [
+        [
+          {
+            "node": "AI图片生成",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "3:4尺寸": {
+      "main": [
+        [
+          {
+            "node": "AI图片生成",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "16:9尺寸": {
+      "main": [
+        [
+          {
+            "node": "AI图片生成",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "9:16尺寸": {
+      "main": [
+        [
+          {
+            "node": "AI图片生成",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "默认尺寸(3:4)": {
+      "main": [
+        [
+          {
+            "node": "AI图片生成",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI图片生成": {
+      "main": [
+        [
+          {
+            "node": "格式化结果",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "格式化结果": {
+      "main": [
+        [
+          {
+            "node": "回调后端API",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "回调后端API": {
+      "main": [
+        [
+          {
+            "node": "返回成功响应",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 0,
+  "updatedAt": "2025-01-27T18:00:00.000Z",
+  "versionId": "frontend-v3"
+}

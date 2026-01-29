@@ -1,0 +1,473 @@
+{
+  "name": "AI场景图生成工作流-飞书触发v3",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "feishu-trigger",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "node-webhook-trigger",
+      "name": "Webhook触发器",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [240, 300],
+      "webhookId": "feishu-trigger-v3"
+    },
+    {
+      "parameters": {
+        "resource": "auth",
+        "operation": "auth:getAccessToken"
+      },
+      "id": "node-feishu-auth",
+      "name": "飞书鉴权",
+      "type": "n8n-nodes-feishu-lite.feishuNode",
+      "typeVersion": 1,
+      "position": [460, 300],
+      "credentials": {
+        "feishuCredentialsApi": {
+          "id": "feishu-credentials",
+          "name": "Feishu Credentials account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "bitable",
+        "operation": "bitable:table:record:get",
+        "app_toke": "={{ $json.body.app_token }}",
+        "table_id": "={{ $json.body.table_id }}",
+        "record_id": "={{ $json.body.record_id }}"
+      },
+      "id": "node-get-data",
+      "name": "获取数据",
+      "type": "n8n-nodes-feishu-lite.feishuNode",
+      "typeVersion": 1,
+      "position": [680, 300],
+      "credentials": {
+        "feishuCredentialsApi": {
+          "id": "feishu-credentials",
+          "name": "Feishu Credentials account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "field-recordId",
+              "name": "record_id",
+              "value": "={{ $('Webhook触发器').item.json.body.record_id }}",
+              "type": "string"
+            },
+            {
+              "id": "field-appToken",
+              "name": "app_token",
+              "value": "={{ $('Webhook触发器').item.json.body.app_token }}",
+              "type": "string"
+            },
+            {
+              "id": "field-tableId",
+              "name": "table_id",
+              "value": "={{ $('Webhook触发器').item.json.body.table_id }}",
+              "type": "string"
+            },
+            {
+              "id": "field-prompt",
+              "name": "prompt",
+              "value": "={{ $json.data.records[0].fields['提示词'][0].text }}",
+              "type": "string"
+            },
+            {
+              "id": "field-productImageUrl",
+              "name": "productImageUrl",
+              "value": "={{ $json.data.records[0].fields['商品图'][0].url }}",
+              "type": "string"
+            },
+            {
+              "id": "field-sceneImageUrl",
+              "name": "sceneImageUrl",
+              "value": "={{ $json.data.records[0].fields['场景图'] && $json.data.records[0].fields['场景图'][0].url || '' }}",
+              "type": "string"
+            },
+            {
+              "id": "field-aspectRatio",
+              "name": "aspectRatio",
+              "value": "={{ $json.data.records[0].fields['尺寸比例'] || '3:4' }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "node-extract-params",
+      "name": "提取参数",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [900, 300]
+    },
+    {
+      "parameters": {
+        "resource": "bitable",
+        "operation": "bitable:table:record:update",
+        "app_toke": "={{ $('提取参数').item.json.app_token }}",
+        "table_id": "={{ $('提取参数').item.json.table_id }}",
+        "record_id": "={{ $('提取参数').item.json.record_id }}",
+        "body": "={\n  \"fields\": {\n    \"状态\": \"处理中\"\n  }\n}"
+      },
+      "id": "node-update-status-processing",
+      "name": "更新状态为处理中",
+      "type": "n8n-nodes-feishu-lite.feishuNode",
+      "typeVersion": 1,
+      "position": [1140, 300],
+      "credentials": {
+        "feishuCredentialsApi": {
+          "id": "feishu-credentials",
+          "name": "Feishu Credentials account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "={{ $('提取参数').item.json.productImageUrl }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $('飞书鉴权').item.json.accessToken }}"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file"
+            }
+          }
+        }
+      },
+      "id": "node-download-product",
+      "name": "下载商品图",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [1380, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose"
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $('提取参数').item.json.sceneImageUrl }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "isNotEmpty"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "node-check-scene",
+      "name": "判断是否有场景图",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.1,
+      "position": [1620, 300]
+    },
+    {
+      "parameters": {
+        "url": "={{ $('提取参数').item.json.sceneImageUrl }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $('飞书鉴权').item.json.accessToken }}"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file",
+              "outputPropertyName": "data2"
+            }
+          }
+        }
+      },
+      "id": "node-download-scene",
+      "name": "下载场景图",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [1840, 200]
+    },
+    {
+      "parameters": {
+        "mode": "image",
+        "userPrompt": "={{ $('提取参数').item.json.prompt }}注意：第一张图片是产品图，第二张图片是场景图。请使用第一张图片（产品图）和第二张图片（场景图）进行生成。",
+        "aspectRatio": "={{ $('提取参数').item.json.aspectRatio }}"
+      },
+      "id": "node-ai-generate",
+      "name": "大模型处理",
+      "type": "n8n-nodes-deerapi.deerApi",
+      "typeVersion": 1,
+      "position": [2060, 320],
+      "credentials": {
+        "deerApi": {
+          "id": "deer-api-credentials",
+          "name": "DeerAPI account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\nfor (let i = 0; i < items.length; i++) {\n  const item = items[i];\n  if (item.binary && item.binary.data) {\n    const buffer = await this.helpers.getBinaryDataBuffer(i, 'data');\n    item.json.real_size = buffer.length;\n    item.json.file_name = \"final_product.png\";\n  }\n}\nreturn items;"
+      },
+      "id": "node-binary-process",
+      "name": "数据处理",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [2280, 320]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://open.feishu.cn/open-apis/drive/v1/medias/upload_all",
+        "sendHeaders": true,
+        "specifyHeaders": "json",
+        "jsonHeaders": "={\n  \"Authorization\": \"Bearer {{ $('飞书鉴权').item.json.accessToken }}\"\n}",
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "parent_type",
+              "value": "bitable_image"
+            },
+            {
+              "name": "parent_node",
+              "value": "={{ $('提取参数').item.json.app_token }}"
+            },
+            {
+              "name": "file_name",
+              "value": "={{ $json.file_name }}"
+            },
+            {
+              "name": "size",
+              "value": "={{ $json.real_size }}"
+            },
+            {
+              "parameterType": "formBinaryData",
+              "name": "file",
+              "inputDataFieldName": "data"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "node-upload-image",
+      "name": "上传素材",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [2500, 320]
+    },
+    {
+      "parameters": {
+        "resource": "bitable",
+        "operation": "bitable:table:record:update",
+        "app_toke": "={{ $('提取参数').item.json.app_token }}",
+        "table_id": "={{ $('提取参数').item.json.table_id }}",
+        "record_id": "={{ $('提取参数').item.json.record_id }}",
+        "body": "={\n  \"fields\": {\n    \"生成结果\": [\n      {\n        \"file_token\": \"{{ $json.data.file_token }}\"\n      }\n    ],\n    \"状态\": \"已完成\"\n  }\n}"
+      },
+      "id": "node-update-feishu-record",
+      "name": "回传飞书",
+      "type": "n8n-nodes-feishu-lite.feishuNode",
+      "typeVersion": 1,
+      "position": [2720, 320],
+      "credentials": {
+        "feishuCredentialsApi": {
+          "id": "feishu-credentials",
+          "name": "Feishu Credentials account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"success\": true,\n  \"recordId\": \"{{ $('提取参数').item.json.record_id }}\",\n  \"message\": \"图片生成成功\"\n}\n",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "id": "node-webhook-response",
+      "name": "返回成功响应",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [2940, 320]
+    }
+  ],
+  "connections": {
+    "Webhook触发器": {
+      "main": [
+        [
+          {
+            "node": "飞书鉴权",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "飞书鉴权": {
+      "main": [
+        [
+          {
+            "node": "获取数据",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "获取数据": {
+      "main": [
+        [
+          {
+            "node": "提取参数",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "提取参数": {
+      "main": [
+        [
+          {
+            "node": "更新状态为处理中",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "更新状态为处理中": {
+      "main": [
+        [
+          {
+            "node": "下载商品图",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "下载商品图": {
+      "main": [
+        [
+          {
+            "node": "判断是否有场景图",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "判断是否有场景图": {
+      "main": [
+        [
+          [
+            {
+              "node": "下载场景图",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ],
+        [
+          [
+            {
+              "node": "大模型处理",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      ]
+    },
+    "下载场景图": {
+      "main": [
+        [
+          {
+            "node": "大模型处理",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "大模型处理": {
+      "main": [
+        [
+          {
+            "node": "数据处理",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "数据处理": {
+      "main": [
+        [
+          {
+            "node": "上传素材",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "上传素材": {
+      "main": [
+        [
+          {
+            "node": "回传飞书",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "回传飞书": {
+      "main": [
+        [
+          {
+            "node": "返回成功响应",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 0,
+  "updatedAt": "2025-01-27T17:30:00.000Z",
+  "versionId": "feishu-v3"
+}

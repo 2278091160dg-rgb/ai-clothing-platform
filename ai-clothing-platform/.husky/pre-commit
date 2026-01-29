@@ -1,0 +1,16 @@
+#!/bin/sh
+. "$(dirname "$0")/_/husky.sh"
+
+# 运行 Prettier 格式化检查
+echo "🔍 检查代码格式..."
+npm run format:check
+
+# 运行 TypeScript 类型检查
+echo "🔍 检查 TypeScript 类型..."
+npx tsc --noEmit
+
+# 运行 ESLint
+echo "🔍 运行 ESLint..."
+npm run lint
+
+echo "✅ 代码质量检查通过！"

@@ -1,0 +1,42 @@
+{
+  "extends": ["next/core-web-vitals", "next/typescript"],
+  "rules": {
+    // 代码质量规则
+    "no-console": ["warn", { "allow": ["warn", "error"] }],
+    "no-var": "error",
+    "prefer-const": "error",
+    "no-unused-vars": "off",
+    "@typescript-eslint/no-unused-vars": [
+      "warn",
+      {
+        "argsIgnorePattern": "^_",
+        "varsIgnorePattern": "^_"
+      }
+    ],
+
+    // React 规则
+    "react/prop-types": "off",
+    "react/react-in-jsx-scope": "off",
+
+    // TypeScript 规则
+    "@typescript-eslint/no-explicit-any": "warn",
+    "@typescript-eslint/explicit-module-boundary-types": "off",
+
+    // 代码复杂度限制
+    "complexity": ["warn", 15],
+    "max-depth": ["warn", 4],
+    "max-lines-per-function": ["warn", 100],
+    "max-params": ["warn", 4],
+    "max-statements": ["warn", 30],
+    "max-lines": ["warn", 200, { "skipBlankLines": true, "skipComments": true }],
+
+    // 导入顺序
+    "import/order": [
+      "warn",
+      {
+        "groups": ["builtin", "external", "internal", "parent", "sibling", "index"],
+        "newlines-between": "always"
+      }
+    ]
+  }
+}

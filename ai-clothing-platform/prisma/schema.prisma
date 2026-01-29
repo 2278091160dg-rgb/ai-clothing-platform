@@ -1,0 +1,355 @@
+// Prisma Schema for AI Clothing Platform
+// 本地开发使用 SQLite，生产环境使用 Supabase PostgreSQL
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"  // 本地使用 SQLite
+  url      = env("DATABASE_URL")
+}
+
+// ============================================
+// User & Authentication
+// ============================================
+
+model User {
+  id                String    @id @default(uuid())
+  feishuUserId      String?   @unique
+  feishuOpenId      String?   @unique
+  feishuUnionId     String?
+  name              String?
+  email             String?   @unique
+  avatar            String?
+  role              UserRole  @default(USER)
+
+  // Relations
+  tasks             Task[]
+  syncLogs          SyncLog[]
+  auditLogs         AuditLog[]
+
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  @@index([feishuUserId])
+  @@index([email])
+  @@map("users")
+}
+
+enum UserRole {
+  ADMIN
+  USER
+  VIEWER
+}
+
+// ============================================
+// Task Management
+// ============================================
+
+model Task {
+  id                String        @id @default(uuid())
+  userId            String
+  user              User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Feishu Integration (Primary Source of Truth)
+  feishuRecordId    String?       @unique
+  feishuAppToken    String?
+  feishuTableId     String?
+
+  // Input Data
+  productImageUrl   String?
+  productImageToken String?
+  sceneImageUrl     String?
+  sceneImageToken   String?
+  prompt            String?
+
+  // Prompt Optimization (AI优化提示词)
+  originalPrompt    String?       // 用户输入的原始提示词
+  optimizedPrompt   String?       // AI优化后的提示词
+  promptSource      PromptSource  @default(USER)  // 最终使用的提示词来源
+  promptOptimizationEnabled Boolean  @default(false)  // 用户是否选择了AI优化
+  promptOptimizationId    String?  // 优化任务ID（用于追溯）
+  promptOptimizedAt       DateTime?  // 提示词优化时间
+
+  // Generation Configuration
+  aiModel           String        @default("FLUX.1")
+  aspectRatio       String        @default("1:1")
+  imageCount        Int           @default(4)
+  quality           String        @default("high")
+
+  // Result (SQLite 使用 JSON 字符串存储数组)
+  resultImageUrls   String?   // JSON string array
+  resultImageTokens String?   // JSON string array
+
+  // Status Tracking
+  status            TaskStatus    @default(PENDING)
+  progress          Int           @default(0)
+  errorMessage      String?
+
+  // Concurrency Control (并发控制)
+  version           Int           @default(0)  // 乐观锁版本号
+  lastModifiedBy    String?       // 'web' | 'feishu' | 'api'
+  lastModifiedAt    DateTime      @default(now())  // 最后修改时间
+  conflictDetected  Boolean       @default(false)  // 冲突标记
+
+  // Sync Status (同步状态)
+  syncStatus        TaskSyncStatus @default(PENDING)  // 与飞书同步状态
+  syncError         String?       // 同步失败原因
+  lastSyncAt        DateTime?     // 最后同步时间
+
+  // Batch Support
+  batchId           String?
+  batchIndex        Int?
+
+  // Cache Expiration (7 days)
+  expiresAt         DateTime?
+
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+  completedAt       DateTime?
+
+  @@index([userId])
+  @@index([feishuRecordId])
+  @@index([status])
+  @@index([batchId])
+  @@index([expiresAt])
+  @@index([version])
+  @@index([lastModifiedAt])
+  @@index([syncStatus])
+  @@map("tasks")
+}
+
+enum TaskStatus {
+  PENDING
+  UPLOADING
+  PROCESSING
+  GENERATING
+  COMPLETED
+  FAILED
+}
+
+enum PromptSource {
+  USER           // 用户直接输入
+  AI_OPTIMIZED   // AI优化后
+  FEISHU         // 飞书表格输入
+  MERGED         // 合并后的提示词
+}
+
+enum TaskSyncStatus {
+  PENDING      // 待同步
+  SYNCING      // 同步中
+  SYNCED       // 已同步
+  FAILED       // 同步失败
+}
+
+// ============================================
+// Sync & Audit
+// ============================================
+
+model SyncLog {
+  id              String      @id @default(uuid())
+  userId          String?
+  user            User?       @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  source          SyncSource
+  action          SyncAction
+  entityType      String
+  entityId        String
+
+  // Request/Response tracking
+  requestData     Json?
+  responseData    Json?
+
+  status          SyncStatus
+  errorCode       String?
+  errorMessage    String?
+
+  // Retry tracking
+  retryCount      Int         @default(0)
+  maxRetries      Int         @default(3)
+
+  createdAt       DateTime    @default(now())
+  completedAt     DateTime?
+
+  @@index([userId])
+  @@index([entityId])
+  @@index([status])
+  @@index([createdAt])
+  @@map("sync_logs")
+}
+
+enum SyncSource {
+  FEISHU
+  FRONTEND
+  SYSTEM
+}
+
+enum SyncAction {
+  CREATE
+  UPDATE
+  DELETE
+  SYNC
+}
+
+enum SyncStatus {
+  PENDING
+  IN_PROGRESS
+  SUCCESS
+  FAILED
+  RETRYING
+}
+
+model AuditLog {
+  id              String      @id @default(uuid())
+  userId          String?
+  user            User?       @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  action          String
+  entity          String
+  entityId        String?
+
+  // Change tracking
+  changes         Json?
+  oldValues       Json?
+  newValues       Json?
+
+  // Context
+  ipAddress       String?
+  userAgent       String?
+
+  createdAt       DateTime    @default(now())
+
+  @@index([userId])
+  @@index([entity])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
+
+// ============================================
+// Quota & Usage
+// ============================================
+
+model UserQuota {
+  id              String      @id @default(uuid())
+  userId          String      @unique
+
+  totalQuota      Int         @default(1000)
+  usedQuota       Int         @default(0)
+  remainingQuota  Int         @default(1000)
+
+  resetPeriod     QuotaPeriod @default(MONTHLY)
+  resetAt         DateTime?
+
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  @@map("user_quotas")
+}
+
+enum QuotaPeriod {
+  DAILY
+  WEEKLY
+  MONTHLY
+}
+
+// ============================================
+// Template Management
+// ============================================
+
+model PromptTemplate {
+  id              String      @id @default(uuid())
+  name            String
+  description     String?
+  category        String?
+
+  template        String
+  variables       String?   // JSON string array
+
+  isPublic        Boolean     @default(false)
+  userId          String?
+
+  usageCount      Int         @default(0)
+
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  @@index([userId])
+  @@index([category])
+  @@map("prompt_templates")
+}
+
+// ============================================
+// AI Conversation (多轮对话)
+// ============================================
+
+model PromptConversation {
+  id          String   @id @default(uuid())
+
+  // 关联飞书记录（通过recordId，不依赖Task）
+  recordId    String   // 飞书多维表格记录ID
+
+  // 对话状态
+  status      String   @default("active") // active | completed | discarded
+  source      String   @default("web")    // web | feishu
+
+  // 最终结果
+  finalPrompt String?  // 用户确认后的最终提示词
+  appliedAt   DateTime? // 应用时间
+
+  // 对话消息（JSON存储，避免复杂表结构）
+  // 格式: [{id, role: "user"|"assistant"|"system", content, timestamp}]
+  messages    Json     @default("[]")
+
+  // 元数据
+  messageCount Int      @default(0)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([recordId])
+  @@index([status])
+  @@map("prompt_conversations")
+}
+
+// ============================================
+// Login Page Configuration
+// ============================================
+
+model LoginPageConfig {
+  id              String      @id @default(uuid())
+
+  // Logo Configuration
+  logoUrl         String?     // Custom logo image URL
+  logoEmoji       String      @default("🏭️")
+
+  // Title & Subtitle
+  title           String      @default("杭州龙易AI系统")
+  subtitle1       String      @default("电商AI践行中")
+  subtitle2       String      @default("AI智能 · 海报生成 · 场景创作")
+
+  // Form Labels
+  passwordLabel   String      @default("VIP密码")
+  passwordPlaceholder  String  @default("请输入VIP密码")
+  buttonText      String      @default("芝麻开门")
+  buttonLoadingText   String  @default("验证中...")
+
+  // Footer Information
+  footerText      String      @default("🔒 系统已启用访问密码保护")
+  copyrightText   String      @default("© 2026 杭州龙易科技 · v1.0.0")
+
+  // Background Image
+  backgroundImageUrl   String? // Custom background image URL
+  backgroundStyle      String  @default("tech-ai") // tech-ai, neural-network, data-flow, etc.
+
+  // Status
+  isActive        Boolean     @default(true)
+
+  // Metadata
+  createdBy       String?     // User ID who created/updated
+  updatedBy       String?     // User ID who last updated
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  @@map("login_page_config")
+}

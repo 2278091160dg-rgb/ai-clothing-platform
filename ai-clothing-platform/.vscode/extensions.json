@@ -1,0 +1,34 @@
+{
+  "recommendations": [
+    // 代码格式化
+    "esbenp.prettier-vscode",
+
+    // ESLint
+    "dbaeumer.vscode-eslint",
+
+    // TypeScript
+    "ms-vscode.vscode-typescript-next",
+
+    // Prisma
+    "prisma.prisma",
+
+    // Git
+    "eamodio.gitlens",
+    "github.vscode-pull-request-github",
+
+    // 代码质量
+    "wix.vscode-import-cost",
+    "usernamehw.errorlens",
+
+    // React/Next.js
+    "dsznajder.es7-react-js-snippets",
+    "formulahendry.auto-rename-tag",
+
+    // Tailwind CSS
+    "bradlc.vscode-tailwindcss",
+
+    // 其他
+    "wayou.vscode-todo-highlight",
+    "streetsidesoftware.code-spell-checker"
+  ]
+}

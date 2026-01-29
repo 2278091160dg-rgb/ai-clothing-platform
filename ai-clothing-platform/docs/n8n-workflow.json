@@ -1,0 +1,361 @@
+{
+  "name": "AI场景图生成工作流",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "ai-clothing-generation",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "8a3b2c1d-4e5f-6a7b-8c9d-0e1f2a3b4c5d",
+      "name": "Webhook触发器",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [240, 300],
+      "webhookId": "ai-clothing-webhook"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "task-id-123",
+              "name": "taskId",
+              "value": "={{ $json.taskId }}",
+              "type": "string"
+            },
+            {
+              "id": "user-id-456",
+              "name": "userId",
+              "value": "={{ $json.userId }}",
+              "type": "string"
+            },
+            {
+              "id": "product-image-url-789",
+              "name": "productImageUrl",
+              "value": "={{ $json.productImageUrl }}",
+              "type": "string"
+            },
+            {
+              "id": "scene-image-url-012",
+              "name": "sceneImageUrl",
+              "value": "={{ $json.sceneImageUrl }}",
+              "type": "string"
+            },
+            {
+              "id": "prompt-345",
+              "name": "prompt",
+              "value": "={{ $json.prompt }}",
+              "type": "string"
+            },
+            {
+              "id": "ai-model-678",
+              "name": "aiModel",
+              "value": "={{ $json.aiModel }}",
+              "type": "string"
+            },
+            {
+              "id": "aspect-ratio-901",
+              "name": "aspectRatio",
+              "value": "={{ $json.aspectRatio }}",
+              "type": "string"
+            },
+            {
+              "id": "image-count-234",
+              "name": "imageCount",
+              "value": "={{ $json.imageCount }}",
+              "type": "number"
+            },
+            {
+              "id": "quality-567",
+              "name": "quality",
+              "value": "={{ $json.quality }}",
+              "type": "string"
+            },
+            {
+              "id": "callback-url-890",
+              "name": "callbackUrl",
+              "value": "={{ $json.callbackUrl }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "b4c3d2e1-6f7a-8b9c-0d1e-2f3a4b5c6d7e",
+      "name": "解析请求参数",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "aspect-1-1-condition",
+              "leftValue": "={{ $json.aspectRatio }}",
+              "rightValue": "1:1",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "c5d4e3f2-7g8b-9c0d-1e2f-3a4b5c6d7e8f",
+      "name": "判断是否1:1比例",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.1,
+      "position": [680, 300]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "width-1-1",
+              "name": "width",
+              "value": "1024",
+              "type": "number"
+            },
+            {
+              "id": "height-1-1",
+              "name": "height",
+              "value": "1024",
+              "type": "number"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "d6e5f4g3-8h9c-0d1e-2f3a-4b5c6d7e8f9a",
+      "name": "设置1:1尺寸",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [900, 200]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "width-other",
+              "name": "width",
+              "value": "1344",
+              "type": "number"
+            },
+            {
+              "id": "height-other",
+              "name": "height",
+              "value": "768",
+              "type": "number"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "e7f6g5h4-9i0d-1e2f-3a4b-5c6d7e8f9a0b",
+      "name": "设置其他尺寸",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [900, 400]
+    },
+    {
+      "parameters": {
+        "url": "=https://api.deerapi.com/v1/ai/generate",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"{{ $json.aiModel }}\",\n  \"prompt\": \"{{ $json.prompt }}\",\n  \"image\": \"{{ $json.productImageUrl }}\",\n  \"width\": {{ $json.width }},\n  \"height\": {{ $json.height }},\n  \"num_images\": {{ $json.imageCount }}\n}",
+        "options": {}
+      },
+      "id": "f8g7h6i5-0j1e-2f3a-4b5c-6d7e8f9a0b1c",
+      "name": "调用AI生成图片",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1140, 300],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "deer-api-credentials",
+          "name": "DeerAPI认证"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "result-images",
+              "name": "resultImageUrls",
+              "value": "={{ $json.data.images }}",
+              "type": "array"
+            },
+            {
+              "id": "status",
+              "name": "status",
+              "value": "completed",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "g9h8i7j6-1k2f-3a4b-5c6d-7e8f9a0b1c2d",
+      "name": "格式化结果",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [1360, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('解析请求参数').item.json.callbackUrl }}",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"taskId\": \"{{ $('解析请求参数').item.json.taskId }}\",\n  \"status\": \"completed\",\n  \"resultImageUrls\": \"{{ $json.resultImageUrls }}\",\n  \"progress\": 100\n}",
+        "options": {}
+      },
+      "id": "h0i9j8k7-2l3g-4b5c-6d7e-8f9a0b1c2d3e",
+      "name": "回调后端API",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1580, 300]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"success\": true,\n  \"taskId\": \"{{ $('解析请求参数').item.json.taskId }}\",\n  \"message\": \"图片生成成功\"\n}",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "id": "i1j0k9l8-3m4h-5c6d-7e8f-9a0b1c2d3e4f",
+      "name": "返回成功响应",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [1800, 300]
+    }
+  ],
+  "connections": {
+    "Webhook触发器": {
+      "main": [
+        [
+          {
+            "node": "解析请求参数",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "解析请求参数": {
+      "main": [
+        [
+          {
+            "node": "判断是否1:1比例",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "判断是否1:1比例": {
+      "main": [
+        [
+          [
+            {
+              "node": "设置1:1尺寸",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ],
+        [
+          [
+            {
+              "node": "设置其他尺寸",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      ]
+    },
+    "设置1:1尺寸": {
+      "main": [
+        [
+          {
+            "node": "调用AI生成图片",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "设置其他尺寸": {
+      "main": [
+        [
+          {
+            "node": "调用AI生成图片",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "调用AI生成图片": {
+      "main": [
+        [
+          {
+            "node": "格式化结果",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "格式化结果": {
+      "main": [
+        [
+          {
+            "node": "回调后端API",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "回调后端API": {
+      "main": [
+        [
+          {
+            "node": "返回成功响应",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 0,
+  "updatedAt": "2025-01-27T14:00:00.000Z",
+  "versionId": "1"
+}

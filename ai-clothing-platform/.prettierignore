@@ -1,0 +1,26 @@
+# Dependencies
+node_modules
+
+# Build output
+.next
+out
+dist
+build
+
+# Database
+*.db
+*.db-journal
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# Cache
+.turbo
+.cache
+
+# Misc
+.DS_Store
+*.log
+coverage
