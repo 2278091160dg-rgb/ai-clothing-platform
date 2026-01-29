@@ -7,8 +7,8 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  // 临时硬编码用于调试 - 使用 Supabase Pooler 完整地址
-  url      = "postgres://postgres.xjojyolfqpjfgdkywkew:G2d2Avr6dCW3J2@aws-0-ap-southeast-1.pooler.supabase.com:6543/postgres"
+  // 临时硬编码 - 使用直接连接（不用 pooler）
+  url      = "postgresql://postgres:G2d2Avr6dCW3J2@db.xjojyolfqpjfgdkywkew.supabase.co:5432/postgres?sslmode=require"
 }
 
 // ============================================
