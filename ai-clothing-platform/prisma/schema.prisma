@@ -8,7 +8,8 @@ generator client {
 datasource db {
   provider = "postgresql"
   // 使用 Supabase Session Pooler (不是 Transaction mode)以避免 prepared statement 问题
-  url      = "postgresql://postgres.xjojyolfqpjfgdkywkew:G2d2Avr6dCW3J2@aws-1-ap-south-1.pooler.supabase.com:5432/postgres"
+  // 生产环境数据库 URL 通过环境变量 DATABASE_URL 配置
+  url      = env("DATABASE_URL")
 }
 
 // ============================================
@@ -64,10 +65,16 @@ model Task {
   sceneImageUrl     String?
   sceneImageToken   String?
   prompt            String?
+  negativePrompt    String?       // 反向提示词（负面提示词）
+
+  // Generation Mode
+  mode              String        @default("scene") // scene | tryon | wear | combine
 
   // Prompt Optimization (AI优化提示词)
   originalPrompt    String?       // 用户输入的原始提示词
   optimizedPrompt   String?       // AI优化后的提示词
+  originalNegativePrompt  String?  // 用户输入的原始反向提示词
+  optimizedNegativePrompt String? // AI优化后的反向提示词
   promptSource      PromptSource  @default(USER)  // 最终使用的提示词来源
   promptOptimizationEnabled Boolean  @default(false)  // 用户是否选择了AI优化
   promptOptimizationId    String?  // 优化任务ID（用于追溯）
@@ -296,6 +303,7 @@ model PromptConversation {
 
   // 最终结果
   finalPrompt String?  // 用户确认后的最终提示词
+  finalNegativePrompt String? // 用户确认后的最终反向提示词
   appliedAt   DateTime? // 应用时间
 
   // 对话消息（JSON存储，避免复杂表结构）

@@ -1,149 +1,147 @@
 /**
  * Task Repository Types
- * 任务仓储类型定义
+ * 任务仓储相关类型定义
  */
 
-import { Task, TaskStatus, PromptSource, TaskSyncStatus } from '@prisma/client';
+import { Task, TaskStatus } from '@prisma/client';
 
+/**
+ * 任务关联数据类型
+ */
 export type TaskWithRelations = Task & {
-  user: {
+  user?: {
     id: string;
     name: string | null;
     email: string | null;
-  };
+  } | null;
 };
 
-export interface CreateTaskInput {
-  userId: string;
-  productImageUrl?: string;
-  productImageToken?: string;
-  sceneImageUrl?: string;
-  sceneImageToken?: string;
-  prompt?: string;
-  // Prompt Optimization fields
-  originalPrompt?: string;
-  optimizedPrompt?: string;
-  promptSource?: PromptSource;
-  promptOptimizationEnabled?: boolean;
-  // Generation Configuration
-  aiModel?: string;
-  aspectRatio?: string;
-  imageCount?: number;
-  quality?: string;
-  // Batch Support
-  batchId?: string;
-  batchIndex?: number;
-  // Sync Status
-  syncStatus?: TaskSyncStatus;
-}
-
-export interface UpdateTaskInput {
-  // Input Data
-  productImageUrl?: string;
-  productImageToken?: string;
-  sceneImageUrl?: string;
-  sceneImageToken?: string;
-  prompt?: string;
-  // Prompt Optimization fields
-  originalPrompt?: string;
-  optimizedPrompt?: string;
-  promptSource?: PromptSource;
-  promptOptimizationEnabled?: boolean;
-  promptOptimizationId?: string;
-  promptOptimizedAt?: Date;
-  // Generation Configuration
-  aiModel?: string;
-  aspectRatio?: string;
-  imageCount?: number;
-  quality?: string;
-  // Result
-  resultImageUrls?: string; // JSON string array for SQLite
-  resultImageTokens?: string; // JSON string array for SQLite
-  // Status Tracking
-  status?: TaskStatus;
-  progress?: number;
-  errorMessage?: string;
-  // Feishu Integration
-  feishuRecordId?: string;
-  feishuAppToken?: string;
-  feishuTableId?: string;
-  // Concurrency Control
-  version?: number;
-  lastModifiedBy?: string;
-  lastModifiedAt?: Date;
-  conflictDetected?: boolean;
-  // Sync Status
-  syncStatus?: TaskSyncStatus;
-  syncError?: string;
-  lastSyncAt?: Date;
-  // Batch Support
-  batchId?: string;
-  batchIndex?: number;
-  // Expiration
-  expiresAt?: Date;
-  completedAt?: Date;
-}
-
-export interface TaskFilter {
-  userId?: string;
-  status?: TaskStatus;
-  batchId?: string;
-  feishuRecordId?: string;
-  expiresBefore?: Date;
-  // New filters
-  promptSource?: PromptSource;
-  syncStatus?: TaskSyncStatus;
-  conflictDetected?: boolean;
-  lastModifiedBy?: string;
+/**
+ * Prompt Source 枚举
+ */
+export enum PromptSource {
+  USER = 'USER',
+  AI_OPTIMIZED = 'AI_OPTIMIZED',
+  FEISHU = 'FEISHU',
+  MERGED = 'MERGED',
 }
 
 /**
- * Version Conflict Error
+ * Task Sync Status 枚举
+ */
+export enum TaskSyncStatus {
+  PENDING = 'PENDING',
+  SYNCING = 'SYNCING',
+  SYNCED = 'SYNCED',
+  FAILED = 'FAILED',
+}
+
+/**
+ * 创建任务输入
+ * 使用更简单的类型，避免 Prisma.TaskCreateInput 的复杂关联要求
+ */
+export type CreateTaskInput = {
+  userId?: string;
+  mode?: string;
+  prompt?: string;
+  negativePrompt?: string;
+  productImageUrl?: string;
+  productImageToken?: string;
+  sceneImageUrl?: string;
+  sceneImageToken?: string;
+  clothingImageUrl?: string;
+  tryonReferenceImageUrl?: string;
+  wearProductImageUrl?: string;
+  wearReferenceImageUrl?: string;
+  materialImageUrls?: string[];
+  aiModel?: string;
+  aspectRatio?: string;
+  imageCount?: number;
+  quality?: string;
+  originalPrompt?: string;
+  originalNegativePrompt?: string;
+  optimizedPrompt?: string;
+  optimizedNegativePrompt?: string;
+  promptSource?: string;
+  promptOptimizationEnabled?: boolean;
+  syncStatus?: string;
+  // 其他可选字段
+  [key: string]: string | number | boolean | string[] | undefined;
+};
+
+/**
+ * 更新任务输入
+ */
+export type UpdateTaskInput = {
+  status?: TaskStatus | string;
+  resultImageUrls?: string[];
+  errorMessage?: string;
+  feishuRecordId?: string;
+  version?: number;
+  progress?: number;
+  syncStatus?: string;
+  lastSyncAt?: Date;
+  syncError?: string;
+  // 其他可选字段
+  [key: string]: string | number | boolean | string[] | Date | undefined;
+};
+
+/**
+ * 任务过滤器
+ */
+export interface TaskFilter {
+  userId?: string;
+  status?: TaskStatus;
+  ids?: string[];
+  batchId?: string;
+  feishuRecordId?: string;
+  expiresBefore?: Date;
+}
+
+/**
  * 版本冲突错误
  */
 export class VersionConflictError extends Error {
-  public readonly conflict: ConflictInfo;
+  public readonly taskId: string;
+  public readonly currentVersion: number;
+  public readonly attemptedVersion: number;
+  public readonly expectedVersion?: number;
+  public readonly actualData?: Record<string, unknown>;
+  public readonly conflict?: ConflictInfo;
 
-  constructor(details: {
+  constructor(params: {
     taskId: string;
     currentVersion: number;
-    expectedVersion: number;
-    actualData: Task;
-    conflict: ConflictInfo;
+    attemptedVersion: number;
+    expectedVersion?: number;
+    actualData?: Record<string, unknown>;
+    conflict?: ConflictInfo;
   }) {
     super(
-      `Version conflict for task ${details.taskId}: expected version ${details.expectedVersion}, got ${details.currentVersion}`
+      `Version conflict for task ${params.taskId}: current version is ${params.currentVersion}, attempted to update to ${params.attemptedVersion}`
     );
     this.name = 'VersionConflictError';
-    this.conflict = details.conflict;
+    this.taskId = params.taskId;
+    this.currentVersion = params.currentVersion;
+    this.attemptedVersion = params.attemptedVersion;
+    this.expectedVersion = params.expectedVersion;
+    this.actualData = params.actualData;
+    this.conflict = params.conflict;
   }
 }
 
 /**
- * Conflict Information
  * 冲突信息
  */
 export interface ConflictInfo {
   taskId: string;
-  conflicts: string[]; // 冲突的字段列表
-  localVersion: number;
-  lastModifiedBy: string;
-  lastModifiedAt: Date;
-  remoteChanges?: Record<string, any>; // 远程的修改内容
+  currentVersion: number;
+  attemptedVersion: number;
+  currentData: TaskWithRelations;
+  attemptedData: Partial<Task>;
+  conflicts?: Array<{ field: string; local: unknown; remote: unknown }>;
+  localVersion?: number;
+  lastModifiedBy?: string;
+  lastModifiedAt?: Date;
+  remoteChanges?: Record<string, unknown>;
 }
-
-/**
- * Task Sync Result
- * 任务同步结果
- */
-export interface TaskSyncResult {
-  taskId: string;
-  success: boolean;
-  syncStatus: TaskSyncStatus;
-  feishuRecordId?: string;
-  error?: string;
-  conflictDetected?: boolean;
-}
-
-// Re-export enums for convenience
-export type { PromptSource, TaskSyncStatus } from '@prisma/client';

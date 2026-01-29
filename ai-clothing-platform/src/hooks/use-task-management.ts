@@ -12,8 +12,10 @@ export function useTaskManagement() {
 
   const handleGenerate = useCallback(
     async (
+      mode: 'scene' | 'tryon' | 'wear' | 'combine',
       productName: string,
       prompt: string,
+      negativePrompt: string,
       productImage: File | null,
       sceneImage: File | null,
       textModel: TextModel,
@@ -28,6 +30,7 @@ export function useTaskManagement() {
         isConfigured,
         productImage: !!productImage,
         prompt,
+        negativePrompt,
       });
 
       if (!isConfigured) {
@@ -44,8 +47,10 @@ export function useTaskManagement() {
 
       await createTaskAndStartPolling(
         {
+          mode,
           productName,
           prompt,
+          negativePrompt,
           productImage,
           sceneImage,
           textModel,

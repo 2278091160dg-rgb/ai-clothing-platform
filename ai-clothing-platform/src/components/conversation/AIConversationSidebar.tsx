@@ -3,6 +3,7 @@
  * AI对话侧边栏组件 - 多轮对话优化提示词
  */
 
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -21,16 +22,25 @@ interface AIConversationSidebarProps {
   onClose: () => void;
   conversationId?: string;
   originalPrompt?: string;
+  originalNegativePrompt?: string;
   recordId?: string;
-  taskData?: any;
-  onApply?: (finalPrompt: string) => void;
+  taskData?: {
+    productImageUrl?: string;
+    sceneImageUrl?: string;
+    aiModel?: string;
+    aspectRatio?: string;
+    imageCount?: number;
+    quality?: string;
+  };
+  onApply?: (finalPrompt: string, finalNegativePrompt?: string) => void;
 }
 
 export function AIConversationSidebar({
   open,
   onClose,
-  conversationId,
+  conversationId: _conversationId,
   originalPrompt,
+  originalNegativePrompt,
   recordId,
   taskData,
   onApply,
@@ -39,6 +49,7 @@ export function AIConversationSidebar({
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [suggestedPrompt, setSuggestedPrompt] = useState<string | null>(null);
+  const [suggestedNegativePrompt, setSuggestedNegativePrompt] = useState<string | null>(null);
   const [currentConversationId, setCurrentConversationId] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -48,7 +59,8 @@ export function AIConversationSidebar({
       // 无论是否有recordId，都创建真实对话
       createConversation();
     }
-  }, [open, recordId]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, recordId, currentConversationId]);
 
   // 滚动到底部
   useEffect(() => {
@@ -163,6 +175,12 @@ export function AIConversationSidebar({
         console.log('[Frontend] Setting suggested prompt:', data.data.suggestedPrompt);
         setSuggestedPrompt(data.data.suggestedPrompt);
       }
+
+      // 如果有建议的反向提示词，显示出来
+      if (data.data.suggestedNegativePrompt) {
+        console.log('[Frontend] Setting suggested negative prompt:', data.data.suggestedNegativePrompt);
+        setSuggestedNegativePrompt(data.data.suggestedNegativePrompt);
+      }
     } catch (error) {
       console.error('[Frontend] Failed to send message:', error);
       const errorMessage = error instanceof Error ? error.message : '消息发送失败，请重试';
@@ -198,7 +216,9 @@ export function AIConversationSidebar({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           finalPrompt: suggestedPrompt,
+          finalNegativePrompt: suggestedNegativePrompt,
           originalPrompt,
+          originalNegativePrompt,
           taskData,
         }),
       });
@@ -207,7 +227,7 @@ export function AIConversationSidebar({
 
       if (data.success) {
         // 通知父组件
-        onApply?.(suggestedPrompt);
+        onApply?.(suggestedPrompt, suggestedNegativePrompt || undefined);
         onClose();
       }
     } catch (error) {
@@ -293,6 +313,22 @@ export function AIConversationSidebar({
           <div className="bg-white rounded-lg p-3 text-sm mb-3 max-h-32 overflow-y-auto">
             {suggestedPrompt}
           </div>
+
+          {/* 反向提示词建议 */}
+          {suggestedNegativePrompt && (
+            <>
+              <div className="flex items-start justify-between mb-2 mt-3">
+                <div className="flex items-center gap-2">
+                  <CheckCircle className="w-5 h-5 text-orange-600" />
+                  <span className="font-medium text-sm">反向提示词</span>
+                </div>
+              </div>
+              <div className="bg-white rounded-lg p-3 text-sm mb-3 max-h-24 overflow-y-auto">
+                {suggestedNegativePrompt}
+              </div>
+            </>
+          )}
+
           <div className="flex gap-2">
             <Button onClick={handleApply} disabled={isLoading} size="sm" className="flex-1">
               {isLoading ? (
@@ -307,7 +343,7 @@ export function AIConversationSidebar({
                 </>
               )}
             </Button>
-            <Button onClick={() => setSuggestedPrompt(null)} variant="outline" size="sm">
+            <Button onClick={() => { setSuggestedPrompt(null); setSuggestedNegativePrompt(null); }} variant="outline" size="sm">
               重新优化
             </Button>
           </div>

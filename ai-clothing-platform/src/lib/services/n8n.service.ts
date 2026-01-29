@@ -3,6 +3,7 @@
  * 负责与n8n工作流引擎通信
  */
 
+/* eslint-disable @typescript-eslint/no-unused-vars */
 interface N8nConfig {
   webhookUrl: string;
   apiKey: string;
@@ -11,25 +12,47 @@ interface N8nConfig {
 interface GenerationRequest {
   taskId: string;
   userId: string;
+  mode: 'scene' | 'tryon' | 'wear' | 'combine';
   productImageUrl: string;
   sceneImageUrl?: string;
   prompt: string;
+  negativePrompt?: string;
   aiModel: string;
   aspectRatio: string;
   imageCount: number;
   quality: string;
   deerApiKey?: string; // 前端传递的DeerAPI密钥（可选）
   callbackUrl?: string; // 自定义回调URL（可选）
+
+  // 虚拟试衣参数
+  clothingImageUrl?: string;
+  clothingDescription?: string;
+  tryonReferenceImageUrl?: string;
+  tryonModelImageUrl?: string;
+  modelDescription?: string;
+  sceneDescription?: string;
+  tryonMode?: 'single' | 'multi';
+
+  // 智能穿戴参数
+  wearProductImageUrl?: string;
+  wearProductDescription?: string;
+  wearReferenceImageUrl?: string;
+  wearReferenceDescription?: string;
+  productType?: 'shoes' | 'bag' | 'watch' | 'jewelry' | 'hat' | 'scarf';
+  viewType?: 'single' | 'multi';
+
+  // 自由搭配参数
+  materialImageUrls?: string[];
+  combinationCount?: number;
+  modelType?: 'any' | 'adult' | 'child' | 'male' | 'female';
+  stylePreference?: 'casual' | 'formal' | 'sporty' | 'elegant' | 'minimalist';
+
+  // 优化后的提示词
+  finalPrompt?: string;
+  finalNegativePrompt?: string;
 }
 
-interface GenerationResponse {
-  success: boolean;
-  taskId: string;
-  resultImageUrls?: string[];
-  resultImageTokens?: string[];
-  error?: string;
-}
-
+// interface GenerationResponse 未使用，已删除
 type GenerationStatus = 'pending' | 'processing' | 'completed' | 'failed';
 
 export class N8nService {
@@ -90,7 +113,7 @@ export class N8nService {
       let data;
       try {
         data = JSON.parse(text);
-      } catch (parseError) {
+      } catch (_parseError) {
         console.error('[N8n] Failed to parse response:', text);
         throw new Error(`n8n returned invalid JSON: ${text.substring(0, 200)}`);
       }

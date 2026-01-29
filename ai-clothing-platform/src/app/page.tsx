@@ -30,12 +30,20 @@ export default function HomePage() {
   const [loginConfig, setLoginConfig] = useState<LoginConfig>(DEFAULT_LOGIN_CONFIG);
 
   // 表单状态
+  const [mode, setMode] = useState<'scene' | 'tryon' | 'wear' | 'combine'>('scene');
   const [productName, setProductName] = useState('');
   const [prompt, setPrompt] = useState('');
+  const [negativePrompt, setNegativePrompt] = useState('');
   const [textModel, setTextModel] = useState<TextModel>('gemini-2.0-flash-exp');
   const [imageModel, setImageModel] = useState<ImageModel>('flux-1.1-pro');
   const [aspectRatio, setAspectRatio] = useState<'1:1' | '3:4' | '16:9' | '9:16'>('3:4');
-  const [quality, setQuality] = useState<'standard' | 'high'>('high');
+  const [quality] = useState<'standard' | 'high'>('high');
+
+  // 模式切换处理 - 清空提示词，保留其他通用参数
+  const handleModeChange = useCallback((newMode: 'scene' | 'tryon' | 'wear' | 'combine') => {
+    setMode(newMode);
+    setPrompt(''); // 清空提示词，因为不同模式需要不同的提示词内容
+  }, []);
 
   // 自定义 hooks
   const { brandConfig, loadBrandConfig } = useBrandConfig();
@@ -98,12 +106,15 @@ export default function HomePage() {
     const resetForm = () => {
       setProductName('');
       setPrompt('');
+      setNegativePrompt('');
       resetImages();
     };
 
     const result = await handleGenerate(
+      mode,
       productName,
       prompt,
+      negativePrompt,
       productImage,
       sceneImage,
       textModel,
@@ -117,8 +128,10 @@ export default function HomePage() {
       setShowConfig(true);
     }
   }, [
+    mode,
     productName,
     prompt,
+    negativePrompt,
     productImage,
     sceneImage,
     textModel,
@@ -146,6 +159,7 @@ export default function HomePage() {
           {/* 左侧栏 - 紧凑配置面板 */}
           <div className="w-[360px] flex-shrink-0 flex flex-col gap-3">
             <UploadPanel
+              mode={mode}
               productImage={productImage}
               productImagePreview={productImagePreview}
               sceneImage={sceneImage}
@@ -154,6 +168,8 @@ export default function HomePage() {
               onSceneUpload={handleSceneUpload}
             />
             <ParamsPanel
+              mode={mode}
+              onModeChange={handleModeChange}
               prompt={prompt}
               productName={productName}
               textModel={textModel}
@@ -167,6 +183,8 @@ export default function HomePage() {
               onAspectRatioChange={setAspectRatio}
               onGenerate={handleGenerateClick}
               isConfigured={isConfigured}
+              negativePrompt={negativePrompt}
+              onNegativePromptChange={setNegativePrompt}
             />
           </div>
 

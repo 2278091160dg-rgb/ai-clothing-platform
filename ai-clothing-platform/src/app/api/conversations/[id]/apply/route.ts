@@ -33,8 +33,8 @@ export async function PUT(req: NextRequest, context: RouteContext) {
       return NextResponse.json({ error: 'Conversation not found' }, { status: 404 });
     }
 
-    // 1. 更新对话状态
-    await conversationRepo.applyFinalPrompt(id, body.finalPrompt);
+    // 1. 更新对话状态（包括反向提示词）
+    await conversationRepo.applyFinalPrompt(id, body.finalPrompt, body.finalNegativePrompt);
 
     // 2. 通过recordId查找对应的飞书记录信息
     // 这里需要从飞书获取记录信息来创建任务
@@ -47,8 +47,11 @@ export async function PUT(req: NextRequest, context: RouteContext) {
       productImageUrl: taskData.productImageUrl,
       sceneImageUrl: taskData.sceneImageUrl,
       prompt: body.finalPrompt,
+      negativePrompt: body.finalNegativePrompt,
       originalPrompt: body.originalPrompt,
+      originalNegativePrompt: body.originalNegativePrompt,
       optimizedPrompt: body.finalPrompt,
+      optimizedNegativePrompt: body.finalNegativePrompt,
       promptSource: 'AI_OPTIMIZED',
       promptOptimizationEnabled: true,
       // ... 其他配置
@@ -75,11 +78,13 @@ export async function PUT(req: NextRequest, context: RouteContext) {
     // 4. 触发N8N工作流
     const n8nService = getN8nService();
     await n8nService.triggerGeneration({
+      mode: 'scene', // AI对话优化默认使用场景生图模式
       taskId: task.id,
       userId: task.userId,
       productImageUrl: taskData.productImageUrl || '',
       sceneImageUrl: taskData.sceneImageUrl,
       prompt: body.finalPrompt,
+      negativePrompt: body.finalNegativePrompt,
       aiModel: taskData.aiModel || 'FLUX.1',
       aspectRatio: taskData.aspectRatio || '1:1',
       imageCount: taskData.imageCount || 4,

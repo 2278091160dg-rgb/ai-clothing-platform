@@ -3,6 +3,7 @@
  * AI对话服务 - 处理多轮AI对话
  */
 
+/* eslint-disable @typescript-eslint/no-unused-vars */
 interface AIConversationConfig {
   apiKey: string;
   baseURL?: string;
@@ -23,6 +24,7 @@ interface AIMessage {
 interface AIResponse {
   message: string;
   suggestedPrompt?: string;
+  suggestedNegativePrompt?: string;
 }
 
 /**
@@ -91,7 +93,7 @@ export class AIConversationService {
 1. 理解用户的原始需求
 2. 分析当前提示词的优缺点
 3. 提供具体的优化建议
-4. 如果用户同意，给出优化后的完整提示词
+4. 如果用户同意，给出优化后的完整提示词和反向提示词
 
 优化原则：
 - 保持用户的原始意图
@@ -102,7 +104,11 @@ export class AIConversationService {
 输出格式：
 - 首先分析当前提示词
 - 然后提供2-3个优化建议
-- 最后，如果用户满意，给出完整的优化提示词（用【优化版本】标记）`;
+- 最后，如果用户满意，给出完整的优化提示词（用【优化版本】标记）
+- 同时给出推荐的反向提示词（用【反向提示词】标记）
+
+反向提示词应包含常见的需要避免的元素：
+blurry, low quality, bad anatomy, distorted, watermark, text, logo, bad composition, oversaturated, ugly, duplicate, mutation`;
 
     if (context?.originalPrompt) {
       systemPrompt += `\n\n原始提示词：${context.originalPrompt}`;
@@ -149,20 +155,27 @@ export class AIConversationService {
    */
   private parseAIResponse(
     response: string,
-    context?: {
+    _context?: {
       originalPrompt?: string;
       currentPrompt?: string;
     }
   ): AIResponse {
     // 检查是否包含优化版本标记
     const optimizedVersionMatch = response.match(
-      /【优化版本】[\s\S]*?[:：]\s*([\s\S]+?)(?=\n\n|$)/
+      /【优化版本】[\s\S]*?[:：]\s*([\s\S]+?)(?=\n\n|【反向提示词】|$)/
     );
     const suggestedPrompt = optimizedVersionMatch ? optimizedVersionMatch[1].trim() : undefined;
+
+    // 检查是否包含反向提示词标记
+    const negativePromptMatch = response.match(
+      /【反向提示词】[\s\S]*?[:：]\s*([\s\S]+?)(?=\n\n|$)/
+    );
+    const suggestedNegativePrompt = negativePromptMatch ? negativePromptMatch[1].trim() : undefined;
 
     return {
       message: response,
       suggestedPrompt,
+      suggestedNegativePrompt,
     };
   }
 }
@@ -212,6 +225,7 @@ class MockAIConversationService {
       const response = {
         message: '你好！我是AI提示词优化助手。请告诉我你想优化什么提示词？',
         suggestedPrompt: undefined,
+        suggestedNegativePrompt: undefined,
       };
       console.log('[MockAI] Returning welcome message');
       return response;
@@ -236,16 +250,20 @@ class MockAIConversationService {
 3. 增加风格描述：如极简主义、时尚摄影
 4. 补充构图元素：如背景虚化、主体突出
 
-【优化版本】：${promptToOptimize}，professional fashion photography, soft natural lighting, clean background, high detail, commercial product shot, 8k quality, studio lighting`;
+【优化版本】：${promptToOptimize}，professional fashion photography, soft natural lighting, clean background, high detail, commercial product shot, 8k quality, studio lighting
+
+【反向提示词】：blurry, low quality, bad anatomy, distorted, watermark, text, logo, bad composition, oversaturated, ugly, duplicate`;
 
     const result = {
       message: response,
       suggestedPrompt: `${promptToOptimize}，professional fashion photography, soft natural lighting, clean background, high detail, commercial product shot, 8k quality, studio lighting`,
+      suggestedNegativePrompt: 'blurry, low quality, bad anatomy, distorted, watermark, text, logo, bad composition, oversaturated, ugly, duplicate',
     };
 
     console.log('[MockAI] Returning optimization response:', {
       messageLength: result.message.length,
       suggestedPromptLength: result.suggestedPrompt?.length,
+      suggestedNegativePromptLength: result.suggestedNegativePrompt?.length,
     });
 
     return result;

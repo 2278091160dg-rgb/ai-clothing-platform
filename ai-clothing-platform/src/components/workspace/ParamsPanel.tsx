@@ -2,6 +2,7 @@
  * ParamsPanel - 参数配置面板
  */
 
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -16,7 +17,41 @@ import { Zap, MessageSquare } from 'lucide-react';
 import { AIConversationSidebar } from '@/components/conversation';
 import type { TextModel, ImageModel } from '@/lib/types';
 
+type GenerationMode = 'scene' | 'tryon' | 'wear' | 'combine';
+
+// 模式配置
+const MODES = [
+  { id: 'scene' as const, name: '场景生图', icon: '🏞️', disabled: false },
+  { id: 'tryon' as const, name: '虚拟试衣', icon: '👔', disabled: false },
+  { id: 'wear' as const, name: '智能穿戴', icon: '👟', disabled: true },
+  { id: 'combine' as const, name: '自由搭配', icon: '🎨', disabled: true },
+];
+
+// 根据模式获取提示词占位符
+function getPromptPlaceholder(mode: GenerationMode): string {
+  const placeholders = {
+    scene: '描述您想要的场景效果，如：温馨卧室、自然窗光、极简风格...',
+    tryon: '描述服装和模特要求，如：年轻亚洲女性、站立姿势、温馨卧室...',
+    wear: '描述商品和穿戴场景，如：运动鞋、年轻女性、户外运动场景...',
+    combine: '描述搭配风格和模特要求，如：休闲时尚风格、年轻女性模特...',
+  };
+  return placeholders[mode];
+}
+
+// 根据模式获取生成按钮文字
+function getGenerateButtonText(mode: GenerationMode): string {
+  const texts = {
+    scene: '开始生成场景图',
+    tryon: '开始生成试衣图',
+    wear: '开始生成穿戴图',
+    combine: '开始生成搭配图',
+  };
+  return texts[mode];
+}
+
 interface ParamsPanelProps {
+  mode: GenerationMode;
+  onModeChange: (mode: GenerationMode) => void;
   prompt: string;
   productName: string;
   textModel: TextModel;
@@ -29,21 +64,25 @@ interface ParamsPanelProps {
   onImageModelChange: (value: ImageModel) => void;
   onAspectRatioChange: (value: '1:1' | '3:4' | '16:9' | '9:16') => void;
   onGenerate: () => void;
-  onAIConversationComplete?: (optimizedPrompt: string) => void;
+  onAIConversationComplete?: (optimizedPrompt: string, optimizedNegativePrompt?: string) => void;
   isConfigured: boolean;
   productImageUrl?: string;
   sceneImageUrl?: string;
+  negativePrompt?: string;
+  onNegativePromptChange?: (value: string) => void;
 }
 
 export function ParamsPanel({
+  mode,
+  onModeChange,
   prompt,
-  productName,
+  productName: _productName,
   textModel,
   imageModel,
   aspectRatio,
   quality,
   onPromptChange,
-  onProductNameChange,
+  onProductNameChange: _onProductNameChange,
   onTextModelChange,
   onImageModelChange,
   onAspectRatioChange,
@@ -52,10 +91,12 @@ export function ParamsPanel({
   isConfigured,
   productImageUrl,
   sceneImageUrl,
+  negativePrompt,
+  onNegativePromptChange,
 }: ParamsPanelProps) {
   // AI对话状态
   const [showAIConversation, setShowAIConversation] = useState(false);
-  const [conversationId, setConversationId] = useState<string>();
+  const [conversationId] = useState<string>();
 
   // 打开AI对话
   const handleOpenAIConversation = () => {
@@ -63,9 +104,12 @@ export function ParamsPanel({
   };
 
   // AI对话完成回调
-  const handleAIConversationComplete = (optimizedPrompt: string) => {
+  const handleAIConversationComplete = (optimizedPrompt: string, optimizedNegativePrompt?: string) => {
     onPromptChange(optimizedPrompt);
-    onAIConversationComplete?.(optimizedPrompt);
+    if (optimizedNegativePrompt && onNegativePromptChange) {
+      onNegativePromptChange(optimizedNegativePrompt);
+    }
+    onAIConversationComplete?.(optimizedPrompt, optimizedNegativePrompt);
     setShowAIConversation(false);
   };
 
@@ -79,6 +123,41 @@ export function ParamsPanel({
         </div>
 
         <div className="space-y-3">
+          {/* 模式选择器 */}
+          <div>
+            <label className="text-[11px] text-muted-foreground mb-1.5 block font-medium">
+              📷 生成模式
+            </label>
+            <div className="grid grid-cols-4 gap-1.5">
+              {MODES.map(m => {
+                const isActive = mode === m.id;
+                return (
+                  <button
+                    key={m.id}
+                    onClick={() => !m.disabled && onModeChange(m.id)}
+                    disabled={m.disabled}
+                    className={`
+                      flex flex-col items-center justify-center py-2 px-1.5 rounded-lg transition-all
+                      ${
+                        isActive
+                          ? 'bg-gradient-to-r from-primary to-blue-600 text-white shadow-lg shadow-primary/30'
+                          : m.disabled
+                            ? 'bg-card/30 text-muted-foreground/50 cursor-not-allowed'
+                            : 'bg-card/50 text-muted-foreground hover:bg-card/80 border border-blue-500/10'
+                      }
+                    `}
+                    title={m.disabled ? '开发中，敬请期待' : m.name}
+                  >
+                    <span className="text-lg mb-0.5">{m.icon}</span>
+                    <span className="text-[9px] font-semibold leading-tight">{m.name}</span>
+                    {m.disabled && <span className="text-[7px] opacity-60 mt-0.5">开发中</span>}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* 提示词 */}
           {/* 提示词 */}
           <div>
             <div className="flex items-center justify-between mb-1.5">
@@ -99,10 +178,25 @@ export function ParamsPanel({
             <Textarea
               value={prompt}
               onChange={e => onPromptChange(e.target.value)}
-              placeholder="描述您想要的场景效果..."
+              placeholder={getPromptPlaceholder(mode)}
               className="min-h-[60px] text-sm resize-none bg-card/50 border-border/30 focus:border-blue-500/50 text-foreground placeholder:text-muted-foreground"
             />
           </div>
+
+          {/* 反向提示词 */}
+          {onNegativePromptChange && (
+            <div>
+              <label className="text-[11px] text-muted-foreground mb-1.5 block font-medium">
+                反向提示词 <span className="text-muted-foreground">（选填）</span>
+              </label>
+              <Textarea
+                value={negativePrompt || ''}
+                onChange={e => onNegativePromptChange(e.target.value)}
+                placeholder="需要避免的元素，如：blurry, low quality, bad anatomy..."
+                className="min-h-[50px] text-sm resize-none bg-card/50 border-border/30 focus:border-blue-500/50 text-foreground placeholder:text-muted-foreground"
+              />
+            </div>
+          )}
 
           {/* 图片比例 */}
           <div>
@@ -111,13 +205,16 @@ export function ParamsPanel({
             </label>
             <div className="flex gap-2">
               {[
+                { value: '9:16', label: '9:16竖版' },
                 { value: '3:4', label: '3:4竖版' },
                 { value: '1:1', label: '1:1方版' },
                 { value: '16:9', label: '16:9横版' },
               ].map(ratio => (
                 <button
                   key={ratio.value}
-                  onClick={() => onAspectRatioChange(ratio.value as any)}
+                  onClick={() =>
+                    onAspectRatioChange(ratio.value as '1:1' | '3:4' | '16:9' | '9:16')
+                  }
                   className={`flex-1 py-2 px-2 rounded-lg text-[11px] font-semibold transition-all ${
                     aspectRatio === ratio.value
                       ? 'bg-gradient-to-r from-primary to-blue-600 text-white shadow-lg shadow-primary/30'
@@ -177,27 +274,27 @@ export function ParamsPanel({
               选择的模型将直接影响DeerAPI调用
             </p>
           </div>
+
+          {/* 生成按钮 */}
+          <Button
+            onClick={onGenerate}
+            className="h-11 text-[13px] font-bold w-full btn-primary rounded-xl shadow-lg hover:shadow-xl hover:scale-[1.02] transition-all"
+            size="lg"
+          >
+            {!isConfigured ? (
+              <>
+                <Zap size={14} className="mr-2 animate-spin-slow" />
+                请先配置API
+              </>
+            ) : (
+              <>
+                <Zap size={14} className="mr-2" />
+                {getGenerateButtonText(mode)}
+              </>
+            )}
+          </Button>
         </div>
       </div>
-
-      {/* 生成按钮 */}
-      <Button
-        onClick={onGenerate}
-        className="h-12 text-[14px] font-bold w-full btn-primary rounded-full shadow-xl hover:shadow-2xl hover:scale-105 transition-all"
-        size="lg"
-      >
-        {!isConfigured ? (
-          <>
-            <Zap size={16} className="mr-2 animate-spin-slow" />
-            请先配置API
-          </>
-        ) : (
-          <>
-            <Zap size={16} className="mr-2" />
-            开始生成场景图
-          </>
-        )}
-      </Button>
 
       {/* AI对话侧边栏 */}
       <AIConversationSidebar

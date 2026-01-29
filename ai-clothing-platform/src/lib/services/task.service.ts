@@ -5,11 +5,13 @@
 
 import { apiService } from './api.service';
 import { ConfigManager } from '../config';
-import type { TaskData, ImageModel, WorkMode } from '../types';
+import type { TaskData, ImageModel, TextModel } from '../types';
 
 export interface CreateTaskParams {
+  mode?: 'scene' | 'tryon' | 'wear' | 'combine';
   productName: string;
   prompt: string;
+  negativePrompt?: string;
   productImage: File;
   sceneImage?: File | null;
   textModel: string;
@@ -33,6 +35,7 @@ export async function createTaskAndStartPolling(
   const {
     productName,
     prompt,
+    negativePrompt,
     productImage,
     sceneImage,
     imageModel,
@@ -48,7 +51,7 @@ export async function createTaskAndStartPolling(
     productName: productName || `任务${existingTasks.length + 1}`,
     prompt,
     config: {
-      textModel: params.textModel as any,
+      textModel: params.textModel as TextModel,
       imageModel,
       aspectRatio,
       imageCount: 1,
@@ -81,9 +84,11 @@ export async function createTaskAndStartPolling(
     const config = ConfigManager.getConfig();
 
     const response = await apiService.createTask({
+      mode: params.mode || 'scene',
       productImageUrl,
       sceneImageUrl,
       prompt,
+      negativePrompt,
       aiModel: imageModel,
       aspectRatio,
       imageCount: 1,

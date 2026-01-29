@@ -50,10 +50,7 @@ export async function POST(req: NextRequest, context: RouteContext) {
     ];
 
     // 3. 添加用户消息到数据库
-    await conversationRepo.addMessage(id, {
-      content: body.content,
-      role: 'user',
-    });
+    await conversationRepo.addMessage(id, 'user', body.content);
 
     // 4. 调用AI服务
     const aiService = getAIConversationService();
@@ -69,15 +66,14 @@ export async function POST(req: NextRequest, context: RouteContext) {
     );
 
     // 5. 添加AI回复消息
-    await conversationRepo.addMessage(id, {
-      content: aiResponse.message,
-      role: 'assistant',
-    });
+    await conversationRepo.addMessage(id, 'assistant', aiResponse.message);
 
     console.log('[API] AI response:', {
       messageLength: aiResponse.message.length,
       hasSuggestedPrompt: !!aiResponse.suggestedPrompt,
       suggestedPrompt: aiResponse.suggestedPrompt,
+      hasSuggestedNegativePrompt: !!aiResponse.suggestedNegativePrompt,
+      suggestedNegativePrompt: aiResponse.suggestedNegativePrompt,
     });
 
     // 6. 返回AI响应
@@ -86,6 +82,7 @@ export async function POST(req: NextRequest, context: RouteContext) {
       data: {
         message: aiResponse.message,
         suggestedPrompt: aiResponse.suggestedPrompt,
+        suggestedNegativePrompt: aiResponse.suggestedNegativePrompt,
       },
     });
   } catch (error) {

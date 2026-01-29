@@ -6,9 +6,11 @@
 import { ConfigManager } from '../config';
 
 interface GenerateTaskRequest {
+  mode?: 'scene' | 'tryon' | 'wear' | 'combine';
   productImageUrl: string;
   sceneImageUrl?: string;
   prompt: string;
+  negativePrompt?: string;
   aiModel?: string;
   aspectRatio?: string;
   imageCount?: number;
@@ -16,6 +18,24 @@ interface GenerateTaskRequest {
   batchId?: string;
   deerApiKey?: string; // 前端配置的DeerAPI密钥（可选）
   callbackUrl?: string; // 前端配置的回调URL（可选）
+
+  // 虚拟试衣参数
+  clothingImageUrl?: string;
+  clothingDescription?: string;
+  tryonReferenceImageUrl?: string;
+  tryonModelImageUrl?: string;
+  modelDescription?: string;
+  sceneDescription?: string;
+
+  // 智能穿戴参数
+  wearProductImageUrl?: string;
+  wearProductDescription?: string;
+  wearReferenceImageUrl?: string;
+  productType?: 'shoes' | 'bag' | 'watch' | 'jewelry' | 'hat' | 'scarf';
+
+  // 自由搭配参数
+  materialImageUrls?: string[];
+  combinationCount?: number;
 }
 
 interface TaskResponse {
@@ -64,8 +84,14 @@ class ApiService {
     });
 
     if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.error || 'Failed to create task');
+      let errorMessage = 'Failed to create task';
+      try {
+        const error = await response.json();
+        errorMessage = error.error || error.message || errorMessage;
+      } catch {
+        errorMessage = `Server error (${response.status}): ${response.statusText}`;
+      }
+      throw new Error(errorMessage);
     }
 
     return response.json();
@@ -100,6 +126,14 @@ class ApiService {
    * 注意：这个方法会将图片上传到临时存储，返回的 URL 可以用于创建任务
    */
   async uploadImage(file: File): Promise<string> {
+    // 限制图片大小（5MB）
+    const MAX_FILE_SIZE = 5 * 1024 * 1024;
+    if (file.size > MAX_FILE_SIZE) {
+      throw new Error(
+        `图片大小超过限制（最大5MB），当前大小：${(file.size / 1024 / 1024).toFixed(2)}MB`
+      );
+    }
+
     const formData = new FormData();
     formData.append('file', file);
 
@@ -119,26 +153,25 @@ class ApiService {
 
         if (response.ok) {
           const data = await response.json();
-          return data.url || data.data?.url;
+          const url = data.url || data.data?.url;
+          if (url) {
+            console.log('[API] Image uploaded to DeerAPI:', url);
+            return url;
+          }
         }
+        console.warn('[API] DeerAPI upload failed with status:', response.status);
       } catch (error) {
-        console.warn('[API] DeerAPI upload failed, falling back to local upload', error);
+        console.warn('[API] DeerAPI upload failed (CORS or network):', error);
       }
     }
 
-    // 回退到本地上传（Vercel 兼容 - 返回 Base64 dataUrl）
-    const response = await fetch(`${this.baseUrl}/upload`, {
-      method: 'POST',
-      body: formData,
-    });
-
-    if (!response.ok) {
-      throw new Error('Failed to upload image');
-    }
-
-    const data = await response.json();
-    // 新版 API 返回 dataUrl (Base64 格式，Vercel 兼容)
-    return data.dataUrl || data.url;
+    // 如果DeerAPI未配置或失败，抛出错误提示用户配置
+    // 不再使用Base64降级方案，因为会导致JSON体过大
+    throw new Error(
+      '图片上传失败：请先在设置中配置DeerAPI图床服务\n' +
+        '配置路径：设置 → API配置 → DeerAPI配置\n' +
+        'DeerAPI注册地址：https://www.deerapi.com/'
+    );
   }
 
   /**
