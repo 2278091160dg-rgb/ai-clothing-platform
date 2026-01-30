@@ -10,10 +10,10 @@ type GenerationMode = 'scene' | 'tryon' | 'wear' | 'combine';
 // 根据模式获取第一个上传区的标签
 function getFirstUploadLabel(mode: GenerationMode): { label: string; required: boolean } {
   const labels = {
-    scene: { label: '白底图', required: true },
-    tryon: { label: '服装图', required: true },
-    wear: { label: '白底图', required: true },
-    combine: { label: '素材1', required: true },
+    scene: { label: '素材A', required: true },
+    tryon: { label: '素材A', required: true },
+    wear: { label: '素材A', required: true },
+    combine: { label: '素材A', required: true },
   };
   return labels[mode];
 }
@@ -21,10 +21,10 @@ function getFirstUploadLabel(mode: GenerationMode): { label: string; required: b
 // 根据模式获取第二个上传区的标签
 function getSecondUploadLabel(mode: GenerationMode): { label: string; required: boolean } | null {
   const labels = {
-    scene: { label: '辅助图', required: false },
-    tryon: { label: '参考图', required: false },
-    wear: { label: '参考图', required: true },
-    combine: { label: '素材2', required: true },
+    scene: { label: '素材B', required: false },
+    tryon: { label: '素材B', required: false },
+    wear: { label: '素材B', required: true },
+    combine: { label: '素材B', required: true },
   };
   return labels[mode];
 }
