@@ -12,14 +12,7 @@ import { createBitableRecord, triggerN8nWebhook } from '@/lib/services/lark.serv
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const {
-      product_token,
-      scene_token,
-      prompt,
-      negative_prompt,
-      ratio,
-      model,
-    } = body as {
+    const { product_token, scene_token, prompt, negative_prompt, ratio, model } = body as {
       product_token: string;
       scene_token?: string;
       prompt: string;
@@ -30,10 +23,7 @@ export async function POST(req: NextRequest) {
 
     // 参数验证
     if (!product_token || !prompt || !ratio || !model) {
-      return NextResponse.json(
-        { code: -1, msg: '缺少必要参数' },
-        { status: 400 }
-      );
+      return NextResponse.json({ code: -1, msg: '缺少必要参数' }, { status: 400 });
     }
 
     // 创建多维表格记录

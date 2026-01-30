@@ -5,6 +5,19 @@
 import { Cloud, Image as ImageIcon, X } from 'lucide-react';
 import Image from 'next/image';
 
+// 🔧 判断 URL 是否需要代理（非 blob URL 需要代理）
+function needsProxy(url: string): boolean {
+  return !url.startsWith('blob:') && !url.startsWith('data:');
+}
+
+// 🔧 获取代理 URL（如果需要）
+function getProxiedUrl(url: string): string {
+  if (needsProxy(url)) {
+    return `/api/image-proxy?url=${encodeURIComponent(url)}`;
+  }
+  return url;
+}
+
 type GenerationMode = 'scene' | 'tryon' | 'wear' | 'combine';
 
 // 根据模式获取第一个上传区的标签
@@ -73,7 +86,7 @@ export function UploadPanel({
           {productImagePreview ? (
             <>
               <Image
-                src={productImagePreview}
+                src={getProxiedUrl(productImagePreview)}
                 alt="白底图预览"
                 width={200}
                 height={200}
@@ -83,14 +96,14 @@ export function UploadPanel({
               {/* 删除按钮 */}
               {onProductClear && (
                 <button
-                  onClick={(e) => {
+                  onClick={e => {
                     e.stopPropagation();
                     onProductClear();
                   }}
-                  className="absolute top-1 right-1 w-6 h-6 bg-red-500 hover:bg-red-600 rounded-full flex items-center justify-center shadow-lg transition-all hover:scale-110"
+                  className="absolute top-1 right-1 w-5 h-5 bg-red-500 hover:bg-red-600 rounded-full flex items-center justify-center shadow-lg transition-all hover:scale-110"
                   title="删除图片"
                 >
-                  <X size={14} className="text-white" />
+                  <X size={12} className="text-white" />
                 </button>
               )}
               {/* 重新上传提示 */}
@@ -121,7 +134,7 @@ export function UploadPanel({
           {sceneImagePreview ? (
             <>
               <Image
-                src={sceneImagePreview}
+                src={getProxiedUrl(sceneImagePreview)}
                 alt="辅助图预览"
                 width={200}
                 height={200}
@@ -131,14 +144,14 @@ export function UploadPanel({
               {/* 删除按钮 */}
               {onSceneClear && (
                 <button
-                  onClick={(e) => {
+                  onClick={e => {
                     e.stopPropagation();
                     onSceneClear();
                   }}
-                  className="absolute top-1 right-1 w-6 h-6 bg-red-500 hover:bg-red-600 rounded-full flex items-center justify-center shadow-lg transition-all hover:scale-110"
+                  className="absolute top-1 right-1 w-5 h-5 bg-red-500 hover:bg-red-600 rounded-full flex items-center justify-center shadow-lg transition-all hover:scale-110"
                   title="删除图片"
                 >
-                  <X size={14} className="text-white" />
+                  <X size={12} className="text-white" />
                 </button>
               )}
               {/* 重新上传提示 */}

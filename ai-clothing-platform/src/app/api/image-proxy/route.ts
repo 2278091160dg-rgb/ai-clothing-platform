@@ -46,7 +46,7 @@ export async function GET(request: NextRequest) {
     // 代理获取图片
     const imageResponse = await fetch(imageUrl, {
       headers: {
-        'Authorization': `Bearer ${tenantAccessToken}`,
+        Authorization: `Bearer ${tenantAccessToken}`,
       },
     });
 

@@ -1,14 +1,27 @@
-'use client'
+'use client';
 
-import { ReactCompareSlider, ReactCompareSliderHandle } from 'react-compare-slider'
-import Image from 'next/image'
-import { Download } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import { ReactCompareSlider, ReactCompareSliderHandle } from 'react-compare-slider';
+import Image from 'next/image';
+import { Download } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 interface ImageComparisonProps {
-  before: string    // 原始商品图
-  after: string     // AI 生成结果
+  before: string; // 原始商品图
+  after: string; // AI 生成结果
   onDownload?: () => void;
+}
+
+// 🔧 判断 URL 是否需要代理（非 blob URL 需要代理）
+function needsProxy(url: string): boolean {
+  return !url.startsWith('blob:') && !url.startsWith('data:');
+}
+
+// 🔧 获取代理 URL（如果需要）
+function getProxiedUrl(url: string): string {
+  if (needsProxy(url)) {
+    return `/api/image-proxy?url=${encodeURIComponent(url)}`;
+  }
+  return url;
 }
 
 export function ImageComparison({ before, after, onDownload }: ImageComparisonProps) {
@@ -41,14 +54,14 @@ export function ImageComparison({ before, after, onDownload }: ImageComparisonPr
         </Button>
       )}
     </div>
-  )
+  );
 }
 
 function ComparisonImage({ src, label }: { src: string; label: string }) {
   return (
     <div className="relative w-full h-full">
       <Image
-        src={src}
+        src={getProxiedUrl(src)}
         alt={label}
         fill
         className="object-contain"
@@ -58,5 +71,5 @@ function ComparisonImage({ src, label }: { src: string; label: string }) {
         {label}
       </div>
     </div>
-  )
+  );
 }

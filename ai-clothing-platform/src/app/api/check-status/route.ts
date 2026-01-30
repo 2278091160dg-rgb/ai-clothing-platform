@@ -15,10 +15,7 @@ export async function GET(req: NextRequest) {
     const recordId = searchParams.get('record_id');
 
     if (!recordId) {
-      return NextResponse.json(
-        { code: -1, msg: '缺少 record_id 参数' },
-        { status: 400 }
-      );
+      return NextResponse.json({ code: -1, msg: '缺少 record_id 参数' }, { status: 400 });
     }
 
     const { status, resultUrl } = await getRecordStatus(recordId);

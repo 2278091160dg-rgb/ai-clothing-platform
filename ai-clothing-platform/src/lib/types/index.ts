@@ -63,6 +63,7 @@ export interface TaskData {
   estimatedTimeRemaining?: number; // 预计剩余时间（秒）
   resultImages?: string[];
   createdAt: Date;
+  source?: 'web' | 'feishu' | 'api'; // 任务来源：网页端/飞书表格端/API
 }
 
 // API配置

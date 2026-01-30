@@ -34,7 +34,7 @@ interface TaskRecord {
 }
 
 export async function GET(request: Request) {
-  console.log("===== 开始获取记录列表 =====");
+  console.log('===== 开始获取记录列表 =====');
 
   try {
     // === Step 1: 获取飞书 tenant_access_token ===
@@ -44,15 +44,15 @@ export async function GET(request: Request) {
     const tableId = process.env.NEXT_PUBLIC_LARK_TABLE_ID;
 
     if (!appId || !appSecret || !baseId || !tableId) {
-      throw new Error("❌ 飞书配置环境变量未设置");
+      throw new Error('❌ 飞书配置环境变量未设置');
     }
 
     // 获取 tenant_access_token
     const tokenResponse = await fetch(
-      "https://open.feishu.cn/open-apis/auth/v3/tenant_access_token/internal",
+      'https://open.feishu.cn/open-apis/auth/v3/tenant_access_token/internal',
       {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           app_id: appId,
           app_secret: appSecret,
@@ -62,7 +62,7 @@ export async function GET(request: Request) {
 
     const tokenData = await tokenResponse.json();
     if (!tokenResponse.ok || tokenData.code !== 0) {
-      throw new Error(`获取 token 失败: ${tokenData.msg || "未知错误"}`);
+      throw new Error(`获取 token 失败: ${tokenData.msg || '未知错误'}`);
     }
 
     const tenantAccessToken = tokenData.tenant_access_token;
@@ -73,33 +73,33 @@ export async function GET(request: Request) {
       `https://open.feishu.cn/open-apis/bitable/v1/apps/${baseId}/tables/${tableId}/records`
     );
 
-    listUrl.searchParams.set("page_size", "100");
+    listUrl.searchParams.set('page_size', '100');
     // 不要使用 order_by，因为 created_time 字段可能不可用
     // listUrl.searchParams.set("order_by", "[{\"field_name\":\"created_time\",\"desc\":true}]");
 
     const listResponse = await fetch(listUrl.toString(), {
-      method: "GET",
+      method: 'GET',
       headers: {
-        "Authorization": `Bearer ${tenantAccessToken}`,
-        "Content-Type": "application/json",
+        Authorization: `Bearer ${tenantAccessToken}`,
+        'Content-Type': 'application/json',
       },
     });
 
     const listData = (await listResponse.json()) as FeishuListRecordsResponse;
-    console.log("  - 记录数量:", listData.data?.items?.length || 0);
+    console.log('  - 记录数量:', listData.data?.items?.length || 0);
 
     // 🔍 打印完整飞书响应（前3条记录）
     if (listData.data?.items && listData.data.items.length > 0) {
-      console.log("===== 飞书原始数据样例 =====");
-      console.log("样例记录1:", JSON.stringify(listData.data.items[0], null, 2));
+      console.log('===== 飞书原始数据样例 =====');
+      console.log('样例记录1:', JSON.stringify(listData.data.items[0], null, 2));
       if (listData.data.items.length > 1) {
-        console.log("样例记录2:", JSON.stringify(listData.data.items[1], null, 2));
+        console.log('样例记录2:', JSON.stringify(listData.data.items[1], null, 2));
       }
-      console.log("========================");
+      console.log('========================');
     }
 
     if (!listResponse.ok || listData.code !== 0) {
-      throw new Error(`获取记录失败: ${listData.msg || "未知错误"}`);
+      throw new Error(`获取记录失败: ${listData.msg || '未知错误'}`);
     }
 
     // === Step 3: 转换为前端格式并过滤脏数据 ===
@@ -139,28 +139,44 @@ export async function GET(request: Request) {
       }
 
       // 提取商品图片 URL
-      const productImageAttachments = fields['商品图片'] as Array<{ file_token: string; url: string }> | undefined;
-      const productImageUrl = productImageAttachments && productImageAttachments.length > 0
-        ? (productImageAttachments[0].url || `https://open.feishu.cn/open-apis/drive/v1/medias/${productImageAttachments[0].file_token}/download?tenant_access_token=${tenantAccessToken}`)
-        : undefined;
+      const productImageAttachments = fields['商品图片'] as
+        | Array<{ file_token: string; url: string }>
+        | undefined;
+      const productImageUrl =
+        productImageAttachments && productImageAttachments.length > 0
+          ? productImageAttachments[0].url ||
+            `https://open.feishu.cn/open-apis/drive/v1/medias/${productImageAttachments[0].file_token}/download?tenant_access_token=${tenantAccessToken}`
+          : undefined;
 
       // 提取场景图片 URL
-      const sceneImageAttachments = fields['场景图'] as Array<{ file_token: string; url: string }> | undefined;
-      const sceneImageUrl = sceneImageAttachments && sceneImageAttachments.length > 0
-        ? (sceneImageAttachments[0].url || `https://open.feishu.cn/open-apis/drive/v1/medias/${sceneImageAttachments[0].file_token}/download?tenant_access_token=${tenantAccessToken}`)
-        : undefined;
+      const sceneImageAttachments = fields['场景图'] as
+        | Array<{ file_token: string; url: string }>
+        | undefined;
+      const sceneImageUrl =
+        sceneImageAttachments && sceneImageAttachments.length > 0
+          ? sceneImageAttachments[0].url ||
+            `https://open.feishu.cn/open-apis/drive/v1/medias/${sceneImageAttachments[0].file_token}/download?tenant_access_token=${tenantAccessToken}`
+          : undefined;
 
       // 提取结果图片 URL
-      const resultAttachments = fields['生成结果'] as Array<{ file_token: string; url: string }> | undefined;
-      let resultImageUrl = resultAttachments && resultAttachments.length > 0
-        ? (resultAttachments[0].url || `https://open.feishu.cn/open-apis/drive/v1/medias/${resultAttachments[0].file_token}/download?tenant_access_token=${tenantAccessToken}`)
-        : undefined;
+      const resultAttachments = fields['生成结果'] as
+        | Array<{ file_token: string; url: string }>
+        | undefined;
+      let resultImageUrl =
+        resultAttachments && resultAttachments.length > 0
+          ? resultAttachments[0].url ||
+            `https://open.feishu.cn/open-apis/drive/v1/medias/${resultAttachments[0].file_token}/download?tenant_access_token=${tenantAccessToken}`
+          : undefined;
 
       // 如果没有生成结果，尝试其他可能的字段名
       if (!resultImageUrl) {
-        const altResultAttachments = fields['结果图'] as Array<{ file_token: string; url: string }> | undefined;
+        const altResultAttachments = fields['结果图'] as
+          | Array<{ file_token: string; url: string }>
+          | undefined;
         if (altResultAttachments && altResultAttachments.length > 0) {
-          resultImageUrl = altResultAttachments[0].url || `https://open.feishu.cn/open-apis/drive/v1/medias/${altResultAttachments[0].file_token}/download?tenant_access_token=${tenantAccessToken}`;
+          resultImageUrl =
+            altResultAttachments[0].url ||
+            `https://open.feishu.cn/open-apis/drive/v1/medias/${altResultAttachments[0].file_token}/download?tenant_access_token=${tenantAccessToken}`;
         }
       }
 
@@ -168,13 +184,14 @@ export async function GET(request: Request) {
       console.log('  📸 结果图片:', {
         has生成结果: !!resultAttachments,
         生成结果length: resultAttachments?.length || 0,
-        has结果图: !!(fields['结果图']),
+        has结果图: !!fields['结果图'],
         resultImageUrl: resultImageUrl ? 'YES' : 'NO',
       });
 
       // 验证 created_time 是否有效（必须是有效的时间戳，毫秒级）
       const createdTime = item.created_time;
-      const isValidTimestamp = createdTime && createdTime > 1000000000000 && createdTime < 4000000000000;
+      const isValidTimestamp =
+        createdTime && createdTime > 1000000000000 && createdTime < 4000000000000;
 
       // 🔧 临时：如果 created_time 无效，使用当前时间
       const finalCreatedTime = isValidTimestamp ? createdTime : Date.now();
@@ -197,19 +214,18 @@ export async function GET(request: Request) {
       });
     }
 
-    console.log("✅ 获取记录成功，返回", records.length, "条记录");
+    console.log('✅ 获取记录成功，返回', records.length, '条记录');
 
     return NextResponse.json({
       success: true,
       data: records,
     });
-
   } catch (error: any) {
-    console.error("❌ 获取记录失败:", error);
+    console.error('❌ 获取记录失败:', error);
     return NextResponse.json(
       {
         success: false,
-        error: "Internal Server Error",
+        error: 'Internal Server Error',
         details: error.message,
       },
       { status: 500 }

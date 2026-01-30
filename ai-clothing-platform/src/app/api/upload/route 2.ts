@@ -46,7 +46,10 @@ export async function POST(req: NextRequest) {
   } catch (error) {
     console.error('[API] Failed to upload file:', error);
     return NextResponse.json(
-      { error: 'Failed to upload file', details: error instanceof Error ? error.message : 'Unknown error' },
+      {
+        error: 'Failed to upload file',
+        details: error instanceof Error ? error.message : 'Unknown error',
+      },
       { status: 500 }
     );
   }

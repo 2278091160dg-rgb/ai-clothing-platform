@@ -102,7 +102,10 @@ export function ParamsPanel({
   };
 
   // AI对话完成回调
-  const handleAIConversationComplete = (optimizedPrompt: string, _optimizedNegativePrompt?: string) => {
+  const handleAIConversationComplete = (
+    optimizedPrompt: string,
+    _optimizedNegativePrompt?: string
+  ) => {
     onPromptChange(optimizedPrompt);
     onAIConversationComplete?.(optimizedPrompt, _optimizedNegativePrompt);
     setShowAIConversation(false);

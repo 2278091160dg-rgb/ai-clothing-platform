@@ -61,6 +61,7 @@
 **状态更新函数**: `onPromptChange`
 
 **数据流向**:
+
 ```
 AIConversationSidebar (优化后)
     ↓ handleAIConversationComplete(optimizedPrompt)
@@ -70,9 +71,10 @@ AIConversationSidebar (优化后)
 ```
 
 **关键代码** (`ParamsPanel.tsx` 第 103-106 行):
+
 ```tsx
 const handleAIConversationComplete = (optimizedPrompt: string) => {
-  onPromptChange(optimizedPrompt);  // 直接更新 prompt 状态
+  onPromptChange(optimizedPrompt); // 直接更新 prompt 状态
   onAIConversationComplete?.(optimizedPrompt);
   setShowAIConversation(false);
 };
@@ -228,6 +230,7 @@ model PromptConversation {
 ```
 
 **功能**:
+
 1. 保存最终提示词到对话记录
 2. 创建 Task 记录（含 `originalPrompt`, `optimizedPrompt`, `promptSource='AI_OPTIMIZED'`）
 3. 触发 N8N 工作流生图
@@ -240,15 +243,15 @@ model PromptConversation {
 
 ### ✅ 无需新增字段
 
-| 字段 | 状态 | 说明 |
-|-----|------|-----|
-| `originalPrompt` | ✅ 已存在 | 第 73 行 |
-| `optimizedPrompt` | ✅ 已存在 | 第 74 行 |
-| `promptSource` | ✅ 已存在 | 第 75 行 |
-| `promptOptimizationEnabled` | ✅ 已存在 | 第 76 行 |
-| `promptOptimizationId` | ✅ 已存在 | 第 77 行 |
-| `promptOptimizedAt` | ✅ 已存在 | 第 78 行 |
-| `PromptConversation` 表 | ✅ 已存在 | 第 291-318 行 |
+| 字段                        | 状态      | 说明          |
+| --------------------------- | --------- | ------------- |
+| `originalPrompt`            | ✅ 已存在 | 第 73 行      |
+| `optimizedPrompt`           | ✅ 已存在 | 第 74 行      |
+| `promptSource`              | ✅ 已存在 | 第 75 行      |
+| `promptOptimizationEnabled` | ✅ 已存在 | 第 76 行      |
+| `promptOptimizationId`      | ✅ 已存在 | 第 77 行      |
+| `promptOptimizedAt`         | ✅ 已存在 | 第 78 行      |
+| `PromptConversation` 表     | ✅ 已存在 | 第 291-318 行 |
 
 ---
 
@@ -292,23 +295,23 @@ sequenceDiagram
 
 **"AI提示词优化"功能已完整实现**，包括：
 
-| 模块 | 状态 | 说明 |
-|-----|------|-----|
-| 前端 UI | ✅ 已实现 | AI 对话侧边栏 + 按钮集成 |
-| 状态管理 | ✅ 已实现 | 受控组件 + 回调更新 |
-| 数据库 | ✅ 已实现 | 所有必需字段已存在 |
-| API 路由 | ✅ 已实现 | 3 个核心 API 完整 |
-| AI 服务 | ✅ 已实现 | 多轮对话服务 |
+| 模块     | 状态      | 说明                     |
+| -------- | --------- | ------------------------ |
+| 前端 UI  | ✅ 已实现 | AI 对话侧边栏 + 按钮集成 |
+| 状态管理 | ✅ 已实现 | 受控组件 + 回调更新      |
+| 数据库   | ✅ 已实现 | 所有必需字段已存在       |
+| API 路由 | ✅ 已实现 | 3 个核心 API 完整        |
+| AI 服务  | ✅ 已实现 | 多轮对话服务             |
 
 ---
 
 ### 5.2 设计保护评估
 
-| 评估项 | 状态 | 说明 |
-|-------|------|-----|
-| 现有布局 | ✅ 未破坏 | 按钮使用现有 DOM 空间 |
-| 样式一致性 | ✅ 已适配 | 使用主题色和设计系统 |
-| 组件复用 | ✅ 高复用 | 复用现有 Button, Textarea 等 |
+| 评估项     | 状态      | 说明                         |
+| ---------- | --------- | ---------------------------- |
+| 现有布局   | ✅ 未破坏 | 按钮使用现有 DOM 空间        |
+| 样式一致性 | ✅ 已适配 | 使用主题色和设计系统         |
+| 组件复用   | ✅ 高复用 | 复用现有 Button, Textarea 等 |
 
 ---
 
@@ -329,6 +332,7 @@ npm run dev
 #### 选项 B: 功能增强（如果现有功能不满足需求）
 
 如果现有功能需要增强，请明确指出：
+
 - 哪些功能不满足需求？
 - 需要添加什么新功能？
 - 需要修改什么现有行为？
@@ -339,28 +343,28 @@ npm run dev
 
 ### 前端
 
-| 功能 | 文件 | 行号 |
-|-----|------|-----|
-| AI 优化按钮 | `ParamsPanel.tsx` | 160-169 |
-| Prompt 输入框 | `ParamsPanel.tsx` | 171-176 |
-| 状态更新回调 | `ParamsPanel.tsx` | 103-106 |
-| AI 对话侧边栏 | `AIConversationSidebar.tsx` | 全文件 |
+| 功能          | 文件                        | 行号    |
+| ------------- | --------------------------- | ------- |
+| AI 优化按钮   | `ParamsPanel.tsx`           | 160-169 |
+| Prompt 输入框 | `ParamsPanel.tsx`           | 171-176 |
+| 状态更新回调  | `ParamsPanel.tsx`           | 103-106 |
+| AI 对话侧边栏 | `AIConversationSidebar.tsx` | 全文件  |
 
 ### 后端
 
-| 功能 | 文件 | 行号 |
-|-----|------|-----|
-| 创建对话 API | `/api/conversations/route.ts` | 全文件 |
-| 发送消息 API | `/api/conversations/[id]/messages/route.ts` | 全文件 |
-| 应用提示词 API | `/api/conversations/[id]/apply/route.ts` | 全文件 |
-| Task 创建逻辑 | `create-task.handler.ts` | 265-276 |
+| 功能           | 文件                                        | 行号    |
+| -------------- | ------------------------------------------- | ------- |
+| 创建对话 API   | `/api/conversations/route.ts`               | 全文件  |
+| 发送消息 API   | `/api/conversations/[id]/messages/route.ts` | 全文件  |
+| 应用提示词 API | `/api/conversations/[id]/apply/route.ts`    | 全文件  |
+| Task 创建逻辑  | `create-task.handler.ts`                    | 265-276 |
 
 ### 数据库
 
-| 模型 | 文件 | 行号 |
-|-----|------|-----|
-| Task 表 | `prisma/schema.prisma` | 52-126 |
-| PromptSource 枚举 | `prisma/schema.prisma` | 137-142 |
+| 模型                  | 文件                   | 行号    |
+| --------------------- | ---------------------- | ------- |
+| Task 表               | `prisma/schema.prisma` | 52-126  |
+| PromptSource 枚举     | `prisma/schema.prisma` | 137-142 |
 | PromptConversation 表 | `prisma/schema.prisma` | 291-318 |
 
 ---

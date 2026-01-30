@@ -17,7 +17,7 @@ export async function uploadFileToDrive(file: File): Promise<{ fileToken: string
   const buffer = Buffer.from(await file.arrayBuffer());
 
   try {
-    const result = await client.drive.media.uploadAll({
+    const result = (await client.drive.media.uploadAll({
       data: {
         file_name: file.name,
         parent_type: 'base_global',
@@ -25,7 +25,7 @@ export async function uploadFileToDrive(file: File): Promise<{ fileToken: string
         size: file.size,
         file: buffer,
       },
-    }) as unknown as { code?: number; msg?: string; file_token?: string };
+    })) as unknown as { code?: number; msg?: string; file_token?: string };
 
     if (result.code !== 0 || !result.file_token) {
       throw new Error(`上传失败: ${result.msg || '未知错误'}`);
@@ -54,11 +54,11 @@ export async function createBitableRecord(params: {
 
   // 构建记录数据
   const fields: Record<string, unknown> = {
-    '商品图片': [{ file_token: params.productToken }],
-    '提示词': params.prompt,
-    '尺寸比例': params.ratio,
-    'AI模型': params.model,
-    '状态': '待处理',
+    商品图片: [{ file_token: params.productToken }],
+    提示词: params.prompt,
+    尺寸比例: params.ratio,
+    AI模型: params.model,
+    状态: '待处理',
   };
 
   if (params.sceneToken) {
@@ -70,7 +70,7 @@ export async function createBitableRecord(params: {
   }
 
   try {
-    const response = await client.bitable.appTableRecord.create({
+    const response = (await client.bitable.appTableRecord.create({
       path: {
         app_token: appToken,
         table_id: tableId,
@@ -78,7 +78,7 @@ export async function createBitableRecord(params: {
       data: {
         fields: fields as Record<string, never>,
       },
-    }) as unknown as { code?: number; msg?: string; data?: { record?: { record_id?: string } } };
+    })) as unknown as { code?: number; msg?: string; data?: { record?: { record_id?: string } } };
 
     if (response.code !== 0 || !response.data?.record?.record_id) {
       throw new Error(`创建记录失败: ${response.msg || '未返回 record_id'}`);
@@ -102,13 +102,17 @@ export async function getRecordStatus(recordId: string): Promise<{
   const appToken = baseId;
 
   try {
-    const response = await client.bitable.appTableRecord.get({
+    const response = (await client.bitable.appTableRecord.get({
       path: {
         app_token: appToken,
         table_id: tableId,
         record_id: recordId,
       },
-    }) as unknown as { code?: number; msg?: string; data?: { record?: { fields?: Record<string, unknown> } } };
+    })) as unknown as {
+      code?: number;
+      msg?: string;
+      data?: { record?: { fields?: Record<string, unknown> } };
+    };
 
     if (response.code !== 0 || !response.data?.record?.fields) {
       throw new Error(`查询记录失败: ${response.msg || '未知错误'}`);

@@ -15,10 +15,11 @@ import type { TaskData } from '@/lib/types';
 interface TaskHistoryPanelProps {
   tasks: TaskData[];
   onPreview: (src: string) => void;
+  onLoadToMainView?: (task: TaskData) => void; // 🔧 新增：加载任务到主视图
   onClearHistory: () => void;
 }
 
-export function TaskHistoryPanel({ tasks, onPreview, onClearHistory }: TaskHistoryPanelProps) {
+export function TaskHistoryPanel({ tasks, onPreview, onLoadToMainView, onClearHistory }: TaskHistoryPanelProps) {
   const [isBatchMode, setIsBatchMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
@@ -106,7 +107,9 @@ export function TaskHistoryPanel({ tasks, onPreview, onClearHistory }: TaskHisto
                   onClick={handleToggleSelectAll}
                   className="text-xs text-muted-foreground hover:text-foreground font-medium transition-colors"
                 >
-                  {selectedIds.size === tasks.filter(t => t.status === 'completed').length ? '取消全选' : '全选'}
+                  {selectedIds.size === tasks.filter(t => t.status === 'completed').length
+                    ? '取消全选'
+                    : '全选'}
                 </button>
                 <button
                   onClick={handleToggleBatchMode}
@@ -139,6 +142,7 @@ export function TaskHistoryPanel({ tasks, onPreview, onClearHistory }: TaskHisto
         <TaskList
           tasks={tasks}
           onPreview={onPreview}
+          onLoadToMainView={onLoadToMainView}
           isBatchMode={isBatchMode}
           selectedIds={selectedIds}
           onToggleSelection={handleToggleSelection}

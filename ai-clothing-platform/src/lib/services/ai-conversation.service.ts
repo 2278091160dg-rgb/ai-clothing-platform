@@ -257,7 +257,8 @@ class MockAIConversationService {
     const result = {
       message: response,
       suggestedPrompt: `${promptToOptimize}，professional fashion photography, soft natural lighting, clean background, high detail, commercial product shot, 8k quality, studio lighting`,
-      suggestedNegativePrompt: 'blurry, low quality, bad anatomy, distorted, watermark, text, logo, bad composition, oversaturated, ugly, duplicate',
+      suggestedNegativePrompt:
+        'blurry, low quality, bad anatomy, distorted, watermark, text, logo, bad composition, oversaturated, ugly, duplicate',
     };
 
     console.log('[MockAI] Returning optimization response:', {

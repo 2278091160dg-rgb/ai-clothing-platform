@@ -12,15 +12,63 @@ import { GENERATION_STEPS, formatTimeRemaining } from '@/lib/progress';
 import { ImageIcon, Loader2, CheckCircle2, XCircle, Download, Eye, Clock, Zap } from 'lucide-react';
 import { ImagePreview } from '@/components/image-preview';
 
+// 格式化任务时间 - 显示具体时间
+function formatTaskTime(date: Date): string {
+  const now = new Date();
+  const taskDate = new Date(date);
+  const diffMs = now.getTime() - taskDate.getTime();
+  const diffMins = Math.floor(diffMs / 60000);
+  const diffHours = Math.floor(diffMs / 3600000);
+  const diffDays = Math.floor(diffMs / 86400000);
+
+  // 如果是今天，显示具体时间
+  if (taskDate.toDateString() === now.toDateString()) {
+    return `今天 ${taskDate.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })}`;
+  }
+
+  // 如果是昨天
+  if (diffDays === 1) {
+    return `昨天 ${taskDate.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })}`;
+  }
+
+  // 如果是前天
+  if (diffDays === 2) {
+    return `前天 ${taskDate.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })}`;
+  }
+
+  // 如果在7天内
+  if (diffDays < 7) {
+    const weekdays = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
+    const weekday = weekdays[taskDate.getDay()];
+    return `${weekday} ${taskDate.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })}`;
+  }
+
+  // 超过7天，显示完整日期
+  return taskDate.toLocaleString('zh-CN', {
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+}
+
 interface TaskListProps {
   tasks: TaskData[];
   onPreview?: (src: string) => void;
+  onLoadToMainView?: (task: TaskData) => void; // 🔧 新增：点击任务加载到主视图
   isBatchMode?: boolean;
   selectedIds?: Set<string>;
   onToggleSelection?: (taskId: string, selected: boolean) => void;
 }
 
-export function TaskList({ tasks, onPreview, isBatchMode = false, selectedIds = new Set(), onToggleSelection }: TaskListProps) {
+export function TaskList({
+  tasks,
+  onPreview,
+  onLoadToMainView,
+  isBatchMode = false,
+  selectedIds = new Set(),
+  onToggleSelection,
+}: TaskListProps) {
   // 预览状态
   const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null);
 
@@ -35,7 +83,9 @@ export function TaskList({ tasks, onPreview, isBatchMode = false, selectedIds = 
       <div className="flex-1 flex items-center justify-center p-8">
         <div className="text-center">
           <ImageIcon size={48} className="mx-auto mb-3 opacity-20 text-muted-foreground" />
-          <p className="text-sm text-muted-foreground font-medium">暂无历史记录，快去生成第一张图片吧！</p>
+          <p className="text-sm text-muted-foreground font-medium">
+            暂无历史记录，快去生成第一张图片吧！
+          </p>
         </div>
       </div>
     );
@@ -49,6 +99,7 @@ export function TaskList({ tasks, onPreview, isBatchMode = false, selectedIds = 
             key={task.id}
             task={task}
             onPreview={handleOpenPreview}
+            onLoadToMainView={onLoadToMainView}
             isBatchMode={isBatchMode}
             isSelected={selectedIds.has(task.id)}
             onToggleSelection={onToggleSelection}
@@ -76,19 +127,37 @@ export function TaskList({ tasks, onPreview, isBatchMode = false, selectedIds = 
 interface TaskItemProps {
   task: TaskData;
   onPreview?: (src: string) => void;
+  onLoadToMainView?: (task: TaskData) => void; // 🔧 新增：加载到主视图回调
   isBatchMode?: boolean;
   isSelected?: boolean;
   onToggleSelection?: (taskId: string, selected: boolean) => void;
 }
 
-function TaskItem({ task, onPreview, isBatchMode = false, isSelected = false, onToggleSelection }: TaskItemProps) {
+function TaskItem({
+  task,
+  onPreview,
+  onLoadToMainView,
+  isBatchMode = false,
+  isSelected = false,
+  onToggleSelection,
+}: TaskItemProps) {
   const isPending = task.status === 'pending';
   const isProcessing = task.status === 'processing' || task.status === 'generating';
   const isCompleted = task.status === 'completed';
   const isFailed = task.status === 'failed';
 
   return (
-    <div className="rounded-xl bg-card/40 border border-border/20 p-4 hover:bg-card/60 hover:border-border/30 transition-all duration-200">
+    <div
+      className={`rounded-xl bg-card/40 border border-border/20 p-4 hover:bg-card/60 hover:border-border/30 transition-all duration-200 ${
+        isCompleted && onLoadToMainView ? 'cursor-pointer' : ''
+      }`}
+      onClick={() => {
+        // 🔧 只有已完成的任务才支持点击加载到主视图
+        if (isCompleted && onLoadToMainView) {
+          onLoadToMainView(task);
+        }
+      }}
+    >
       {/* 任务头部 */}
       <div className="flex items-start gap-3 mb-3">
         {/* 批量模式复选框 */}
@@ -105,7 +174,9 @@ function TaskItem({ task, onPreview, isBatchMode = false, isSelected = false, on
           className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary/10 to-primary/20 flex items-center justify-center overflow-hidden flex-shrink-0 border border-primary/10 cursor-pointer hover:ring-2 hover:ring-primary/50 transition-all"
           onClick={() => {
             // 优先打开结果图，其次商品图
-            const imageUrl = task.resultImages?.[0] || (typeof task.productImage === 'string' ? task.productImage : null);
+            const imageUrl =
+              task.resultImages?.[0] ||
+              (typeof task.productImage === 'string' ? task.productImage : null);
             if (imageUrl && onPreview) {
               onPreview(imageUrl);
             }
@@ -139,10 +210,25 @@ function TaskItem({ task, onPreview, isBatchMode = false, isSelected = false, on
 
         {/* 任务信息 */}
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-semibold text-foreground truncate">
-            {task.productName || (task.prompt ? (task.prompt.length > 15 ? task.prompt.slice(0, 15) + '...' : task.prompt) : `任务 ${task.id.slice(0, 6)}`)}
+          <div className="flex items-center gap-2 mb-1">
+            <p className="text-sm font-semibold text-foreground truncate">
+              {task.productName ||
+                (task.prompt
+                  ? task.prompt.length > 15
+                    ? task.prompt.slice(0, 15) + '...'
+                    : task.prompt
+                  : `任务 ${task.id.slice(0, 6)}`)}
+            </p>
+          </div>
+          <p className="text-xs text-muted-foreground truncate mt-1">
+            {task.prompt || '无提示词'}
           </p>
-          <p className="text-xs text-muted-foreground truncate mt-1">{task.prompt || '无提示词'}</p>
+          {/* 具体创建时间 */}
+          {task.createdAt && (
+            <p className="text-[10px] text-muted-foreground mt-0.5">
+              {formatTaskTime(task.createdAt)}
+            </p>
+          )}
         </div>
 
         {/* 状态图标 */}
@@ -249,12 +335,22 @@ function TaskItem({ task, onPreview, isBatchMode = false, isSelected = false, on
   );
 }
 
-// 处理下载
-function handleDownload(task: TaskData) {
+// 处理下载 - 使用代理避免飞书授权问题
+async function handleDownload(task: TaskData) {
   if (task.resultImages && task.resultImages.length > 0) {
-    const link = document.createElement('a');
-    link.href = task.resultImages[0];
-    link.download = `task-${task.id}.png`;
-    link.click();
+    try {
+      const imageUrl = task.resultImages[0];
+      const proxyUrl = `/api/image-proxy?url=${encodeURIComponent(imageUrl)}`;
+      const response = await fetch(proxyUrl);
+      const blob = await response.blob();
+
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = `task-${task.id}-${Date.now()}.png`;
+      link.click();
+      URL.revokeObjectURL(link.href);
+    } catch (error) {
+      console.error('下载失败:', error);
+    }
   }
 }

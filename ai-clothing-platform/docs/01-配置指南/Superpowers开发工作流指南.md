@@ -51,11 +51,13 @@ graph LR
 ```
 
 **示例场景**:
+
 - 新增 AI 模型支持
 - 添加批量操作功能
 - 实现新的生成模式
 
 **关键步骤**:
+
 1. **brainstorming**: 探索用户意图、技术方案、边界情况
 2. **writing-plans**: 生成详细实现计划（文件、API、数据模型）
 3. **executing-plans**: 按计划执行，有检查点
@@ -80,11 +82,13 @@ graph LR
 ```
 
 **示例场景**:
+
 - TypeScript 类型错误
 - API 调用失败
 - 状态更新不生效
 
 **关键步骤**:
+
 1. **Phase 1 - 根因分析**:
    - 读取完整错误消息
    - 检查最近变更
@@ -104,6 +108,7 @@ graph LR
    - 验证成功
 
 **实际案例** (2026-01-30 构建错误修复):
+
 ```
 错误: Type 'string' is not assignable to type 'PromptSource'
 根因: CreateTaskInput 中 promptSource 是 string，但 Prisma 期望枚举
@@ -129,11 +134,13 @@ graph LR
 ```
 
 **示例场景**:
+
 - 迁移到新状态管理
 - API 层重构
 - 数据库 schema 变更
 
 **关键步骤**:
+
 1. **writing-plans**: 设计重构方案、风险评估
 2. **using-git-worktrees**: 在独立 worktree 工作
 3. **executing-plans**: 执行重构
@@ -160,11 +167,13 @@ graph LR
 ```
 
 **示例场景**:
+
 - 同时修复多个文件
 - 并行更新文档和代码
 - 同时处理前端和后端
 
 **使用方式**:
+
 ```
 并行任务:
 1. 修复 TypeScript 类型错误
@@ -193,15 +202,16 @@ graph LR
 
 **部署前检查清单**:
 
-| 检查项 | 命令 | 成功标准 |
-|-------|------|---------|
-| 构建成功 | `npm run build` | ✓ Compiled successfully |
-| 代码格式化 | `npm run format` | 无错误 |
-| Lint 通过 | `npm run lint` | 0 problems |
-| 清理日志 | 检查 `console.log` | 仅保留 error/warn |
-| 文件大小 | 检查新文件 | < 250 行 |
+| 检查项     | 命令               | 成功标准                |
+| ---------- | ------------------ | ----------------------- |
+| 构建成功   | `npm run build`    | ✓ Compiled successfully |
+| 代码格式化 | `npm run format`   | 无错误                  |
+| Lint 通过  | `npm run lint`     | 0 problems              |
+| 清理日志   | 检查 `console.log` | 仅保留 error/warn       |
+| 文件大小   | 检查新文件         | < 250 行                |
 
 **环境变量检查**:
+
 ```bash
 # 本地开发
 DATABASE_URL=...          # SQLite 或 PostgreSQL
@@ -260,6 +270,7 @@ FEISHU_APP_SECRET=...     # 飞书密钥
 **症状**: `npm run build` 报错
 
 **处理流程**:
+
 1. 使用 `systematic-debugging`
 2. 读取完整错误消息
 3. 定位错误文件和行号
@@ -267,11 +278,13 @@ FEISHU_APP_SECRET=...     # 飞书密钥
 5. 重新构建验证
 
 **常见类型错误**:
+
 - 枚举类型: `string` vs `EnumType`
 - 可空类型: `string` vs `string | null`
 - JSON 字段: `Record<string, unknown>` vs `Prisma.InputJsonValue`
 
 **修复模式**:
+
 ```typescript
 // 错误: promptSource: string
 data: { ...data }  // ❌
@@ -287,6 +300,7 @@ data: { ...data } as Prisma.TaskUncheckedCreateInput  // ✓
 **症状**: 飞书记录创建/更新失败
 
 **处理流程**:
+
 1. 使用 `systematic-debugging`
 2. 检查 `SyncLog` 表中的错误记录
 3. 验证飞书配置 (APP_ID, APP_SECRET)
@@ -294,6 +308,7 @@ data: { ...data } as Prisma.TaskUncheckedCreateInput  // ✓
 5. 测试熔断器状态
 
 **检查命令**:
+
 ```bash
 curl http://localhost:3000/api/monitoring/circuit-breaker
 ```
@@ -306,11 +321,11 @@ curl http://localhost:3000/api/monitoring/circuit-breaker
 
 **常见模式**:
 
-| 问题 | 原因 | 解决方案 |
-|-----|------|---------|
-| `string` 不能赋值给枚举 | 类型定义不匹配 | `as Prisma.EnumType` |
-| `unknown` 类型访问属性 | 缺少类型收窄 | `event instanceof Error` |
-| JSON 字段类型错误 | Prisma 特殊类型 | `as Prisma.InputJsonValue` |
+| 问题                    | 原因            | 解决方案                   |
+| ----------------------- | --------------- | -------------------------- |
+| `string` 不能赋值给枚举 | 类型定义不匹配  | `as Prisma.EnumType`       |
+| `unknown` 类型访问属性  | 缺少类型收窄    | `event instanceof Error`   |
+| JSON 字段类型错误       | Prisma 特殊类型 | `as Prisma.InputJsonValue` |
 
 ---
 
@@ -319,6 +334,7 @@ curl http://localhost:3000/api/monitoring/circuit-breaker
 ### 代码提交前
 
 1. **运行验证**:
+
 ```bash
 npm run build    # 构建成功
 npm run format   # 格式化代码
@@ -326,10 +342,12 @@ npm run lint     # 无 lint 错误
 ```
 
 2. **移除调试代码**:
+
 - 删除 `console.log` (保留 `console.error`, `console.warn`)
 - 移除 `.old`, `.bak`, `.disabled` 文件
 
 3. **文件大小检查**:
+
 - 页面组件: ≤ 250 行
 - 功能组件: ≤ 200 行
 - UI 组件: ≤ 150 行
@@ -338,6 +356,7 @@ npm run lint     # 无 lint 错误
 ### 代码审查时
 
 使用 `requesting-code-review` 技能:
+
 1. 说明变更内容
 2. 标注关键修改
 3. 附带测试结果
@@ -346,6 +365,7 @@ npm run lint     # 无 lint 错误
 ### 接收审查反馈时
 
 使用 `receiving-code-review` 技能:
+
 1. 理解反馈意图
 2. 技术验证建议
 3. 不盲目实施
@@ -356,38 +376,47 @@ npm run lint     # 无 lint 错误
 ## 技能快速参考
 
 ### brainstorming
+
 **何时使用**: 创建功能、添加组件前的需求探索
 **输出**: 用户意图、需求列表、设计建议、边界情况
 
 ### systematic-debugging
+
 **何时使用**: 任何 Bug、测试失败、异常行为
 **输出**: 根本原因、修复方案、验证步骤
 
 ### writing-plans
+
 **何时使用**: 有明确需求的多步骤任务
 **输出**: 实现计划、文件列表、API 设计、数据模型
 
 ### executing-plans
+
 **何时使用**: 按照已有计划执行
 **输出**: 分步实现、检查点验证
 
 ### verification-before-completion
+
 **何时使用**: 声称工作完成前
 **输出**: 验证命令、测试结果、确认完成
 
 ### requesting-code-review
+
 **何时使用**: 完成任务、实现主要功能后
 **输出**: 审查请求、变更说明、测试证据
 
 ### receiving-code-review
+
 **何时使用**: 收到审查反馈时
 **输出**: 理解反馈、技术验证、讨论方案
 
 ### dispatching-parallel-agents
+
 **何时使用**: 2+ 个独立任务可同时进行
 **输出**: 并行执行、结果汇总
 
 ### using-git-worktrees
+
 **何时使用**: 需要隔离工作空间的特性开发
 **输出**: 独立 worktree、安全验证
 
@@ -444,6 +473,6 @@ try {
 
 ## 更新日志
 
-| 日期 | 版本 | 变更 |
-|-----|------|-----|
+| 日期       | 版本 | 变更                                         |
+| ---------- | ---- | -------------------------------------------- |
 | 2026-01-30 | v1.0 | 初始版本，基于 systematic-debugging 实战经验 |

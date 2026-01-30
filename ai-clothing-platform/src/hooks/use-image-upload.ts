@@ -14,6 +14,7 @@ interface UseImageUploadReturn {
   resetImages: () => void;
   clearProductImage: () => void;
   clearSceneImage: () => void;
+  setSceneImagePreviewOnly: (url: string) => void;
 }
 
 export function useImageUpload(): UseImageUploadReturn {
@@ -69,6 +70,11 @@ export function useImageUpload(): UseImageUploadReturn {
     setSceneImagePreview('');
   }, []);
 
+  // 设置场景图预览（用于历史记录加载）
+  const setSceneImagePreviewOnly = useCallback((url: string) => {
+    setSceneImagePreview(url);
+  }, []);
+
   return {
     productImage,
     productImagePreview,
@@ -79,5 +85,6 @@ export function useImageUpload(): UseImageUploadReturn {
     resetImages,
     clearProductImage,
     clearSceneImage,
+    setSceneImagePreviewOnly,
   };
 }

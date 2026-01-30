@@ -70,7 +70,9 @@ export function useFeishuTaskManagement() {
   };
 
   // 查询任务状态
-  const checkTaskStatus = async (recordId: string): Promise<{ status: string; resultUrl: string | null }> => {
+  const checkTaskStatus = async (
+    recordId: string
+  ): Promise<{ status: string; resultUrl: string | null }> => {
     const response = await fetch(`/api/check-status?record_id=${recordId}`);
     const data = await response.json();
 
@@ -85,120 +87,138 @@ export function useFeishuTaskManagement() {
   };
 
   // 开始轮询任务状态
-  const startPolling = useCallback((recordId: string) => {
-    // 清除之前的轮询
-    if (pollingIntervalId) {
-      clearInterval(pollingIntervalId);
-    }
+  const startPolling = useCallback(
+    (recordId: string) => {
+      // 清除之前的轮询
+      if (pollingIntervalId) {
+        clearInterval(pollingIntervalId);
+      }
 
-    pollingRecordIdRef.current = recordId;
+      pollingRecordIdRef.current = recordId;
 
-    const intervalId = setInterval(async () => {
-      try {
-        const { status, resultUrl } = await checkTaskStatus(recordId);
+      const intervalId = setInterval(async () => {
+        try {
+          const { status, resultUrl } = await checkTaskStatus(recordId);
 
-        setCurrentTask(prev => {
-          if (!prev) return null;
+          setCurrentTask(prev => {
+            if (!prev) return null;
 
-          // 更新状态
-          let newProgress = prev.progress;
-          if (status === '处理中' || status === 'processing') {
-            newProgress = Math.min(prev.progress + 10, 90);
-          } else if (status === '完成' || status === 'completed') {
-            newProgress = 100;
+            // 更新状态
+            let newProgress = prev.progress;
+            if (status === '处理中' || status === 'processing') {
+              newProgress = Math.min(prev.progress + 10, 90);
+            } else if (status === '完成' || status === 'completed') {
+              newProgress = 100;
+            }
+
+            return {
+              ...prev,
+              status:
+                status === '完成' || status === 'completed'
+                  ? 'completed'
+                  : status === '处理中' || status === 'processing'
+                    ? 'processing'
+                    : status === '失败' || status === 'failed'
+                      ? 'failed'
+                      : 'pending',
+              progress: newProgress,
+              ...(resultUrl && { resultUrl }),
+            };
+          });
+
+          // 如果完成或失败，停止轮询
+          if (
+            status === '完成' ||
+            status === 'completed' ||
+            status === '失败' ||
+            status === 'failed'
+          ) {
+            clearInterval(intervalId);
+            setPollingIntervalId(null);
+            pollingRecordIdRef.current = null;
           }
-
-          return {
-            ...prev,
-            status: (status === '完成' || status === 'completed') ? 'completed' :
-                    (status === '处理中' || status === 'processing') ? 'processing' :
-                    (status === '失败' || status === 'failed') ? 'failed' : 'pending',
-            progress: newProgress,
-            ...(resultUrl && { resultUrl }),
-          };
-        });
-
-        // 如果完成或失败，停止轮询
-        if (status === '完成' || status === 'completed' || status === '失败' || status === 'failed') {
+        } catch (error) {
+          console.error('轮询任务状态失败:', error);
+          setCurrentTask(prev => {
+            if (!prev) return null;
+            return {
+              ...prev,
+              status: 'failed',
+              error: error instanceof Error ? error.message : '未知错误',
+            };
+          });
           clearInterval(intervalId);
           setPollingIntervalId(null);
           pollingRecordIdRef.current = null;
         }
-      } catch (error) {
-        console.error('轮询任务状态失败:', error);
-        setCurrentTask(prev => {
-          if (!prev) return null;
-          return {
-            ...prev,
-            status: 'failed',
-            error: error instanceof Error ? error.message : '未知错误',
-          };
-        });
-        clearInterval(intervalId);
-        setPollingIntervalId(null);
-        pollingRecordIdRef.current = null;
-      }
-    }, 3000); // 每3秒轮询一次
+      }, 3000); // 每3秒轮询一次
 
-    setPollingIntervalId(intervalId);
-  }, [pollingIntervalId]);
+      setPollingIntervalId(intervalId);
+    },
+    [pollingIntervalId]
+  );
 
   // 执行完整流程：上传 -> 创建任务 -> 轮询
-  const executeGeneration = useCallback(async (
-    productImage: File,
-    sceneImage: File | null,
-    prompt: string,
-    negativePrompt: string,
-    ratio: string,
-    model: string
-  ) => {
-    try {
-      // 重置当前任务状态
-      setCurrentTask({
-        id: Date.now().toString(),
-        status: 'pending',
-        progress: 0,
-        createdAt: new Date(),
-      });
+  const executeGeneration = useCallback(
+    async (
+      productImage: File,
+      sceneImage: File | null,
+      prompt: string,
+      negativePrompt: string,
+      ratio: string,
+      model: string
+    ) => {
+      try {
+        // 重置当前任务状态
+        setCurrentTask({
+          id: Date.now().toString(),
+          status: 'pending',
+          progress: 0,
+          createdAt: new Date(),
+        });
 
-      // 第一步：并行上传图片
-      const [productToken, sceneToken] = await Promise.all([
-        uploadFile(productImage),
-        sceneImage ? uploadFile(sceneImage) : Promise.resolve(undefined),
-      ]);
+        // 第一步：并行上传图片
+        const [productToken, sceneToken] = await Promise.all([
+          uploadFile(productImage),
+          sceneImage ? uploadFile(sceneImage) : Promise.resolve(undefined),
+        ]);
 
-      // 更新进度
-      setCurrentTask(prev => prev ? { ...prev, progress: 20 } : null);
+        // 更新进度
+        setCurrentTask(prev => (prev ? { ...prev, progress: 20 } : null));
 
-      // 第二步：创建任务
-      const recordId = await createTask({
-        productToken,
-        sceneToken,
-        prompt,
-        negativePrompt,
-        ratio,
-        model,
-      });
+        // 第二步：创建任务
+        const recordId = await createTask({
+          productToken,
+          sceneToken,
+          prompt,
+          negativePrompt,
+          ratio,
+          model,
+        });
 
-      // 更新进度
-      setCurrentTask(prev => prev ? { ...prev, id: recordId, progress: 30, status: 'processing' } : null);
+        // 更新进度
+        setCurrentTask(prev =>
+          prev ? { ...prev, id: recordId, progress: 30, status: 'processing' } : null
+        );
 
-      // 第三步：开始轮询
-      startPolling(recordId);
+        // 第三步：开始轮询
+        startPolling(recordId);
 
-      return { success: true, recordId };
-    } catch (error) {
-      const errorMsg = error instanceof Error ? error.message : '未知错误';
-      setCurrentTask({
-        id: Date.now().toString(),
-        status: 'failed',
-        progress: 0,
-        error: errorMsg,
-        createdAt: new Date(),
-      });
-      return { success: false, error: errorMsg };
-    }
-  }, [startPolling]);
+        return { success: true, recordId };
+      } catch (error) {
+        const errorMsg = error instanceof Error ? error.message : '未知错误';
+        setCurrentTask({
+          id: Date.now().toString(),
+          status: 'failed',
+          progress: 0,
+          error: errorMsg,
+          createdAt: new Date(),
+        });
+        return { success: false, error: errorMsg };
+      }
+    },
+    [startPolling]
+  );
 
   // 停止轮询
   const stopPolling = useCallback(() => {

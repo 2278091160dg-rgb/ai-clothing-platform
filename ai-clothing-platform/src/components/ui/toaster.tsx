@@ -1,6 +1,6 @@
-'use client'
+'use client';
 
-import { Toaster as SonnerToaster } from 'sonner'
+import { Toaster as SonnerToaster } from 'sonner';
 
 export function Toaster() {
   return (
@@ -15,5 +15,5 @@ export function Toaster() {
         },
       }}
     />
-  )
+  );
 }

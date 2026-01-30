@@ -178,7 +178,10 @@ export function AIConversationSidebar({
 
       // 如果有建议的反向提示词，显示出来
       if (data.data.suggestedNegativePrompt) {
-        console.log('[Frontend] Setting suggested negative prompt:', data.data.suggestedNegativePrompt);
+        console.log(
+          '[Frontend] Setting suggested negative prompt:',
+          data.data.suggestedNegativePrompt
+        );
         setSuggestedNegativePrompt(data.data.suggestedNegativePrompt);
       }
     } catch (error) {
@@ -343,7 +346,14 @@ export function AIConversationSidebar({
                 </>
               )}
             </Button>
-            <Button onClick={() => { setSuggestedPrompt(null); setSuggestedNegativePrompt(null); }} variant="outline" size="sm">
+            <Button
+              onClick={() => {
+                setSuggestedPrompt(null);
+                setSuggestedNegativePrompt(null);
+              }}
+              variant="outline"
+              size="sm"
+            >
               重新优化
             </Button>
           </div>
