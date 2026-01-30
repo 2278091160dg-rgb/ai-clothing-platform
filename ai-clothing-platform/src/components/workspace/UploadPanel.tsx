@@ -2,7 +2,7 @@
  * UploadPanel - 图片上传面板
  */
 
-import { Cloud, Image as ImageIcon } from 'lucide-react';
+import { Cloud, Image as ImageIcon, X } from 'lucide-react';
 import Image from 'next/image';
 
 type GenerationMode = 'scene' | 'tryon' | 'wear' | 'combine';
@@ -37,6 +37,8 @@ interface UploadPanelProps {
   sceneImagePreview: string;
   onProductUpload: () => void;
   onSceneUpload: () => void;
+  onProductClear?: () => void;
+  onSceneClear?: () => void;
 }
 
 export function UploadPanel({
@@ -47,6 +49,8 @@ export function UploadPanel({
   sceneImagePreview,
   onProductUpload,
   onSceneUpload,
+  onProductClear,
+  onSceneClear,
 }: UploadPanelProps) {
   // 根据模式获取标签
   const firstUpload = getFirstUploadLabel(mode);
@@ -61,20 +65,39 @@ export function UploadPanel({
       <div className="grid grid-cols-2 gap-2">
         {/* 白底图上传 */}
         <div
-          onClick={onProductUpload}
+          onClick={productImagePreview ? undefined : onProductUpload}
           className={`w-full aspect-square rounded-xl overflow-hidden flex flex-col items-center justify-center transition-all cursor-pointer ${
             productImage ? 'upload-zone-filled relative bg-card' : 'upload-zone'
           }`}
         >
           {productImagePreview ? (
-            <Image
-              src={productImagePreview}
-              alt="白底图预览"
-              width={200}
-              height={200}
-              className="w-full h-full object-contain p-2"
-              unoptimized
-            />
+            <>
+              <Image
+                src={productImagePreview}
+                alt="白底图预览"
+                width={200}
+                height={200}
+                className="w-full h-full object-contain p-2"
+                unoptimized
+              />
+              {/* 删除按钮 */}
+              {onProductClear && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onProductClear();
+                  }}
+                  className="absolute top-1 right-1 w-6 h-6 bg-red-500 hover:bg-red-600 rounded-full flex items-center justify-center shadow-lg transition-all hover:scale-110"
+                  title="删除图片"
+                >
+                  <X size={14} className="text-white" />
+                </button>
+              )}
+              {/* 重新上传提示 */}
+              <div className="absolute bottom-0 left-0 right-0 bg-black/60 backdrop-blur-sm text-white text-[10px] py-1 text-center">
+                点击重新上传
+              </div>
+            </>
           ) : (
             <div className="text-center">
               <Cloud size={32} className="mx-auto mb-1 opacity-40" />
@@ -90,20 +113,39 @@ export function UploadPanel({
 
         {/* 辅助图上传 */}
         <div
-          onClick={onSceneUpload}
+          onClick={sceneImagePreview ? undefined : onSceneUpload}
           className={`w-full aspect-square rounded-xl overflow-hidden flex flex-col items-center justify-center transition-all cursor-pointer ${
             sceneImage ? 'upload-zone-filled relative bg-card' : 'upload-zone'
           }`}
         >
           {sceneImagePreview ? (
-            <Image
-              src={sceneImagePreview}
-              alt="辅助图预览"
-              width={200}
-              height={200}
-              className="w-full h-full object-contain p-2"
-              unoptimized
-            />
+            <>
+              <Image
+                src={sceneImagePreview}
+                alt="辅助图预览"
+                width={200}
+                height={200}
+                className="w-full h-full object-contain p-2"
+                unoptimized
+              />
+              {/* 删除按钮 */}
+              {onSceneClear && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onSceneClear();
+                  }}
+                  className="absolute top-1 right-1 w-6 h-6 bg-red-500 hover:bg-red-600 rounded-full flex items-center justify-center shadow-lg transition-all hover:scale-110"
+                  title="删除图片"
+                >
+                  <X size={14} className="text-white" />
+                </button>
+              )}
+              {/* 重新上传提示 */}
+              <div className="absolute bottom-0 left-0 right-0 bg-black/60 backdrop-blur-sm text-white text-[10px] py-1 text-center">
+                点击重新上传
+              </div>
+            </>
           ) : (
             <div className="text-center">
               <ImageIcon size={32} className="mx-auto mb-1 opacity-40" />

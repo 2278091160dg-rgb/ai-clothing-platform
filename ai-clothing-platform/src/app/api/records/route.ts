@@ -74,7 +74,8 @@ export async function GET(request: Request) {
     );
 
     listUrl.searchParams.set("page_size", "100");
-    listUrl.searchParams.set("order_by", "[{\"field_name\":\"created_time\",\"desc\":true}]");
+    // 不要使用 order_by，因为 created_time 字段可能不可用
+    // listUrl.searchParams.set("order_by", "[{\"field_name\":\"created_time\",\"desc\":true}]");
 
     const listResponse = await fetch(listUrl.toString(), {
       method: "GET",
@@ -87,6 +88,16 @@ export async function GET(request: Request) {
     const listData = (await listResponse.json()) as FeishuListRecordsResponse;
     console.log("  - 记录数量:", listData.data?.items?.length || 0);
 
+    // 🔍 打印完整飞书响应（前3条记录）
+    if (listData.data?.items && listData.data.items.length > 0) {
+      console.log("===== 飞书原始数据样例 =====");
+      console.log("样例记录1:", JSON.stringify(listData.data.items[0], null, 2));
+      if (listData.data.items.length > 1) {
+        console.log("样例记录2:", JSON.stringify(listData.data.items[1], null, 2));
+      }
+      console.log("========================");
+    }
+
     if (!listResponse.ok || listData.code !== 0) {
       throw new Error(`获取记录失败: ${listData.msg || "未知错误"}`);
     }
@@ -97,14 +108,22 @@ export async function GET(request: Request) {
     for (const item of listData.data?.items || []) {
       const fields = item.fields;
 
-      // 🔍 调试：打印每条记录的关键字段
+      // 🔍 调试：打印每条记录的所有字段
+      const rawStatus = fields['状态'] as string;
+      const allFieldNames = Object.keys(fields);
       console.log('📋 处理记录:', {
         record_id: item.record_id,
         来源: fields['来源'],
         提示词: (fields['提示词'] as string)?.slice(0, 30),
-        状态: fields['状态'],
-        created_time: item.created_time,
+        原始状态: rawStatus,
+        所有字段名: allFieldNames,
+        字段数量: allFieldNames.length,
       });
+
+      // 如果状态是"完成"，打印完整数据结构
+      if (rawStatus === '完成' || rawStatus === '已完成') {
+        console.log('  🎉 已完成任务完整数据:', JSON.stringify(fields, null, 2));
+      }
 
       // 🔧 临时禁用来源过滤，显示所有记录
       // const source = (fields['来源'] as string) || '';
@@ -122,35 +141,46 @@ export async function GET(request: Request) {
       // 提取商品图片 URL
       const productImageAttachments = fields['商品图片'] as Array<{ file_token: string; url: string }> | undefined;
       const productImageUrl = productImageAttachments && productImageAttachments.length > 0
-        ? (productImageAttachments[0].url || `https://open.feishu.cn/open-apis/drive/v1/medias/${productImageAttachments[0].file_token}/download`)
+        ? (productImageAttachments[0].url || `https://open.feishu.cn/open-apis/drive/v1/medias/${productImageAttachments[0].file_token}/download?tenant_access_token=${tenantAccessToken}`)
         : undefined;
 
       // 提取场景图片 URL
       const sceneImageAttachments = fields['场景图'] as Array<{ file_token: string; url: string }> | undefined;
       const sceneImageUrl = sceneImageAttachments && sceneImageAttachments.length > 0
-        ? (sceneImageAttachments[0].url || `https://open.feishu.cn/open-apis/drive/v1/medias/${sceneImageAttachments[0].file_token}/download`)
+        ? (sceneImageAttachments[0].url || `https://open.feishu.cn/open-apis/drive/v1/medias/${sceneImageAttachments[0].file_token}/download?tenant_access_token=${tenantAccessToken}`)
         : undefined;
 
       // 提取结果图片 URL
       const resultAttachments = fields['生成结果'] as Array<{ file_token: string; url: string }> | undefined;
       let resultImageUrl = resultAttachments && resultAttachments.length > 0
-        ? (resultAttachments[0].url || `https://open.feishu.cn/open-apis/drive/v1/medias/${resultAttachments[0].file_token}/download`)
+        ? (resultAttachments[0].url || `https://open.feishu.cn/open-apis/drive/v1/medias/${resultAttachments[0].file_token}/download?tenant_access_token=${tenantAccessToken}`)
         : undefined;
 
       // 如果没有生成结果，尝试其他可能的字段名
       if (!resultImageUrl) {
         const altResultAttachments = fields['结果图'] as Array<{ file_token: string; url: string }> | undefined;
         if (altResultAttachments && altResultAttachments.length > 0) {
-          resultImageUrl = altResultAttachments[0].url || `https://open.feishu.cn/open-apis/drive/v1/medias/${altResultAttachments[0].file_token}/download`;
+          resultImageUrl = altResultAttachments[0].url || `https://open.feishu.cn/open-apis/drive/v1/medias/${altResultAttachments[0].file_token}/download?tenant_access_token=${tenantAccessToken}`;
         }
       }
+
+      // 🔍 调试：打印结果图片信息
+      console.log('  📸 结果图片:', {
+        has生成结果: !!resultAttachments,
+        生成结果length: resultAttachments?.length || 0,
+        has结果图: !!(fields['结果图']),
+        resultImageUrl: resultImageUrl ? 'YES' : 'NO',
+      });
 
       // 验证 created_time 是否有效（必须是有效的时间戳，毫秒级）
       const createdTime = item.created_time;
       const isValidTimestamp = createdTime && createdTime > 1000000000000 && createdTime < 4000000000000;
+
+      // 🔧 临时：如果 created_time 无效，使用当前时间
+      const finalCreatedTime = isValidTimestamp ? createdTime : Date.now();
+
       if (!isValidTimestamp) {
-        console.log('  ⚠️ 跳过：时间戳无效', createdTime);
-        continue; // 跳过时间戳无效的记录
+        console.log('  ⚠️ 时间戳无效，使用当前时间替代:', createdTime, '->', finalCreatedTime);
       }
 
       records.push({
@@ -163,7 +193,7 @@ export async function GET(request: Request) {
         negativePrompt: (fields['反向提示词'] as string) || undefined,
         ratio: (fields['尺寸比例'] as string) || undefined,
         model: (fields['AI模型'] as string) || undefined,
-        created_time: createdTime,
+        created_time: finalCreatedTime,
       });
     }
 

@@ -4,11 +4,13 @@
 
 'use client';
 
+import { useState } from 'react';
 import { TaskData } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import Image from 'next/image';
 import { GENERATION_STEPS, formatTimeRemaining } from '@/lib/progress';
 import { ImageIcon, Loader2, CheckCircle2, XCircle, Download, Eye, Clock, Zap } from 'lucide-react';
+import { ImagePreview } from '@/components/image-preview';
 
 interface TaskListProps {
   tasks: TaskData[];
@@ -19,6 +21,15 @@ interface TaskListProps {
 }
 
 export function TaskList({ tasks, onPreview, isBatchMode = false, selectedIds = new Set(), onToggleSelection }: TaskListProps) {
+  // 预览状态
+  const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null);
+
+  // 打开预览
+  const handleOpenPreview = (imageUrl: string) => {
+    const proxyUrl = `/api/image-proxy?url=${encodeURIComponent(imageUrl)}`;
+    setPreviewImageUrl(proxyUrl);
+  };
+
   if (tasks.length === 0) {
     return (
       <div className="flex-1 flex items-center justify-center p-8">
@@ -31,23 +42,34 @@ export function TaskList({ tasks, onPreview, isBatchMode = false, selectedIds = 
   }
 
   return (
-    <div className="flex-1 overflow-y-auto p-4 space-y-3 scroll-smooth">
-      {tasks.map(task => (
-        <TaskItem
-          key={task.id}
-          task={task}
-          onPreview={onPreview}
-          isBatchMode={isBatchMode}
-          isSelected={selectedIds.has(task.id)}
-          onToggleSelection={onToggleSelection}
+    <>
+      <div className="flex-1 overflow-y-auto p-4 space-y-3 scroll-smooth">
+        {tasks.map(task => (
+          <TaskItem
+            key={task.id}
+            task={task}
+            onPreview={handleOpenPreview}
+            isBatchMode={isBatchMode}
+            isSelected={selectedIds.has(task.id)}
+            onToggleSelection={onToggleSelection}
+          />
+        ))}
+        {tasks.length > 0 && (
+          <div className="text-center py-4">
+            <p className="text-xs text-muted-foreground">已显示全部 {tasks.length} 条记录</p>
+          </div>
+        )}
+      </div>
+
+      {/* 图片预览模态框 */}
+      {previewImageUrl && (
+        <ImagePreview
+          src={previewImageUrl}
+          alt="预览图片"
+          onClose={() => setPreviewImageUrl(null)}
         />
-      ))}
-      {tasks.length > 0 && (
-        <div className="text-center py-4">
-          <p className="text-xs text-muted-foreground">已显示全部 {tasks.length} 条记录</p>
-        </div>
       )}
-    </div>
+    </>
   );
 }
 
@@ -84,15 +106,15 @@ function TaskItem({ task, onPreview, isBatchMode = false, isSelected = false, on
           onClick={() => {
             // 优先打开结果图，其次商品图
             const imageUrl = task.resultImages?.[0] || (typeof task.productImage === 'string' ? task.productImage : null);
-            if (imageUrl) {
-              window.open(imageUrl, '_blank');
+            if (imageUrl && onPreview) {
+              onPreview(imageUrl);
             }
           }}
           title="点击查看大图"
         >
           {task.resultImages && task.resultImages.length > 0 ? (
             <Image
-              src={task.resultImages[0]}
+              src={`/api/image-proxy?url=${encodeURIComponent(task.resultImages[0])}`}
               alt=""
               width={48}
               height={48}
@@ -101,7 +123,7 @@ function TaskItem({ task, onPreview, isBatchMode = false, isSelected = false, on
             />
           ) : task.productImage && typeof task.productImage === 'string' ? (
             <Image
-              src={task.productImage}
+              src={`/api/image-proxy?url=${encodeURIComponent(task.productImage)}`}
               alt=""
               width={48}
               height={48}
@@ -195,9 +217,9 @@ function TaskItem({ task, onPreview, isBatchMode = false, isSelected = false, on
               size="sm"
               className="h-7 px-3 text-xs bg-card/40 hover:bg-card/60 text-foreground rounded-lg"
               onClick={() => {
-                // 在新标签页打开图片
-                if (task.resultImages && task.resultImages.length > 0) {
-                  window.open(task.resultImages[0], '_blank');
+                // 使用模态框预览
+                if (task.resultImages && task.resultImages.length > 0 && onPreview) {
+                  onPreview(task.resultImages[0]);
                 }
               }}
             >

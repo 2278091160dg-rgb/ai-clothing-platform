@@ -12,6 +12,8 @@ interface UseImageUploadReturn {
   handleProductUpload: () => void;
   handleSceneUpload: () => void;
   resetImages: () => void;
+  clearProductImage: () => void;
+  clearSceneImage: () => void;
 }
 
 export function useImageUpload(): UseImageUploadReturn {
@@ -55,6 +57,18 @@ export function useImageUpload(): UseImageUploadReturn {
     setSceneImagePreview('');
   }, []);
 
+  // 单独清空商品图
+  const clearProductImage = useCallback(() => {
+    setProductImage(null);
+    setProductImagePreview('');
+  }, []);
+
+  // 单独清空场景图
+  const clearSceneImage = useCallback(() => {
+    setSceneImage(null);
+    setSceneImagePreview('');
+  }, []);
+
   return {
     productImage,
     productImagePreview,
@@ -63,5 +77,7 @@ export function useImageUpload(): UseImageUploadReturn {
     handleProductUpload,
     handleSceneUpload,
     resetImages,
+    clearProductImage,
+    clearSceneImage,
   };
 }

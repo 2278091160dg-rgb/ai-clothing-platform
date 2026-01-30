@@ -8,6 +8,7 @@
 
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { toast } from 'sonner';
+import { ReactCompareSlider, ReactCompareSliderImage } from 'react-compare-slider';
 import { LoginSettings } from '@/components/login/LoginSettings';
 import { ConfigPanel } from '@/components/settings/config-panel';
 import { ImagePreview } from '@/components/image-preview';
@@ -40,6 +41,15 @@ interface HistoryTask {
   resultImages?: string[];
   productImagePreview?: string;
   createdAt: Date;
+}
+
+// 简化的历史记录项格式
+interface HistoryRecord {
+  id: string;
+  original: string;      // 原始商品图 URL
+  generated: string;     // AI 生成结果图 URL
+  timestamp: number;     // 时间戳
+  prompt: string;        // 提示词
 }
 
 interface FeishuRecord {
@@ -89,6 +99,11 @@ export default function HomePage() {
   const [showSubmitMessage, setShowSubmitMessage] = useState(false);
   const previousCompletedIds = useRef<Set<string>>(new Set());
 
+  // 新增：简化的历史记录状态
+  const [history, setHistory] = useState<HistoryRecord[]>([]);
+  const [uploadedImage, setUploadedImage] = useState<string | null>(null);
+  const [generatedImage, setGeneratedImage] = useState<string | null>(null);
+
   // 飞书任务管理 (保留兼容性)
   const { resetTask } = useFeishuTaskManagement();
 
@@ -107,7 +122,16 @@ export default function HomePage() {
     sceneImagePreview,
     handleProductUpload,
     handleSceneUpload,
+    clearProductImage,
+    clearSceneImage,
   } = useImageUpload();
+
+  // 同步 productImagePreview 到 uploadedImage 状态
+  useEffect(() => {
+    if (productImagePreview) {
+      setUploadedImage(productImagePreview);
+    }
+  }, [productImagePreview]);
 
   const isConfigured = ConfigManager.isConfigured();
 
@@ -155,21 +179,20 @@ export default function HomePage() {
 
   // 状态映射：飞书状态 -> HistoryTask 状态
   const mapFeishuStatus = (feishuStatus: string): 'pending' | 'processing' | 'completed' | 'failed' => {
-    const status = feishuStatus?.toLowerCase() || '';
-    if (status === '待处理' || status === 'pending') return 'pending';
-    if (status === '处理中' || status === 'processing') return 'processing';
-    if (status === '已完成' || status === 'completed') return 'completed';
-    if (status === '失败' || status === 'failed') return 'failed';
+    // 直接检查原始状态（不使用 toLowerCase，因为中文需要原样匹配）
+    if (feishuStatus === '待处理' || feishuStatus === 'pending' || feishuStatus === 'Pending') return 'pending';
+    if (feishuStatus === '处理中' || feishuStatus === 'processing' || feishuStatus === 'Processing') return 'processing';
+    if (feishuStatus === '已完成' || feishuStatus === '完成' || feishuStatus === 'completed' || feishuStatus === 'Completed') return 'completed';
+    if (feishuStatus === '失败' || feishuStatus === 'failed' || feishuStatus === 'Failed') return 'failed';
     return 'pending';
   };
 
   // 进度映射：状态 -> 进度百分比
   const mapStatusToProgress = (status: string): number => {
-    const s = status?.toLowerCase() || '';
-    if (s === '待处理' || s === 'pending') return 0;
-    if (s === '处理中' || s === 'processing') return 50;
-    if (s === '已完成' || s === 'completed') return 100;
-    if (s === '失败' || s === 'failed') return 0;
+    if (status === '待处理' || status === 'pending' || status === 'Pending') return 0;
+    if (status === '处理中' || status === 'processing' || status === 'Processing') return 50;
+    if (status === '已完成' || status === '完成' || status === 'completed' || status === 'Completed') return 100;
+    if (status === '失败' || status === 'failed' || status === 'Failed') return 0;
     return 0;
   };
 
@@ -248,31 +271,82 @@ export default function HomePage() {
         console.log('📋 去重后的任务数:', deduplicatedTasks.length);
         console.log('📋 任务列表:', deduplicatedTasks.map(t => ({ id: t.id, status: t.status, prompt: t.prompt.slice(0, 20) })));
 
-        // 检测待处理的任务是否已出现在历史记录中
-        // 如果是，则清除 isGenerating 状态
-        if (pendingTaskIdRef.current && isGenerating) {
-          const pendingTaskExists = deduplicatedTasks.some(t => t.id === pendingTaskIdRef.current);
-          if (pendingTaskExists) {
-            console.log('✅ 待处理任务已出现在历史记录中，解除 loading 状态');
-            setIsGenerating(false);
-            pendingTaskIdRef.current = null;
-            // 清除超时定时器
-            if (loadingTimeoutRef.current) {
-              clearTimeout(loadingTimeoutRef.current);
-              loadingTimeoutRef.current = null;
-            }
-          }
-        }
-
         // 检测新完成的任务
         const newCompletedIds = new Set(
           deduplicatedTasks.filter(t => t.status === 'completed').map(t => t.id)
         );
 
+        console.log('🔍 检测完成状态:');
+        console.log('  - 已完成任务ID:', Array.from(newCompletedIds));
+        console.log('  - 之前已完成ID:', Array.from(previousCompletedIds.current));
+        console.log('  - pendingTaskIdRef.current:', pendingTaskIdRef.current);
+
         // 找出刚完成的任务（新完成但之前未完成的）
         const justCompleted = [...newCompletedIds].filter(id => !previousCompletedIds.current.has(id));
+        console.log('  - 新完成的任务:', justCompleted);
 
         if (justCompleted.length > 0) {
+          console.log('🎉 检测到新完成的任务:', justCompleted);
+
+          // 为每个刚完成的任务创建 HistoryRecord
+          justCompleted.forEach(taskId => {
+            const completedTask = deduplicatedTasks.find(t => t.id === taskId);
+            console.log('🔍 完成的任务详情:', {
+              id: completedTask?.id,
+              hasResultImages: !!completedTask?.resultImages,
+              resultImagesLength: completedTask?.resultImages?.length || 0,
+              resultImages: completedTask?.resultImages,
+              productImagePreview: completedTask?.productImagePreview,
+            });
+
+            if (completedTask && completedTask.resultImages && completedTask.resultImages.length > 0) {
+              const newRecord: HistoryRecord = {
+                id: completedTask.id,
+                original: completedTask.productImagePreview || '',
+                generated: completedTask.resultImages[0],
+                timestamp: Date.now(),
+                prompt: completedTask.prompt,
+              };
+
+              console.log('✅ 创建 HistoryRecord:', newRecord);
+
+              // 添加到历史记录
+              setHistory(prev => {
+                // 避免重复添加
+                const exists = prev.some(h => h.id === newRecord.id);
+                if (exists) {
+                  console.log('⚠️ HistoryRecord 已存在，跳过');
+                  return prev;
+                }
+                console.log('➕ 添加 HistoryRecord 到历史列表');
+                return [newRecord, ...prev];
+              });
+
+              // 如果是当前正在等待的任务，设置主视图并清除 loading 状态
+              if (pendingTaskIdRef.current === taskId) {
+                console.log('✅ 设置主视图图片:', {
+                  original: newRecord.original,
+                  generated: newRecord.generated
+                });
+                setUploadedImage(newRecord.original);
+                setGeneratedImage(newRecord.generated);
+                setIsGenerating(false);
+                pendingTaskIdRef.current = null;
+                // 清除超时定时器
+                if (loadingTimeoutRef.current) {
+                  clearTimeout(loadingTimeoutRef.current);
+                  loadingTimeoutRef.current = null;
+                }
+              }
+            } else {
+              console.warn('⚠️ 无法创建 HistoryRecord:', {
+                hasTask: !!completedTask,
+                hasResultImages: !!completedTask?.resultImages,
+                resultImagesLength: completedTask?.resultImages?.length || 0,
+              });
+            }
+          });
+
           toast.success('生成完成！', {
             description: `${justCompleted.length} 张图片已准备就绪`,
           });
@@ -293,10 +367,16 @@ export default function HomePage() {
     }
   }, [isHistoryCleared, isGenerating]);
 
-  // 组件挂载时获取记录
+  // 组件挂载时获取记录并清空历史
   useEffect(() => {
+    // 清空历史记录
+    setHistory([]);
+    setHistoryTasks([]);
+    console.log('🧹 初始化：已清空历史记录');
     fetchRecords();
-  }, [fetchRecords]);
+    // 初始化时记录当前已完成的任务ID，避免被当作新任务
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // 只在挂载时执行一次
 
   // 轮询检查任务状态
   const startPolling = useCallback(() => {
@@ -352,10 +432,13 @@ export default function HomePage() {
       loadingTimeoutRef.current = null;
     }
 
-    // ⚡ 立即设置 loading 状态
+    // 1️⃣ 立即设置 loading 状态
     setIsGenerating(true);
 
-    // ⚡ Optimistic UI: 立即在历史记录顶部添加一个占位任务
+    // 2️⃣ 立即显示 Toast 提示
+    toast.success('任务已提交，AI 正在绘图...');
+
+    // 3️⃣ Optimistic UI: 立即在历史记录顶部添加一个占位任务
     const tempId = `temp-${Date.now()}`;
     const tempTask: HistoryTask = {
       id: tempId,
@@ -379,10 +462,9 @@ export default function HomePage() {
     console.log('⚡ 已添加临时占位任务到历史记录:', tempTask);
 
     try {
-      // 构建 FormData
+      // 4️⃣ 构建 FormData
       const formData = new FormData();
       formData.append('prompt', prompt);
-      // 使用默认反向提示词（不再让用户手动修改）
       formData.append('negative_prompt', DEFAULT_NEGATIVE_PROMPT);
       formData.append('ratio', aspectRatio);
       formData.append('model', imageModel);
@@ -400,6 +482,7 @@ export default function HomePage() {
 
       console.log('2. 发送 FormData 请求到 /api/proxy');
 
+      // 5️⃣ 发送 fetch 请求给 N8N (通过后端代理)
       const response = await fetch('/api/proxy', {
         method: 'POST',
         body: formData,
@@ -414,10 +497,10 @@ export default function HomePage() {
         const recordId = data.feishu_record_id;
         console.log('✅ 任务提交成功, record_id:', recordId);
 
-        // 存储待处理的任务 ID，用于检测何时任务出现在历史记录中
+        // 存储待处理的任务 ID（用于 fetchRecords 检测完成）
         pendingTaskIdRef.current = recordId;
 
-        // 设置安全超时：如果2分钟后任务还没出现在历史记录中，自动解除 loading 状态
+        // 设置安全超时：如果2分钟后任务还没完成，自动解除 loading 状态
         loadingTimeoutRef.current = setTimeout(() => {
           console.warn('⚠️ Loading 状态超时，自动解除');
           setIsGenerating(false);
@@ -435,18 +518,14 @@ export default function HomePage() {
         // 立即刷新记录列表，获取最新状态
         await fetchRecords();
 
-        // 显示 Toast 提示
-        toast.success('任务已提交', {
-          description: 'AI 正在努力绘图中，请稍候...',
-        });
-
         // 显示提交成功提示（不清空输入内容，方便用户重试）
         setShowSubmitMessage(true);
         setTimeout(() => setShowSubmitMessage(false), 3000);
 
         // 注意：不在这里设置 setIsGenerating(false)
-        // loading 状态会在 fetchRecords 中检测到任务出现后自动解除
+        // 等待 fetchRecords 检测到任务完成后再设置
       } else {
+        // 失败时解除所有状态
         setIsGenerating(false);
         // 失败时移除临时任务
         setHistoryTasks(prev => prev.filter(t => t.id !== tempId));
@@ -454,6 +533,7 @@ export default function HomePage() {
       }
     } catch (error) {
       console.error('❌ 请求失败:', error);
+      // 失败时解除所有状态
       setIsGenerating(false);
       // 失败时移除临时任务
       setHistoryTasks(prev => prev.filter(t => t.id !== tempId));
@@ -493,23 +573,25 @@ export default function HomePage() {
       />
 
       {/* 主内容区 - Bento Grid 布局 */}
-      <main className={`p-6 overflow-hidden ${showSubmitMessage ? 'h-[calc(100vh-64px-64px)]' : 'h-[calc(100vh-64px)]'}`}>
-        {/* 提交成功提示 */}
+      <main className="p-6 overflow-hidden h-[calc(100vh-64px)] relative">
+        {/* 提交成功提示 - 固定定位，不影响布局 */}
         {showSubmitMessage && (
-          <div className="mb-4 bg-green-500/10 border border-green-500/30 rounded-xl px-4 py-3 flex items-center gap-3 animate-in slide-in-from-top fade-in duration-300">
-            <div className="w-8 h-8 rounded-full bg-green-500/20 flex items-center justify-center flex-shrink-0">
-              <span className="text-green-400 text-sm">✓</span>
+          <div className="fixed top-20 left-0 right-0 z-50 flex justify-center px-6 animate-in slide-in-from-top fade-in duration-300">
+            <div className="bg-green-500/10 border border-green-500/30 backdrop-blur-sm rounded-xl px-4 py-3 flex items-center gap-3 shadow-lg">
+              <div className="w-8 h-8 rounded-full bg-green-500/20 flex items-center justify-center flex-shrink-0">
+                <span className="text-green-400 text-sm">✓</span>
+              </div>
+              <div className="flex-1">
+                <p className="text-sm font-semibold text-green-400">任务已提交至后台</p>
+                <p className="text-xs text-muted-foreground mt-0.5">任务在后台运行中，您可以关闭页面稍后查看</p>
+              </div>
+              <button
+                onClick={() => setShowSubmitMessage(false)}
+                className="text-muted-foreground hover:text-foreground transition-colors"
+              >
+                ✕
+              </button>
             </div>
-            <div className="flex-1">
-              <p className="text-sm font-semibold text-green-400">任务已提交至后台</p>
-              <p className="text-xs text-muted-foreground mt-0.5">任务在后台运行中，您可以关闭页面稍后查看</p>
-            </div>
-            <button
-              onClick={() => setShowSubmitMessage(false)}
-              className="text-muted-foreground hover:text-foreground transition-colors"
-            >
-              ✕
-            </button>
           </div>
         )}
 
@@ -526,6 +608,8 @@ export default function HomePage() {
                 sceneImagePreview={sceneImagePreview}
                 onProductUpload={handleProductUpload}
                 onSceneUpload={handleSceneUpload}
+                onProductClear={clearProductImage}
+                onSceneClear={clearSceneImage}
               />
               <ParamsPanel
                 mode={mode}
@@ -550,13 +634,117 @@ export default function HomePage() {
 
           {/* 中间栏 - 结果展示 */}
           <div className="flex-1 flex flex-col gap-4">
-            <ResultPanel
-              tasks={displayTasks}
-              imageModel={imageModel}
-              isPolling={!!pollingIntervalRef.current}
-              isGenerating={isGenerating}
-              onReset={resetTask}
-            />
+            {isGenerating ? (
+              // Loading 状态
+              <ResultPanel
+                tasks={displayTasks}
+                imageModel={imageModel}
+                isPolling={!!pollingIntervalRef.current}
+                isGenerating={true}
+                onReset={resetTask}
+              />
+            ) : generatedImage ? (
+              // 显示生成结果（有原图显示对比，无原图只显示结果）
+              <div className="flex-1 theme-card rounded-2xl p-4 flex flex-col relative overflow-hidden">
+                <div className="absolute inset-0 bg-grid-pattern opacity-50" />
+                <div className="flex-1 relative z-10 flex items-center justify-center">
+                  {uploadedImage ? (
+                    // 有原图：显示对比滑块
+                    <ReactCompareSlider
+                      itemOne={
+                        <ReactCompareSliderImage
+                          src={`/api/image-proxy?url=${encodeURIComponent(uploadedImage)}`}
+                          alt="原始图"
+                          className="w-full h-full object-contain"
+                        />
+                      }
+                      itemTwo={
+                        <ReactCompareSliderImage
+                          src={`/api/image-proxy?url=${encodeURIComponent(generatedImage)}`}
+                          alt="AI生成"
+                          className="w-full h-full object-contain"
+                        />
+                      }
+                      portrait
+                      className="rounded-xl overflow-hidden shadow-2xl h-full w-full"
+                    >
+                      <button
+                        onClick={() => {
+                          // 使用代理下载
+                          const proxyUrl = `/api/image-proxy?url=${encodeURIComponent(generatedImage)}`;
+                          fetch(proxyUrl)
+                            .then(res => res.blob())
+                            .then(blob => {
+                              const link = document.createElement('a');
+                              link.href = URL.createObjectURL(blob);
+                              link.download = `ai-generated-${Date.now()}.png`;
+                              link.click();
+                              URL.revokeObjectURL(link.href);
+                            });
+                        }}
+                        className="absolute top-4 right-4 btn-primary px-4 py-2 rounded-lg shadow-lg flex items-center gap-2 text-sm z-20"
+                      >
+                        下载图片
+                      </button>
+                    </ReactCompareSlider>
+                  ) : (
+                    // 无原图：只显示生成结果
+                    <div className="relative w-full h-full flex items-center justify-center">
+                      <img
+                        src={`/api/image-proxy?url=${encodeURIComponent(generatedImage)}`}
+                        alt="AI生成结果"
+                        className="max-w-full max-h-[500px] rounded-xl shadow-2xl"
+                        onError={(e) => {
+                          console.error('生成图片加载失败:', generatedImage);
+                        }}
+                      />
+                      <button
+                        onClick={() => {
+                          // 使用代理下载
+                          const proxyUrl = `/api/image-proxy?url=${encodeURIComponent(generatedImage)}`;
+                          fetch(proxyUrl)
+                            .then(res => res.blob())
+                            .then(blob => {
+                              const link = document.createElement('a');
+                              link.href = URL.createObjectURL(blob);
+                              link.download = `ai-generated-${Date.now()}.png`;
+                              link.click();
+                              URL.revokeObjectURL(link.href);
+                            });
+                        }}
+                        className="absolute top-4 right-4 btn-primary px-4 py-2 rounded-lg shadow-lg flex items-center gap-2 text-sm"
+                      >
+                        下载图片
+                      </button>
+                    </div>
+                  )}
+                </div>
+                {/* 底部信息卡片 */}
+                <div className="theme-card-light rounded-xl p-4 mt-4">
+                  <div className="flex items-center justify-between text-sm">
+                    <div className="flex items-center gap-2">
+                      <span className="text-muted-foreground">生成时间:</span>
+                      <span className="font-semibold text-foreground">
+                        {new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-muted-foreground">模型:</span>
+                      <span className="font-semibold text-primary">{imageModel}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              // 空状态或展示第一个任务
+              <ResultPanel
+                tasks={displayTasks}
+                imageModel={imageModel}
+                isPolling={!!pollingIntervalRef.current}
+                isGenerating={false}
+                onReset={resetTask}
+              />
+            )}
           </div>
 
           {/* 右侧栏 - 历史记录 */}
@@ -568,10 +756,68 @@ export default function HomePage() {
               onClearHistory={() => {
                 if (confirm('确定要清空历史记录吗？')) {
                   setHistoryTasks([]);
+                  setHistory([]);
                   setIsHistoryCleared(true);
                 }
               }}
             />
+            {/* 新增：简化历史记录列表 */}
+            {history.length > 0 && (
+              <div className="theme-card rounded-xl p-4">
+                <h3 className="text-sm font-bold text-foreground mb-3 flex items-center gap-2">
+                  <span>📸</span>
+                  <span>生成历史</span>
+                  <span className="text-xs text-muted-foreground">({history.length})</span>
+                </h3>
+                <div className="space-y-2 max-h-[400px] overflow-y-auto">
+                  {history.map((item) => (
+                    <div
+                      key={item.id}
+                      onClick={() => {
+                        console.log('🖱️ 点击历史记录:', {
+                          id: item.id,
+                          original: item.original,
+                          generated: item.generated,
+                          prompt: item.prompt,
+                        });
+                        setUploadedImage(item.original);
+                        setGeneratedImage(item.generated);
+                        toast.info('已加载历史记录', {
+                          description: item.prompt.slice(0, 30) + (item.prompt.length > 30 ? '...' : ''),
+                        });
+                      }}
+                      className="flex gap-2 p-2 rounded-lg bg-card/40 hover:bg-card/60 border border-border/20 hover:border-border/40 cursor-pointer transition-all"
+                    >
+                      <div className="w-12 h-12 rounded-lg overflow-hidden flex-shrink-0 relative">
+                        {item.generated ? (
+                          <img
+                            src={`/api/image-proxy?url=${encodeURIComponent(item.generated)}`}
+                            alt="生成结果"
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              console.error('图片加载失败:', item.generated);
+                              e.currentTarget.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="48" height="48"%3E%3Crect fill="%23ccc" width="48" height="48"/%3E%3C/svg%3E';
+                            }}
+                          />
+                        ) : (
+                          <div className="w-full h-full bg-card/60 flex items-center justify-center">
+                            <span className="text-xs text-muted-foreground">无图</span>
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs text-muted-foreground truncate">
+                          {item.prompt.slice(0, 20) + (item.prompt.length > 20 ? '...' : '')}
+                        </p>
+                        <p className="text-[10px] text-muted-foreground mt-1">
+                          {new Date(item.timestamp).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </main>
