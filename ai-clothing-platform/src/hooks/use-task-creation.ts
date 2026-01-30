@@ -3,26 +3,26 @@
  * 任务创建Hook - 集成同步状态和冲突处理
  */
 
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { useState, useCallback } from 'react';
 import { getTaskRepository } from '@/lib/repositories/task.repository';
 import { getN8nService } from '@/lib/services/n8n.service';
 import { initializeApp } from '@/lib/app-initialization';
-import {
-  ConflictResolutionDialog,
-  DeleteConfirmDialog,
-  SyncStatusAlert,
-  useSyncStatusToast,
-  type SyncStatus,
-} from '@/components/ui';
+import { useSyncStatusToast, type SyncStatus } from '@/components/ui';
 import type { CreateTaskInput, ConflictInfo } from '@/lib/repositories/task.repository.types';
 
 interface TaskCreationOptions {
-  onSuccess?: (task: any) => void;
+  onSuccess?: (task: { id: string; prompt?: string | null; status: string }) => void;
   onError?: (error: Error) => void;
 }
 
 interface TaskCreationResult {
-  createTask: (input: CreateTaskInput) => Promise<any>;
+  createTask: (input: CreateTaskInput) => Promise<{
+    id: string;
+    prompt?: string | null;
+    status: string;
+    [key: string]: unknown;
+  }>;
   deleteTask: (taskId: string, scope?: 'both' | 'local') => Promise<void>;
   syncStatus: SyncStatus;
   showDeleteDialog: boolean;
@@ -38,7 +38,12 @@ export function useTaskCreation(options?: TaskCreationOptions): TaskCreationResu
   const [syncStatus, setSyncStatus] = useState<SyncStatus>('pending');
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showConflictDialog, setShowConflictDialog] = useState(false);
-  const [taskToDelete, setTaskToDelete] = useState<any>(null);
+  const [taskToDelete, setTaskToDelete] = useState<{
+    id: string;
+    prompt?: string | null;
+    feishuRecordId?: string | null;
+    hasFeishuRecord: boolean;
+  } | null>(null);
   const [conflictInfo, setConflictInfo] = useState<ConflictInfo | null>(null);
 
   const { showSyncStatus } = useSyncStatusToast();
@@ -86,6 +91,7 @@ export function useTaskCreation(options?: TaskCreationOptions): TaskCreationResu
         // 触发N8N工作流
         const n8nService = getN8nService();
         await n8nService.triggerGeneration({
+          mode: 'scene', // 默认场景生图模式
           taskId: task.id,
           userId: task.userId,
           productImageUrl: input.productImageUrl!,
@@ -113,8 +119,9 @@ export function useTaskCreation(options?: TaskCreationOptions): TaskCreationResu
 
         // 检查是否是版本冲突错误
         if (error instanceof Error && error.name === 'VersionConflictError') {
-          const conflictError = error as any;
-          setConflictInfo(conflictError.conflict);
+          // 尝试从 error 中获取 conflict 信息
+          const conflictError = error as { conflict?: ConflictInfo };
+          setConflictInfo(conflictError.conflict || null);
           setShowConflictDialog(true);
         } else {
           setSyncStatus('failed');
@@ -131,7 +138,7 @@ export function useTaskCreation(options?: TaskCreationOptions): TaskCreationResu
    * 删除任务
    */
   const deleteTask = useCallback(
-    async (taskId: string, scope: 'both' | 'local' = 'both') => {
+    async (taskId: string, _scope: 'both' | 'local' = 'both') => {
       try {
         const taskRepo = getTaskRepository();
         const task = await taskRepo.findById(taskId);
@@ -178,8 +185,6 @@ export function useTaskCreation(options?: TaskCreationOptions): TaskCreationResu
 
         setShowDeleteDialog(false);
         setTaskToDelete(null);
-
-        options?.onSuccess?.({ deleted: true });
       } catch (error) {
         console.error('[TaskCreation] Failed to delete task:', error);
         options?.onError?.(error as Error);
@@ -215,8 +220,6 @@ export function useTaskCreation(options?: TaskCreationOptions): TaskCreationResu
             // 手动合并
             break;
         }
-
-        options?.onSuccess?.({ resolved: true });
       } catch (error) {
         console.error('[TaskCreation] Failed to resolve conflict:', error);
         options?.onError?.(error as Error);

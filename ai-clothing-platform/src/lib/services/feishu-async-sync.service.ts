@@ -106,6 +106,21 @@ class CircuitBreaker {
   }
 
   /**
+   * 获取完整状态信息
+   */
+  getStatus(): {
+    state: CircuitBreakerState;
+    failureCount: number;
+    lastFailureTime: number | null;
+  } {
+    return {
+      state: this.state,
+      failureCount: this.failureCount,
+      lastFailureTime: this.lastFailureTime || null,
+    };
+  }
+
+  /**
    * 重置熔断器
    */
   reset(): void {
@@ -379,13 +394,9 @@ export class FeishuAsyncSyncService {
   getCircuitBreakerStatus(): {
     state: CircuitBreakerState;
     failureCount: number;
-    lastFailureTime: number;
+    lastFailureTime: number | null;
   } {
-    return {
-      state: this.circuitBreaker.getState(),
-      failureCount: (this.circuitBreaker as any).failureCount,
-      lastFailureTime: (this.circuitBreaker as any).lastFailureTime,
-    };
+    return this.circuitBreaker.getStatus();
   }
 
   /**

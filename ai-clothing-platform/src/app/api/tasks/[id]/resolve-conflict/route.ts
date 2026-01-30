@@ -131,11 +131,13 @@ export async function POST(req: NextRequest, context: RouteContext) {
 
     // 检查是否是版本冲突错误
     if (error instanceof Error && error.name === 'VersionConflictError') {
-      const conflictError = error as any;
+      // 尝试从 error 中获取 conflict 信息
+      const conflictInfo =
+        'conflict' in error ? (error as { conflict?: ConflictInfo }).conflict : undefined;
       return NextResponse.json(
         {
           error: 'Version conflict detected during resolution',
-          conflict: conflictError.conflict,
+          conflict: conflictInfo,
         },
         { status: 409 }
       );
@@ -172,6 +174,10 @@ export async function GET(req: NextRequest, context: RouteContext) {
     // 获取冲突详情
     const conflictInfo: ConflictInfo = {
       taskId: task.id,
+      currentVersion: task.version,
+      attemptedVersion: task.version,
+      currentData: task,
+      attemptedData: {},
       conflicts: [], // 需要从版本历史中获取实际冲突的字段
       localVersion: task.version,
       lastModifiedBy: task.lastModifiedBy || 'unknown',

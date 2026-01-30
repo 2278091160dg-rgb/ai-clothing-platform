@@ -3,6 +3,7 @@
  */
 
 import { Button } from '@/components/ui/button';
+import Image from 'next/image';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { ThemeSwitcher } from '@/components/theme-switcher';
 import { LayoutGrid, History, Database, Settings, Sparkles } from 'lucide-react';
@@ -37,7 +38,14 @@ export function WorkspaceHeader({
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-blue-600 flex items-center justify-center shadow-lg shadow-primary/30 text-white text-lg font-bold overflow-hidden">
             {brandConfig.logoImage ? (
-              <img src={brandConfig.logoImage} alt="Logo" className="w-full h-full object-cover" />
+              <Image
+                src={brandConfig.logoImage}
+                alt="Logo"
+                width={40}
+                height={40}
+                className="w-full h-full object-cover"
+                unoptimized
+              />
             ) : (
               brandConfig.icon
             )}

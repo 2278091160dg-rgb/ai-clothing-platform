@@ -11,8 +11,8 @@ export interface CreateSyncLogInput {
   action: SyncAction;
   entityType: string;
   entityId: string;
-  requestData?: any;
-  responseData?: any;
+  requestData?: Record<string, unknown>;
+  responseData?: Record<string, unknown>;
   status?: SyncStatus;
   errorCode?: string;
   errorMessage?: string;
@@ -22,7 +22,7 @@ export interface CreateSyncLogInput {
 
 export interface UpdateSyncLogInput {
   status?: SyncStatus;
-  responseData?: any;
+  responseData?: Record<string, unknown>;
   errorCode?: string;
   errorMessage?: string;
   retryCount?: number;
@@ -35,7 +35,11 @@ export class SyncLogRepository {
    */
   async create(data: CreateSyncLogInput) {
     return prisma.syncLog.create({
-      data: data as Prisma.SyncLogUncheckedCreateInput,
+      data: {
+        ...data,
+        requestData: data.requestData as Prisma.InputJsonValue,
+        responseData: data.responseData as Prisma.InputJsonValue,
+      } as Prisma.SyncLogUncheckedCreateInput,
     });
   }
 
@@ -54,19 +58,22 @@ export class SyncLogRepository {
   async update(id: string, data: UpdateSyncLogInput) {
     return prisma.syncLog.update({
       where: { id },
-      data,
+      data: {
+        ...data,
+        responseData: data.responseData as Prisma.InputJsonValue,
+      },
     });
   }
 
   /**
    * 标记为成功
    */
-  async markAsSuccess(id: string, responseData?: any) {
+  async markAsSuccess(id: string, responseData?: Record<string, unknown>) {
     return prisma.syncLog.update({
       where: { id },
       data: {
         status: SyncStatus.SUCCESS,
-        responseData,
+        responseData: responseData as Prisma.InputJsonValue,
         completedAt: new Date(),
       },
     });

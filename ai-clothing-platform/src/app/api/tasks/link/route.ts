@@ -3,6 +3,7 @@
  * 提供前端任务与飞书记录之间的双向查询
  */
 
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { NextRequest, NextResponse } from 'next/server';
 import { getTaskRepository } from '@/lib/repositories/task.repository';
 import { getFeishuService } from '@/lib/services/feishu.service';
@@ -80,6 +81,7 @@ export async function GET(req: NextRequest) {
           linked: true,
         });
       } catch (feishuError) {
+        const message = feishuError instanceof Error ? feishuError.message : String(feishuError);
         return NextResponse.json({
           task: {
             id: task.id,
@@ -90,7 +92,7 @@ export async function GET(req: NextRequest) {
           feishuRecord: null,
           linked: false,
           error: 'Feishu record not accessible',
-          message: (feishuError as Error).message,
+          message,
         });
       }
     }
@@ -113,7 +115,7 @@ export async function GET(req: NextRequest) {
             linked: false,
             message: 'Feishu record exists but no linked local task',
           });
-        } catch (feishuError) {
+        } catch (_feishuError) {
           return NextResponse.json(
             {
               error: 'Record not found',
@@ -146,6 +148,7 @@ export async function GET(req: NextRequest) {
           linked: true,
         });
       } catch (feishuError) {
+        const message = feishuError instanceof Error ? feishuError.message : String(feishuError);
         return NextResponse.json({
           task: {
             id: task.id,
@@ -156,7 +159,7 @@ export async function GET(req: NextRequest) {
           feishuRecord: null,
           linked: false,
           error: 'Feishu record not accessible',
-          message: (feishuError as Error).message,
+          message,
         });
       }
     }
@@ -164,10 +167,11 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'Invalid request' }, { status: 400 });
   } catch (error) {
     console.error('[API] Failed to query task link:', error);
+    const message = error instanceof Error ? error.message : String(error);
     return NextResponse.json(
       {
         error: 'Internal server error',
-        message: (error as Error).message,
+        message,
       },
       { status: 500 }
     );
@@ -213,11 +217,12 @@ export async function POST(req: NextRequest) {
     try {
       await feishuService.getRecord(feishuRecordId);
     } catch (feishuError) {
+      const message = feishuError instanceof Error ? feishuError.message : String(feishuError);
       return NextResponse.json(
         {
           error: 'Feishu record not found',
           feishuRecordId,
-          message: (feishuError as Error).message,
+          message,
         },
         { status: 404 }
       );
@@ -240,10 +245,11 @@ export async function POST(req: NextRequest) {
     });
   } catch (error) {
     console.error('[API] Failed to link task:', error);
+    const message = error instanceof Error ? error.message : String(error);
     return NextResponse.json(
       {
         error: 'Internal server error',
-        message: (error as Error).message,
+        message,
       },
       { status: 500 }
     );

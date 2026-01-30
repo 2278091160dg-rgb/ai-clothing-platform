@@ -17,9 +17,9 @@ export interface RetryConfig {
 /**
  * 降级策略配置
  */
-export interface FallbackConfig {
+export interface FallbackConfig<T = unknown> {
   enabled: boolean;
-  fallbackValue?: any;
+  fallbackValue?: T;
   onFallback?: (error: Error) => void;
 }
 
@@ -219,10 +219,15 @@ export class CircuitBreaker {
   /**
    * 获取当前状态
    */
-  getState(): { state: CircuitState; failureCount: number } {
+  getState(): {
+    state: CircuitState;
+    failureCount: number;
+    lastFailureTime: number | null;
+  } {
     return {
       state: this.state,
       failureCount: this.failureCount,
+      lastFailureTime: this.lastFailureTime,
     };
   }
 

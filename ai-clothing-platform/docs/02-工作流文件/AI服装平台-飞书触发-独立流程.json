@@ -1,0 +1,486 @@
+{
+  "name": "AI服装平台-飞书触发-独立流程",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "ai-clothing-feishu",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-trigger",
+      "name": "【Webhook】接收飞书自动化",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1.1,
+      "position": [250, 300],
+      "webhookId": "feishu-trigger"
+    },
+    {
+      "parameters": {
+        "mode": "manual",
+        "document": {
+          "id": "extract-trigger-info",
+          "name": "Extract Trigger Info",
+          "data": {
+            "extract": {
+              "app_token": "={{ $json.app_token }}",
+              "table_id": "={{ $json.table_id }}",
+              "record_id": "={{ $json.record_id }}"
+            }
+          }
+        }
+      },
+      "id": "extract-trigger-info",
+      "name": "提取触发信息",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [450, 300]
+    },
+    {
+      "parameters": {
+        "operation": "getRecord",
+        "appToken": "={{ $('提取触发信息').item.json.app_token }}",
+        "tableId": "={{ $('提取触发信息').item.json.table_id }}",
+        "recordId": "={{ $('提取触发信息').item.json.record_id }}",
+        "options": {}
+      },
+      "id": "get-feishu-record",
+      "name": "【飞书】获取记录详情",
+      "type": "n8n-nodes-base.feishuBitable",
+      "typeVersion": 1.1,
+      "position": [650, 300],
+      "credentials": {
+        "feishuApi": {
+          "id": "feishu-credential",
+          "name": "Feishu Credentials account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "manual",
+        "document": {
+          "id": "extract-record-fields",
+          "name": "Extract Record Fields",
+          "data": {
+            "extract": {
+              "recordId": "={{ $('提取触发信息').item.json.record_id }}",
+              "appToken": "={{ $('提取触发信息').item.json.app_token }}",
+              "tableId": "={{ $('提取触发信息').item.json.table_id }}",
+              "prompt": "={{ $json.data.records[0].fields['提示词'] && $json.data.records[0].fields['提示词'][0].text || '' }}",
+              "productImageUrl": "={{ $json.data.records[0].fields['商品图片'] && $json.data.records[0].fields['商品图片'][0].url || '' }}",
+              "sceneImageUrl": "={{ $json.data.records[0].fields['场景图'] && $json.data.records[0].fields['场景图'][0].url || '' }}",
+              "aiModel": "={{ $json.data.records[0].fields['AI模型'] || 'Gemini-3-Pro-Image' }}",
+              "aspectRatio": "={{ $json.data.records[0].fields['尺寸比例'] || '3:4' }}",
+              "imageCount": "={{ $json.data.records[0].fields['生成数量'] || 4 }}"
+            }
+          }
+        }
+      },
+      "id": "extract-record-fields",
+      "name": "提取记录字段",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [850, 300]
+    },
+    {
+      "parameters": {
+        "operation": "updateRecord",
+        "appToken": "={{ $('提取记录字段').item.json.appToken }}",
+        "tableId": "={{ $('提取记录字段').item.json.tableId }}",
+        "recordId": "={{ $('提取记录字段').item.json.recordId }}",
+        "data": {
+          "fields": {
+            "状态": "⏳ 处理中"
+          }
+        },
+        "options": {}
+      },
+      "id": "update-status-processing",
+      "name": "【飞书】更新状态-处理中",
+      "type": "n8n-nodes-base.feishuBitable",
+      "typeVersion": 1.1,
+      "position": [1050, 300],
+      "credentials": {
+        "feishuApi": {
+          "id": "feishu-credential",
+          "name": "Feishu Credentials account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "manual",
+        "document": {
+          "id": "aspect-ratio-switch",
+          "name": "Aspect Ratio Switch",
+          "data": {
+            "switch": {
+              "field": "={{ $('提取记录字段').item.json.aspectRatio }}",
+              "cases": {
+                "9:16": {
+                  "width": 720,
+                  "height": 1280
+                },
+                "3:4": {
+                  "width": 768,
+                  "height": 1024
+                },
+                "1:1": {
+                  "width": 1024,
+                  "height": 1024
+                },
+                "16:9": {
+                  "width": 1280,
+                  "height": 720
+                }
+              },
+              "default": {
+                "width": 768,
+                "height": 1024
+              }
+            }
+          }
+        }
+      },
+      "id": "aspect-ratio-switch",
+      "name": "判断比例并设置尺寸",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3,
+      "position": [1250, 300]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $('提取记录字段').item.json.productImageUrl }}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file"
+            }
+          }
+        }
+      },
+      "id": "download-product-image",
+      "name": "下载商品图片",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1450, 200]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $('提取记录字段').item.json.sceneImageUrl }}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file"
+            }
+          }
+        },
+        "condition": "={{ $('提取记录字段').item.json.sceneImageUrl !== '' }}"
+      },
+      "id": "download-scene-image",
+      "name": "下载场景图片",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1450, 400]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.deerapi.com/v1/ai/generate",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "model",
+              "value": "={{ $('提取记录字段').item.json.aiModel }}"
+            },
+            {
+              "name": "prompt",
+              "value": "={{ $('提取记录字段').item.json.prompt }}"
+            },
+            {
+              "name": "image",
+              "value": "={{ $('下载商品图片').item.binary.data }}"
+            },
+            {
+              "name": "image2",
+              "value": "={{ $('下载场景图片').item.binary.data }}"
+            },
+            {
+              "name": "aspect_ratio",
+              "value": "={{ $('提取记录字段').item.json.aspectRatio }}"
+            },
+            {
+              "name": "num_images",
+              "value": "={{ $('提取记录字段').item.json.imageCount }}"
+            },
+            {
+              "name": "resolution",
+              "value": "1K"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "deerapi-generate",
+      "name": "【DeerAPI】AI图片生成",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1650, 300],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "deerapi-credential",
+          "name": "DeerAPI account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "manual",
+        "document": {
+          "id": "extract-results",
+          "name": "Extract Results",
+          "data": {
+            "extract": {
+              "resultImageUrls": "={{ $json.data.images || [] }}",
+              "imageCount": "={{ ($json.data.images || []).length }}",
+              "recordId": "={{ $('提取记录字段').item.json.recordId }}",
+              "appToken": "={{ $('提取记录字段').item.json.appToken }}",
+              "tableId": "={{ $('提取记录字段').item.json.tableId }}"
+            }
+          }
+        }
+      },
+      "id": "extract-results",
+      "name": "提取生成结果",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [1850, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.deerapi.com/v1/upload",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "file",
+              "value": "={{ $json }}"
+            }
+          ]
+        },
+        "options": {
+          "batching": {
+            "batch": {
+              "batchSize": 1,
+              "batchField": "resultImageUrls"
+            }
+          }
+        }
+      },
+      "id": "upload-results",
+      "name": "【DeerAPI】上传结果图",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [2050, 300],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "deerapi-credential",
+          "name": "DeerAPI account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "updateRecord",
+        "appToken": "={{ $('提取生成结果').item.json.appToken }}",
+        "tableId": "={{ $('提取生成结果').item.json.tableId }}",
+        "recordId": "={{ $('提取生成结果').item.json.recordId }}",
+        "data": {
+          "fields": {
+            "生成结果": "={{ $('上传结果图').item.json.uploadedUrls }}",
+            "状态": "✅ 已完成"
+          }
+        },
+        "options": {}
+      },
+      "id": "update-feishu-record",
+      "name": "【飞书】更新记录-完成",
+      "type": "n8n-nodes-base.feishuBitable",
+      "typeVersion": 1.1,
+      "position": [2250, 300],
+      "credentials": {
+        "feishuApi": {
+          "id": "feishu-credential",
+          "name": "Feishu Credentials account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { success: true, message: '飞书记录已更新', recordId: $('提取生成结果').item.json.recordId } }}"
+      },
+      "id": "webhook-response",
+      "name": "【响应】返回成功",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [2450, 300]
+    }
+  ],
+  "connections": {
+    "【Webhook】接收飞书自动化": {
+      "main": [
+        [
+          {
+            "node": "提取触发信息",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "提取触发信息": {
+      "main": [
+        [
+          {
+            "node": "【飞书】获取记录详情",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "【飞书】获取记录详情": {
+      "main": [
+        [
+          {
+            "node": "提取记录字段",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "提取记录字段": {
+      "main": [
+        [
+          {
+            "node": "【飞书】更新状态-处理中",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "【飞书】更新状态-处理中": {
+      "main": [
+        [
+          {
+            "node": "判断比例并设置尺寸",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "判断比例并设置尺寸": {
+      "main": [
+        [
+          {
+            "node": "下载商品图片",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "下载场景图片",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "下载商品图片": {
+      "main": [
+        [
+          {
+            "node": "【DeerAPI】AI图片生成",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "下载场景图片": {
+      "main": [
+        [
+          {
+            "node": "【DeerAPI】AI图片生成",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "【DeerAPI】AI图片生成": {
+      "main": [
+        [
+          {
+            "node": "提取生成结果",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "提取生成结果": {
+      "main": [
+        [
+          {
+            "node": "【DeerAPI】上传结果图",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "【DeerAPI】上传结果图": {
+      "main": [
+        [
+          {
+            "node": "【飞书】更新记录-完成",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "【飞书】更新记录-完成": {
+      "main": [
+        [
+          {
+            "node": "【响应】返回成功",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 1,
+  "updatedAt": "2026-01-29T00:00:00.000Z",
+  "versionId": "v2-feishu-trigger"
+}

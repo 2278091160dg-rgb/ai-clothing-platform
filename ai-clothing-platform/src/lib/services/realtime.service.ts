@@ -32,26 +32,29 @@ export class RealtimeService {
     const eventBus = getEventBus();
 
     // 监听任务进度事件
-    eventBus.on(EventNames.TASK_PROGRESS, event => {
-      this.broadcastToUser(event.userId, {
+    eventBus.on(EventNames.TASK_PROGRESS, (event: unknown) => {
+      const taskEvent = event as { userId: string; taskId: string; progress: number };
+      this.broadcastToUser(taskEvent.userId, {
         type: 'task.progress',
-        data: event,
+        data: taskEvent,
       });
     });
 
     // 监听任务完成事件
-    eventBus.on(EventNames.TASK_COMPLETED, event => {
-      this.broadcastToUser(event.userId, {
+    eventBus.on(EventNames.TASK_COMPLETED, (event: unknown) => {
+      const taskEvent = event as { userId: string; taskId: string; resultImageUrls?: string[] };
+      this.broadcastToUser(taskEvent.userId, {
         type: 'task.completed',
-        data: event,
+        data: taskEvent,
       });
     });
 
     // 监听任务失败事件
-    eventBus.on(EventNames.TASK_FAILED, event => {
-      this.broadcastToUser(event.userId, {
+    eventBus.on(EventNames.TASK_FAILED, (event: unknown) => {
+      const taskEvent = event as { userId: string; taskId: string; errorMessage: string };
+      this.broadcastToUser(taskEvent.userId, {
         type: 'task.failed',
-        data: event,
+        data: taskEvent,
       });
     });
 

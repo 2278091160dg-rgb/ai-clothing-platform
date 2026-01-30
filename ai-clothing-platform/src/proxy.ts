@@ -7,7 +7,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { isAuthenticated } from '@/lib/access-auth';
 
 // 不需要认证的路径
-const publicPaths = ['/login', '/api/auth/login', '/api/webhooks'];
+const publicPaths = ['/login', '/api/auth/login', '/api/webhooks', '/api/proxy'];
 
 export default function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;

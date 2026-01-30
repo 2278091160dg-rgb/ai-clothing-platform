@@ -25,7 +25,7 @@ export interface TaskUpdatedEvent {
   type: 'task.updated';
   taskId: string;
   userId: string;
-  changes: Record<string, any>;
+  changes: Record<string, unknown>;
   timestamp: number;
 }
 
@@ -131,14 +131,14 @@ export interface UserQuotaUpdatedEvent {
 export interface WebhookReceivedEvent {
   type: 'webhook.received';
   source: 'feishu' | 'n8n';
-  payload: any;
+  payload: Record<string, unknown>;
   timestamp: number;
 }
 
 export interface ErrorOccurredEvent {
   type: 'error.occurred';
   error: Error;
-  context?: Record<string, any>;
+  context?: Record<string, unknown>;
   userId?: string;
   timestamp: number;
 }

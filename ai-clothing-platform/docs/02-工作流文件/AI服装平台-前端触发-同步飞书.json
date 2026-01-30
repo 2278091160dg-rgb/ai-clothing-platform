@@ -1,0 +1,494 @@
+{
+  "name": "AI服装平台-前端触发-同步飞书",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "ai-clothing-frontend",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-trigger",
+      "name": "【Webhook】接收前端请求",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1.1,
+      "position": [250, 300],
+      "webhookId": "frontend-trigger"
+    },
+    {
+      "parameters": {
+        "mode": "manual",
+        "document": {
+          "id": "auth-header",
+          "name": "Header Auth",
+          "data": {
+            "headerAuth": [
+              {
+                "name": "X-Webhook-Token",
+                "value": "{{$env.WEBHOOK_TOKEN}}"
+              }
+            ]
+          }
+        }
+      },
+      "id": "auth-validation",
+      "name": "【鉴权】验证请求",
+      "type": "n8n-nodes-base.headerAuth",
+      "typeVersion": 1,
+      "position": [450, 300],
+      "credentials": {
+        "headerAuth": {
+          "id": "header-auth-credential",
+          "name": "Webhook Auth"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "manual",
+        "document": {
+          "id": "extract-params",
+          "name": "Extract Params",
+          "data": {
+            "extract": {
+              "taskId": "={{ $json.taskId }}",
+              "userId": "={{ $json.userId }}",
+              "mode": "={{ $json.mode }}",
+              "prompt": "={{ $json.prompt }}",
+              "productImageUrl": "={{ $json.productImageUrl }}",
+              "sceneImageUrl": "={{ $json.sceneImageUrl || '' }}",
+              "aiModel": "={{ $json.aiModel || 'Gemini-3-Pro-Image' }}",
+              "aspectRatio": "={{ $json.aspectRatio || '3:4' }}",
+              "imageCount": "={{ $json.imageCount || 4 }}",
+              "quality": "={{ $json.quality || 'high' }}",
+              "callbackUrl": "={{ $json.callbackUrl }}"
+            }
+          }
+        }
+      },
+      "id": "extract-params",
+      "name": "提取请求参数",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [650, 300]
+    },
+    {
+      "parameters": {
+        "mode": "manual",
+        "document": {
+          "id": "aspect-ratio-switch",
+          "name": "Aspect Ratio Switch",
+          "data": {
+            "switch": {
+              "field": "={{ $json.aspectRatio }}",
+              "cases": {
+                "9:16": {
+                  "width": 720,
+                  "height": 1280
+                },
+                "3:4": {
+                  "width": 768,
+                  "height": 1024
+                },
+                "1:1": {
+                  "width": 1024,
+                  "height": 1024
+                },
+                "16:9": {
+                  "width": 1280,
+                  "height": 720
+                }
+              },
+              "default": {
+                "width": 768,
+                "height": 1024
+              }
+            }
+          }
+        }
+      },
+      "id": "aspect-ratio-switch",
+      "name": "判断比例并设置尺寸",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3,
+      "position": [850, 300]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $('提取请求参数').item.json.productImageUrl }}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file"
+            }
+          }
+        }
+      },
+      "id": "download-product-image",
+      "name": "下载商品图片",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1050, 200]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $('提取请求参数').item.json.sceneImageUrl }}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file"
+            }
+          }
+        },
+        "condition": "={{ $('提取请求参数').item.json.sceneImageUrl !== '' }}"
+      },
+      "id": "download-scene-image",
+      "name": "下载场景图片",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1050, 400]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.deerapi.com/v1/ai/generate",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "model",
+              "value": "={{ $('提取请求参数').item.json.aiModel }}"
+            },
+            {
+              "name": "prompt",
+              "value": "={{ $('提取请求参数').item.json.prompt }}"
+            },
+            {
+              "name": "image",
+              "value": "={{ $('下载商品图片').item.binary.data }}"
+            },
+            {
+              "name": "image2",
+              "value": "={{ $('下载场景图片').item.binary.data }}"
+            },
+            {
+              "name": "aspect_ratio",
+              "value": "={{ $('提取请求参数').item.json.aspectRatio }}"
+            },
+            {
+              "name": "num_images",
+              "value": "={{ $('提取请求参数').item.json.imageCount }}"
+            },
+            {
+              "name": "resolution",
+              "value": "1K"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "deerapi-generate",
+      "name": "【DeerAPI】AI图片生成",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1250, 300],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "deerapi-credential",
+          "name": "DeerAPI account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "manual",
+        "document": {
+          "id": "extract-results",
+          "name": "Extract Results",
+          "data": {
+            "extract": {
+              "resultImageUrls": "={{ $json.data.images || [] }}",
+              "imageCount": "={{ ($json.data.images || []).length }}",
+              "taskId": "={{ $('提取请求参数').item.json.taskId }}",
+              "userId": "={{ $('提取请求参数').item.json.userId }}",
+              "prompt": "={{ $('提取请求参数').item.json.prompt }}",
+              "productImageUrl": "={{ $('提取请求参数').item.json.productImageUrl }}",
+              "sceneImageUrl": "={{ $('提取请求参数').item.json.sceneImageUrl }}",
+              "aiModel": "={{ $('提取请求参数').item.json.aiModel }}",
+              "aspectRatio": "={{ $('提取请求参数').item.json.aspectRatio }}",
+              "imageCount": "={{ $('提取请求参数').item.json.imageCount }}"
+            }
+          }
+        }
+      },
+      "id": "extract-results",
+      "name": "提取生成结果",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [1450, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.deerapi.com/v1/upload",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "file",
+              "value": "={{ $json }}"
+            }
+          ]
+        },
+        "options": {
+          "batching": {
+            "batch": {
+              "batchSize": 1,
+              "batchField": "resultImageUrls"
+            }
+          }
+        }
+      },
+      "id": "upload-results",
+      "name": "【DeerAPI】上传结果图",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1650, 300],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "deerapi-credential",
+          "name": "DeerAPI account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "createRecord",
+        "appToken": "app_xxx",
+        "tableId": "tbl_xxx",
+        "data": {
+          "fields": {
+            "提示词": "={{ $('提取生成结果').item.json.prompt }}",
+            "商品图片": "={{ $('提取生成结果').item.json.productImageUrl }}",
+            "场景图": "={{ $('提取生成结果').item.json.sceneImageUrl }}",
+            "AI模型": "={{ $('提取生成结果').item.json.aiModel }}",
+            "尺寸比例": "={{ $('提取生成结果').item.json.aspectRatio }}",
+            "生成数量": "={{ $('提取生成结果').item.json.imageCount }}",
+            "生成结果": "={{ $('上传结果图').item.json.uploadedUrls }}",
+            "状态": "✅ 已完成"
+          }
+        },
+        "options": {}
+      },
+      "id": "create-feishu-record",
+      "name": "【飞书】创建记录",
+      "type": "n8n-nodes-base.feishuBitable",
+      "typeVersion": 1.1,
+      "position": [1850, 300],
+      "credentials": {
+        "feishuApi": {
+          "id": "feishu-credential",
+          "name": "Feishu Credentials account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('提取请求参数').item.json.callbackUrl }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "taskId",
+              "value": "={{ $('提取生成结果').item.json.taskId }}"
+            },
+            {
+              "name": "status",
+              "value": "completed"
+            },
+            {
+              "name": "resultImageUrls",
+              "value": "={{ $('上传结果图').item.json.uploadedUrls }}"
+            },
+            {
+              "name": "progress",
+              "value": "100"
+            },
+            {
+              "name": "feishuRecordId",
+              "value": "={{ $('创建飞书记录').item.json.record.record_id }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "callback-frontend",
+      "name": "【回调】通知前端",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [2050, 300],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "callback-auth",
+          "name": "Callback Auth"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { success: true, message: '任务已完成', taskId: $('提取生成结果').item.json.taskId, resultImageUrls: $('上传结果图').item.json.uploadedUrls } }}"
+      },
+      "id": "webhook-response",
+      "name": "【响应】返回成功",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [2250, 300]
+    }
+  ],
+  "connections": {
+    "【Webhook】接收前端请求": {
+      "main": [
+        [
+          {
+            "node": "【鉴权】验证请求",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "【鉴权】验证请求": {
+      "main": [
+        [
+          {
+            "node": "提取请求参数",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "提取请求参数": {
+      "main": [
+        [
+          {
+            "node": "判断比例并设置尺寸",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "判断比例并设置尺寸": {
+      "main": [
+        [
+          {
+            "node": "下载商品图片",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "下载场景图片",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "下载商品图片": {
+      "main": [
+        [
+          {
+            "node": "【DeerAPI】AI图片生成",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "下载场景图片": {
+      "main": [
+        [
+          {
+            "node": "【DeerAPI】AI图片生成",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "【DeerAPI】AI图片生成": {
+      "main": [
+        [
+          {
+            "node": "提取生成结果",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "提取生成结果": {
+      "main": [
+        [
+          {
+            "node": "【DeerAPI】上传结果图",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "【DeerAPI】上传结果图": {
+      "main": [
+        [
+          {
+            "node": "【飞书】创建记录",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "【飞书】创建记录": {
+      "main": [
+        [
+          {
+            "node": "【回调】通知前端",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "【回调】通知前端": {
+      "main": [
+        [
+          {
+            "node": "【响应】返回成功",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 1,
+  "updatedAt": "2026-01-29T00:00:00.000Z",
+  "versionId": "v2-frontend-trigger"
+}

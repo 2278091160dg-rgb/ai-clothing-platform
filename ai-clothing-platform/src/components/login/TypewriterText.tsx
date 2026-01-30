@@ -19,7 +19,6 @@ export function TypewriterText({
   texts,
   speed = 100,
   deleteSpeed = 50,
-  pauseDuration = 2000,
   className = '',
 }: TypewriterTextProps) {
   const [displayText, setDisplayText] = useState('');

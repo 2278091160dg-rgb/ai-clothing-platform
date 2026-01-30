@@ -3,7 +3,8 @@
  * 用于保护公开部署的应用
  */
 
-const COOKIE_NAME = 'access_token';
+import type { NextResponse } from 'next/server';
+
 const SESSION_COOKIE = 'access_session';
 
 /**
@@ -19,7 +20,7 @@ export function validateAccessToken(token: string): boolean {
 
 /**
  * 设置认证 Cookie */
-export function setAccessCookie(response: any, token: string): void {
+export function setAccessCookie(response: NextResponse, token: string): void {
   const isProduction = process.env.NODE_ENV === 'production';
 
   response.cookies.set(SESSION_COOKIE, token, {
@@ -33,7 +34,7 @@ export function setAccessCookie(response: any, token: string): void {
 
 /**
  * 清除认证 Cookie */
-export function clearAccessCookie(response: any): void {
+export function clearAccessCookie(response: NextResponse): void {
   response.cookies.delete(SESSION_COOKIE);
 }
 

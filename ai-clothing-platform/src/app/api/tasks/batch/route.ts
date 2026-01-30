@@ -51,18 +51,31 @@ export async function POST(req: NextRequest) {
     const taskRepo = getTaskRepository();
 
     // 创建任务数据
-    const taskData = tasks.map((task: any, index: number) => ({
-      userId: defaultUserId,
-      productImageUrl: task.productImageUrl,
-      sceneImageUrl: task.sceneImageUrl,
-      prompt: task.prompt,
-      aiModel: task.aiModel || 'FLUX.1',
-      aspectRatio: task.aspectRatio || '1:1',
-      imageCount: task.imageCount || 4,
-      quality: task.quality || 'high',
-      batchId,
-      batchIndex: index,
-    }));
+    const taskData = tasks.map(
+      (
+        task: {
+          productImageUrl?: string;
+          sceneImageUrl?: string;
+          prompt?: string;
+          aiModel?: string;
+          aspectRatio?: string;
+          imageCount?: number;
+          quality?: string;
+        },
+        index: number
+      ) => ({
+        userId: defaultUserId,
+        productImageUrl: task.productImageUrl,
+        sceneImageUrl: task.sceneImageUrl,
+        prompt: task.prompt,
+        aiModel: task.aiModel || 'FLUX.1',
+        aspectRatio: task.aspectRatio || '1:1',
+        imageCount: task.imageCount || 4,
+        quality: task.quality || 'high',
+        batchId,
+        batchIndex: index,
+      })
+    );
 
     // 批量创建任务
     const result = await taskRepo.createMany(taskData);
@@ -94,6 +107,7 @@ export async function POST(req: NextRequest) {
       const n8nService = getN8nService();
       await n8nService.triggerBatchGeneration(
         createdTasks.map(task => ({
+          mode: (task.mode || 'scene') as 'scene' | 'tryon' | 'wear' | 'combine',
           taskId: task.id,
           userId: defaultUserId,
           productImageUrl: task.productImageUrl || '',

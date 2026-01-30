@@ -12,19 +12,21 @@ interface BrandConfig {
   logoImage?: string;
 }
 
-const DEFAULT_BRAND_CONFIG: BrandConfig = {
-  title: 'AI场景图生成器',
-  subtitle: '智能电商商拍工具',
-  icon: '🎨',
-  logoImage: undefined,
-};
-
 export function useBrandConfig() {
-  const [brandConfig, setBrandConfig] = useState<BrandConfig>(DEFAULT_BRAND_CONFIG);
+  const [brandConfig, setBrandConfig] = useState<BrandConfig>(() => {
+    // 初始化时读取配置
+    const config = ConfigManager.getConfig();
+    return {
+      title: config.brandTitle || 'AI场景图生成器',
+      subtitle: config.brandSubtitle || '智能电商商拍工具',
+      icon: config.brandIcon || '🎨',
+      logoImage: config.brandLogoImage,
+    };
+  });
 
   const loadBrandConfig = useCallback(() => {
     const config = ConfigManager.getConfig();
-    const newBrandConfig = {
+    const newBrandConfig: BrandConfig = {
       title: config.brandTitle || 'AI场景图生成器',
       subtitle: config.brandSubtitle || '智能电商商拍工具',
       icon: config.brandIcon || '🎨',
@@ -38,9 +40,12 @@ export function useBrandConfig() {
     }
   }, []);
 
+  // 只在挂载时加载一次配置
   useEffect(() => {
     loadBrandConfig();
-  }, [loadBrandConfig]);
+    // 只在挂载时运行，禁用依赖警告
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return { brandConfig, loadBrandConfig };
 }

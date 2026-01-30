@@ -5,7 +5,6 @@
 
 import { getEventBus } from '../../events/event-bus';
 import type { ServiceType, DegradationLevel } from './degradation.types';
-import { DEGRADATION_LEVELS } from './degradation.types';
 
 interface ServiceHealthInternal {
   status: 'healthy' | 'degraded' | 'down';

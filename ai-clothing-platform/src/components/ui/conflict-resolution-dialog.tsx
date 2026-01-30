@@ -26,7 +26,7 @@ interface ConflictInfo {
   localVersion: number;
   lastModifiedBy: string;
   lastModifiedAt: Date;
-  remoteChanges?: Record<string, any>;
+  remoteChanges?: Record<string, unknown>;
 }
 
 interface ConflictResolutionDialogProps {

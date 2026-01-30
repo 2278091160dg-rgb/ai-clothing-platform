@@ -1,0 +1,1209 @@
+{
+  "name": "AI场景图生成工作流-前端触发-v3-修正版",
+  "nodes": [
+    {
+      "parameters": {
+        "resource": "auth",
+        "operation": "auth:getAccessToken"
+      },
+      "id": "2df4ff48-550f-444b-a316-5bc8084f94ce",
+      "name": "飞书鉴权",
+      "type": "n8n-nodes-feishu-lite.feishuNode",
+      "typeVersion": 1,
+      "position": [1488, 144],
+      "credentials": {
+        "feishuCredentialsApi": {
+          "id": "vMUT6XQ19LuBHj6G",
+          "name": "Feishu Credentials account 3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "bitable",
+        "operation": "bitable:table:record:get",
+        "app_toke": "={{ $json.body.app_token }}",
+        "table_id": "={{ $json.body.table_id }}",
+        "record_id": "={{ $json.body.record_id }}"
+      },
+      "id": "7471d98e-93bd-4bc1-b041-be1cd2965198",
+      "name": "获取数据",
+      "type": "n8n-nodes-feishu-lite.feishuNode",
+      "typeVersion": 1,
+      "position": [1712, 144],
+      "credentials": {
+        "feishuCredentialsApi": {
+          "id": "vMUT6XQ19LuBHj6G",
+          "name": "Feishu Credentials account 3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "field-recordId",
+              "name": "record_id",
+              "value": "={{ $('Webhook触发器1').item.json.body.record_id }}",
+              "type": "string"
+            },
+            {
+              "id": "field-appToken",
+              "name": "app_token",
+              "value": "={{ $('Webhook触发器1').item.json.body.app_token }}",
+              "type": "string"
+            },
+            {
+              "id": "field-tableId",
+              "name": "table_id",
+              "value": "={{ $('Webhook触发器1').item.json.body.table_id }}",
+              "type": "string"
+            },
+            {
+              "id": "field-prompt",
+              "name": "prompt",
+              "value": "={{ $json.data.records[0].fields['提示词'][0].text }}",
+              "type": "string"
+            },
+            {
+              "id": "field-productImageUrl",
+              "name": "productImageUrl",
+              "value": "={{ $json.data.records[0].fields['商品图'][0].url }}",
+              "type": "string"
+            },
+            {
+              "id": "field-sceneImageUrl",
+              "name": "sceneImageUrl",
+              "value": "={{ $json.data.records[0].fields['场景图'] && $json.data.records[0].fields['场景图'][0].url || '' }}",
+              "type": "string"
+            },
+            {
+              "id": "field-aspectRatio",
+              "name": "aspectRatio",
+              "value": "={{ $json.data.records[0].fields['尺寸比例'] || '3:4' }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "9d6dc304-226c-48d4-956a-98872ccfd69e",
+      "name": "提取参数",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [1936, 144]
+    },
+    {
+      "parameters": {
+        "resource": "bitable",
+        "operation": "bitable:table:record:update",
+        "app_toke": "={{ $('提取参数').item.json.app_token }}",
+        "table_id": "={{ $('提取参数').item.json.table_id }}",
+        "record_id": "={{ $('提取参数').item.json.record_id }}",
+        "body": "={\n  \"fields\": {\n    \"状态\": \"处理中\"\n  }\n}"
+      },
+      "id": "b8a66dc8-4d44-4eac-9546-feb2a757c13f",
+      "name": "更新状态为处理中",
+      "type": "n8n-nodes-feishu-lite.feishuNode",
+      "typeVersion": 1,
+      "position": [2176, 144],
+      "credentials": {
+        "feishuCredentialsApi": {
+          "id": "vMUT6XQ19LuBHj6G",
+          "name": "Feishu Credentials account 3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "={{ $('提取参数').item.json.productImageUrl }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $('飞书鉴权').item.json.accessToken }}"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file"
+            }
+          }
+        }
+      },
+      "id": "c5e99346-fefb-4d9d-96c0-04f727502a52",
+      "name": "下载商品图",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [2416, 144]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $('提取参数').item.json.sceneImageUrl }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "isNotEmpty"
+              },
+              "id": "b6a9cef2-244c-4281-9e07-c9044afca980"
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "56acbe8e-b9c7-4219-97e6-60a77f6b3281",
+      "name": "判断是否有场景图",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.1,
+      "position": [2656, 144]
+    },
+    {
+      "parameters": {
+        "url": "={{ $('提取参数').item.json.sceneImageUrl }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $('飞书鉴权').item.json.accessToken }}"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file",
+              "outputPropertyName": "data2"
+            }
+          }
+        }
+      },
+      "id": "b355c066-b74c-4407-ba9e-af4ef5a00566",
+      "name": "下载场景图",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [1392, 400]
+    },
+    {
+      "parameters": {
+        "mode": "image",
+        "userPrompt": "={{ $('提取参数').item.json.prompt }}注意：第一张图片是产品图，第二张图片是场景图。请使用第一张图片（产品图）和第二张图片（场景图）进行生成。",
+        "aspectRatio": "={{ $('提取参数').item.json.aspectRatio }}"
+      },
+      "id": "3f1a41af-c106-483a-bbd6-f6373bf20380",
+      "name": "大模型处理",
+      "type": "n8n-nodes-deerapi.deerApi",
+      "typeVersion": 1,
+      "position": [1632, 384],
+      "credentials": {
+        "deerApi": {
+          "id": "LbaMt4eRjzXDjQva",
+          "name": "DeerAPI account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\nfor (let i = 0; i < items.length; i++) {\n  const item = items[i];\n  if (item.binary && item.binary.data) {\n    const buffer = await this.helpers.getBinaryDataBuffer(i, 'data');\n    item.json.real_size = buffer.length;\n    item.json.file_name = \"final_product.png\";\n  }\n}\nreturn items;"
+      },
+      "id": "21be343f-af99-4a45-adc3-cb6f9f95d79d",
+      "name": "数据处理",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1856, 384]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://open.feishu.cn/open-apis/drive/v1/medias/upload_all",
+        "sendHeaders": true,
+        "specifyHeaders": "json",
+        "jsonHeaders": "={\n  \"Authorization\": \"Bearer {{ $('飞书鉴权').item.json.accessToken }}\"\n}",
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "parent_type",
+              "value": "bitable_image"
+            },
+            {
+              "name": "parent_node",
+              "value": "={{ $('提取参数').item.json.app_token }}"
+            },
+            {
+              "name": "file_name",
+              "value": "={{ $json.file_name }}"
+            },
+            {
+              "name": "size",
+              "value": "={{ $json.real_size }}"
+            },
+            {
+              "parameterType": "formBinaryData",
+              "name": "file",
+              "inputDataFieldName": "data"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "bbd82cb3-6219-4584-9d32-7e1f83878b92",
+      "name": "上传素材",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [2080, 384]
+    },
+    {
+      "parameters": {
+        "resource": "bitable",
+        "operation": "bitable:table:record:update",
+        "app_toke": "={{ $('提取参数').item.json.app_token }}",
+        "table_id": "={{ $('提取参数').item.json.table_id }}",
+        "record_id": "={{ $('提取参数').item.json.record_id }}",
+        "body": "={\n  \"fields\": {\n    \"生成结果\": [\n      {\n        \"file_token\": \"{{ $json.data.file_token }}\"\n      }\n    ],\n    \"状态\": \"已完成\"\n  }\n}"
+      },
+      "id": "c2441bfc-807f-49d5-8d89-6479ac29f3f5",
+      "name": "回传飞书",
+      "type": "n8n-nodes-feishu-lite.feishuNode",
+      "typeVersion": 1,
+      "position": [2288, 384],
+      "credentials": {
+        "feishuCredentialsApi": {
+          "id": "vMUT6XQ19LuBHj6G",
+          "name": "Feishu Credentials account 3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "feishu-trigger",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "a9b0480e-fd0f-465c-90c3-16720abc7e48",
+      "name": "Webhook触发器1",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [1264, 144],
+      "webhookId": "feishu-trigger-v3"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"success\": true,\n  \"recordId\": \"{{ $('提取参数').item.json.record_id }}\",\n  \"message\": \"图片生成成功\"\n}\n",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "id": "53ea0b52-bcc8-41fe-a236-bbad5ccf90ed",
+      "name": "返回成功响应1",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [2512, 384]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "ai-clothing-generation",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "d62a7b0c-680d-4a2c-993a-f184ad901d93",
+      "name": "Webhook触发器",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [-752, 736],
+      "webhookId": "ai-clothing-frontend-v2"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "field-taskId",
+              "name": "taskId",
+              "value": "={{ $json.taskId }}",
+              "type": "string"
+            },
+            {
+              "id": "field-userId",
+              "name": "userId",
+              "value": "={{ $json.userId }}",
+              "type": "string"
+            },
+            {
+              "id": "field-productImageUrl",
+              "name": "productImageUrl",
+              "value": "={{ $json.productImageUrl }}",
+              "type": "string"
+            },
+            {
+              "id": "field-sceneImageUrl",
+              "name": "sceneImageUrl",
+              "value": "={{ $json.sceneImageUrl }}",
+              "type": "string"
+            },
+            {
+              "id": "field-prompt",
+              "name": "prompt",
+              "value": "={{ $json.prompt }}",
+              "type": "string"
+            },
+            {
+              "id": "field-aiModel",
+              "name": "aiModel",
+              "value": "={{ $json.aiModel }}",
+              "type": "string"
+            },
+            {
+              "id": "field-aspectRatio",
+              "name": "aspectRatio",
+              "value": "={{ $json.aspectRatio }}",
+              "type": "string"
+            },
+            {
+              "id": "field-imageCount",
+              "name": "imageCount",
+              "value": "={{ $json.imageCount }}",
+              "type": "number"
+            },
+            {
+              "id": "field-quality",
+              "name": "quality",
+              "value": "={{ $json.quality }}",
+              "type": "string"
+            },
+            {
+              "id": "field-callbackUrl",
+              "name": "callbackUrl",
+              "value": "={{ $json.callbackUrl }}",
+              "type": "string"
+            },
+            {
+              "id": "field-deerApiKey",
+              "name": "deerApiKey",
+              "value": "={{ $json.deerApiKey }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "8f8e488c-e0f6-4928-b2a9-0724210a535a",
+      "name": "解析请求参数",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [-528, 736]
+    },
+    {
+      "parameters": {
+        "resource": "bitable",
+        "operation": "bitable:table:record:create",
+        "app_toke": "={{ $env.FEISHU_APP_TOKEN }}",
+        "table_id": "={{ $env.FEISHU_TABLE_ID }}",
+        "body": "={\n  \"fields\": {\n    \"提示词\": \"{{ $('解析请求参数').item.json.prompt }}\",\n    \"商品图\": [{\n      \"url\": \"{{ $('解析请求参数').item.json.productImageUrl }}\"\n    }],\n    \"场景图\": {{ $('解析请求参数').item.json.sceneImageUrl ? '[{\"url\": \"' + $('解析请求参数').item.json.sceneImageUrl + '\"}]' : '[]' }},\n    \"状态\": \"待处理\",\n    \"数据来源\": \"🌐 前端用户\",\n    \"同步状态\": \"✅ 已同步\",\n    \"前端用户ID\": \"{{ $('解析请求参数').item.json.userId }}\",\n    \"AI模型\": \"{{ $('解析请求参数').item.json.aiModel }}\",\n    \"尺寸比例\": \"{{ $('解析请求参数').item.json.aspectRatio }}\",\n    \"生成数量\": {{ $('解析请求参数').item.json.imageCount }}\n  }\n}"
+      },
+      "id": "create-feishu-record",
+      "name": "创建飞书记录",
+      "type": "n8n-nodes-feishu-lite.feishuNode",
+      "typeVersion": 1,
+      "position": [-304, 736],
+      "credentials": {
+        "feishuCredentialsApi": {
+          "id": "vMUT6XQ19LuBHj6G",
+          "name": "Feishu Credentials account 3"
+        }
+      },
+      "continueOnFail": true,
+      "retryOnFail": true,
+      "maxTries": 2
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "field-feishuRecordId",
+              "name": "feishuRecordId",
+              "value": "={{ $json.data ? $json.data.record_id : '' }}",
+              "type": "string"
+            },
+            {
+              "id": "field-feishuAppToken",
+              "name": "feishuAppToken",
+              "value": "={{ $env.FEISHU_APP_TOKEN }}",
+              "type": "string"
+            },
+            {
+              "id": "field-feishuTableId",
+              "name": "feishuTableId",
+              "value": "={{ $env.FEISHU_TABLE_ID }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "extract-feishu-record-id",
+      "name": "提取飞书记录ID",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [-80, 736]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "field-aspectRatio-clean",
+              "name": "aspectRatioClean",
+              "value": "={{ $json.aspectRatio.trim().replace(/：/g, ':').replace(/，/g, ',') }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "98939633-5e20-4921-8f47-e7e220e58ae2",
+      "name": "标准化尺寸参数",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [144, 736]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "width-1to1",
+              "name": "width",
+              "value": 1024,
+              "type": "number"
+            },
+            {
+              "id": "height-1to1",
+              "name": "height",
+              "value": 1024,
+              "type": "number"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "20f50683-d2c0-49a6-8374-53762c65a34a",
+      "name": "1:1尺寸",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [368, 544]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "width-3to4",
+              "name": "width",
+              "value": 768,
+              "type": "number"
+            },
+            {
+              "id": "height-3to4",
+              "name": "height",
+              "value": 1024,
+              "type": "number"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "f663482e-9343-4193-b211-7532c60cf623",
+      "name": "3:4尺寸",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [368, 352]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "width-16to9",
+              "name": "width",
+              "value": 1344,
+              "type": "number"
+            },
+            {
+              "id": "height-16to9",
+              "name": "height",
+              "value": 768,
+              "type": "number"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "87f69759-a343-4527-8b86-ecdcb5a40dad",
+      "name": "16:9尺寸",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [368, 736]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "width-9to16",
+              "name": "width",
+              "value": 768,
+              "type": "number"
+            },
+            {
+              "id": "height-9to16",
+              "name": "height",
+              "value": 1344,
+              "type": "number"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "3ffeeb5f-6652-43e7-9940-e021a61fe338",
+      "name": "9:16尺寸",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [368, 928]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "width-default",
+              "name": "width",
+              "value": 768,
+              "type": "number"
+            },
+            {
+              "id": "height-default",
+              "name": "height",
+              "value": 1024,
+              "type": "number"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "7aacb920-fc99-40cf-9f91-5a9a0d345828",
+      "name": "默认尺寸(3:4)",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [368, 1120]
+    },
+    {
+      "parameters": {
+        "url": "=https://api.deerapi.com/",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer sk-VudNMyMqsnsbSPAWoYUyxc6aJJgCVLXvLvHI97lkR3DlXmST"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"Gemini-3-Pro-Image\",\n  \"prompt\": \"{{ $('解析请求参数').item.json.prompt }}\",\n  \"image\": \"{{ $('解析请求参数').item.json.productImageUrl }}\",\n  \"width\": 768,\n  \"height\": 1024,\n  \"num_images\": 1\n}",
+        "options": {}
+      },
+      "id": "feb8f6d2-6120-4edb-a9b7-f6dc722f452a",
+      "name": "AI图片生成",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [592, 736]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "result-images",
+              "name": "resultImageUrls",
+              "value": "={{ $json.data.images }}",
+              "type": "array"
+            },
+            {
+              "id": "status",
+              "name": "status",
+              "value": "completed",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "476d6d3e-8324-49eb-a1a2-1dd68c7b8ecd",
+      "name": "格式化结果",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [816, 736]
+    },
+    {
+      "parameters": {
+        "resource": "bitable",
+        "operation": "bitable:table:record:update",
+        "app_toke": "={{ $('提取飞书记录ID').item.json.feishuAppToken }}",
+        "table_id": "={{ $('提取飞书记录ID').item.json.feishuTableId }}",
+        "record_id": "={{ $('提取飞书记录ID').item.json.feishuRecordId }}",
+        "body": "={\n  \"fields\": {\n    \"生成结果\": {{ $('格式化结果').item.json.resultImageUrls.map(url => '{\"url\": \"' + url + '\"}').join(', ') ? '[' + $('格式化结果').item.json.resultImageUrls.map(url => '{\"url\": \"' + url + '\"}').join(', ') + ']' : '[]' }},\n    \"状态\": \"已完成\",\n    \"同步状态\": \"✅ 已同步\",\n    \"进度\": 100\n  }\n}",
+        "options": {}
+      },
+      "id": "update-feishu-record",
+      "name": "更新飞书记录",
+      "type": "n8n-nodes-feishu-lite.feishuNode",
+      "typeVersion": 1,
+      "position": [1040, 736],
+      "credentials": {
+        "feishuCredentialsApi": {
+          "id": "vMUT6XQ19LuBHj6G",
+          "name": "Feishu Credentials account 3"
+        }
+      },
+      "continueOnFail": true,
+      "retryOnFail": true,
+      "maxTries": 2
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Webhook触发器').item.json.body.callbackUrl }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"taskId\": \"{{ $('解析请求参数').item.json.taskId }}\",\n  \"status\": \"completed\",\n  \"resultImageUrls\": \"{{ $json.resultImageUrls }}\",\n  \"progress\": 100\n}",
+        "options": {}
+      },
+      "id": "3edef140-173a-4935-a7f8-8db62242862a",
+      "name": "回调后端API",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1264, 736],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "LGhdLnHpPFKUSGuA",
+          "name": "Header Auth account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"success\": true,\n  \"taskId\": \"{{ $('解析请求参数').item.json.taskId }}\",\n  \"message\": \"图片生成成功\"\n}",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "id": "feaeae5a-9f0e-4f19-8225-b6d70cda5f72",
+      "name": "返回成功响应",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [1488, 736]
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.aspectRatioClean }}",
+                    "rightValue": "\"3:4\"",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "5f390d47-e87a-4877-9f66-f77b0f10870f"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "3to4"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "34a9cadb-7734-40b3-bcd1-92d770a71275",
+                    "leftValue": "={{ $json.aspectRatioClean }}",
+                    "rightValue": "\"1:1\"",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "1to1"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "e9aafb5e-762b-4753-a5fd-33b936ddbe84",
+                    "leftValue": "={{ $json.aspectRatioClean }}",
+                    "rightValue": "\"16:9\"",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "16to9"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "cd1ebe27-2d78-4fa8-a31a-8c266ea99166",
+                    "leftValue": "={{ $json.aspectRatioClean }}",
+                    "rightValue": "\"9:16\"",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "9to16"
+            }
+          ]
+        },
+        "options": {
+          "fallbackOutput": "extra"
+        }
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [256, 688],
+      "id": "9f1a4d69-8576-4669-81bb-00f274f40677",
+      "name": "判断尺寸比例1"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://audience-ons-moss-combat.trycloudflare.com/api/webhooks/n8n/callback",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-n8n-api-key",
+              "value": "n8n-callback-secret-key-2024"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"taskId\": \"{{ $json.taskId }}\",\n  \"status\": \"completed\",\n  \"resultImageUrls\": [\"{{ $json.imageUrl }}\"],\n  \"resultImageTokens\": [],\n  \"progress\": 100\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [1696, 736],
+      "id": "a2f6863b-a57f-4140-9f86-e62ea9f98ca0",
+      "name": "HTTP Request"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "飞书鉴权": {
+      "main": [
+        [
+          {
+            "node": "获取数据",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "获取数据": {
+      "main": [
+        [
+          {
+            "node": "提取参数",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "提取参数": {
+      "main": [
+        [
+          {
+            "node": "更新状态为处理中",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "更新状态为处理中": {
+      "main": [
+        [
+          {
+            "node": "下载商品图",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "下载商品图": {
+      "main": [
+        [
+          {
+            "node": "判断是否有场景图",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "下载场景图": {
+      "main": [
+        [
+          {
+            "node": "大模型处理",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "大模型处理": {
+      "main": [
+        [
+          {
+            "node": "数据处理",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "数据处理": {
+      "main": [
+        [
+          {
+            "node": "上传素材",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "上传素材": {
+      "main": [
+        [
+          {
+            "node": "回传飞书",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "回传飞书": {
+      "main": [
+        [
+          {
+            "node": "返回成功响应1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook触发器1": {
+      "main": [
+        [
+          {
+            "node": "飞书鉴权",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook触发器": {
+      "main": [
+        [
+          {
+            "node": "解析请求参数",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "解析请求参数": {
+      "main": [
+        [
+          {
+            "node": "创建飞书记录",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "创建飞书记录": {
+      "main": [
+        [
+          {
+            "node": "提取飞书记录ID",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "提取飞书记录ID": {
+      "main": [
+        [
+          {
+            "node": "标准化尺寸参数",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "标准化尺寸参数": {
+      "main": [
+        [
+          {
+            "node": "判断尺寸比例1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "1:1尺寸": {
+      "main": [
+        [
+          {
+            "node": "AI图片生成",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "3:4尺寸": {
+      "main": [
+        [
+          {
+            "node": "AI图片生成",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "16:9尺寸": {
+      "main": [
+        [
+          {
+            "node": "AI图片生成",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "9:16尺寸": {
+      "main": [
+        [
+          {
+            "node": "AI图片生成",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "默认尺寸(3:4)": {
+      "main": [
+        [
+          {
+            "node": "AI图片生成",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI图片生成": {
+      "main": [
+        [
+          {
+            "node": "格式化结果",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "格式化结果": {
+      "main": [
+        [
+          {
+            "node": "更新飞书记录",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "更新飞书记录": {
+      "main": [
+        [
+          {
+            "node": "回调后端API",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "回调后端API": {
+      "main": [
+        [
+          {
+            "node": "返回成功响应",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "判断尺寸比例1": {
+      "main": [
+        [
+          {
+            "node": "3:4尺寸",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "1:1尺寸",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "16:9尺寸",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "9:16尺寸",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "默认尺寸(3:4)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "返回成功响应": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "f55a9003-905f-4f62-8dad-af69d705d31c",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "2fe458802b357325554b9b6fc0e6ac78bf38d7ba7f5cde2f7cbe1f1c975def63"
+  },
+  "id": "l3WnOVJy7eVzlQEX",
+  "tags": []
+}

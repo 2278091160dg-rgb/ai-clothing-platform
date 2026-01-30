@@ -4,6 +4,7 @@
 
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import Image from 'next/image';
 import type { LoginConfig } from '@/config/login-defaults';
 
 interface LoginPreviewModalProps {
@@ -38,7 +39,14 @@ export function LoginPreviewModal({ config, onClose }: LoginPreviewModalProps) {
           <div className="p-8 text-center border-b border-cyan-500/20">
             <div className="w-20 h-20 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-cyan-400 via-blue-500 to-purple-600 flex items-center justify-center shadow-lg">
               {config.logoUrl ? (
-                <img src={config.logoUrl} alt="Logo" className="w-16 h-16 object-contain" />
+                <Image
+                  src={config.logoUrl}
+                  alt="Logo"
+                  width={64}
+                  height={64}
+                  className="w-16 h-16 object-contain"
+                  unoptimized
+                />
               ) : (
                 <span className="text-4xl">{config.logoEmoji}</span>
               )}

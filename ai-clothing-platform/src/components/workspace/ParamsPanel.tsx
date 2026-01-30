@@ -68,8 +68,7 @@ interface ParamsPanelProps {
   isConfigured: boolean;
   productImageUrl?: string;
   sceneImageUrl?: string;
-  negativePrompt?: string;
-  onNegativePromptChange?: (value: string) => void;
+  isGenerating?: boolean;
 }
 
 export function ParamsPanel({
@@ -91,8 +90,7 @@ export function ParamsPanel({
   isConfigured,
   productImageUrl,
   sceneImageUrl,
-  negativePrompt,
-  onNegativePromptChange,
+  isGenerating = false,
 }: ParamsPanelProps) {
   // AI对话状态
   const [showAIConversation, setShowAIConversation] = useState(false);
@@ -104,12 +102,9 @@ export function ParamsPanel({
   };
 
   // AI对话完成回调
-  const handleAIConversationComplete = (optimizedPrompt: string, optimizedNegativePrompt?: string) => {
+  const handleAIConversationComplete = (optimizedPrompt: string, _optimizedNegativePrompt?: string) => {
     onPromptChange(optimizedPrompt);
-    if (optimizedNegativePrompt && onNegativePromptChange) {
-      onNegativePromptChange(optimizedNegativePrompt);
-    }
-    onAIConversationComplete?.(optimizedPrompt, optimizedNegativePrompt);
+    onAIConversationComplete?.(optimizedPrompt, _optimizedNegativePrompt);
     setShowAIConversation(false);
   };
 
@@ -183,21 +178,6 @@ export function ParamsPanel({
             />
           </div>
 
-          {/* 反向提示词 */}
-          {onNegativePromptChange && (
-            <div>
-              <label className="text-[11px] text-muted-foreground mb-1.5 block font-medium">
-                反向提示词 <span className="text-muted-foreground">（选填）</span>
-              </label>
-              <Textarea
-                value={negativePrompt || ''}
-                onChange={e => onNegativePromptChange(e.target.value)}
-                placeholder="需要避免的元素，如：blurry, low quality, bad anatomy..."
-                className="min-h-[50px] text-sm resize-none bg-card/50 border-border/30 focus:border-blue-500/50 text-foreground placeholder:text-muted-foreground"
-              />
-            </div>
-          )}
-
           {/* 图片比例 */}
           <div>
             <label className="text-[11px] text-muted-foreground mb-1.5 block font-medium">
@@ -267,24 +247,25 @@ export function ParamsPanel({
             </div>
           </div>
 
-          {/* 模型说明 */}
-          <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-2">
-            <p className="text-[10px] text-blue-400 flex items-center gap-1">
-              <Zap size={12} />
-              选择的模型将直接影响DeerAPI调用
-            </p>
-          </div>
-
           {/* 生成按钮 */}
           <Button
-            onClick={onGenerate}
-            className="h-11 text-[13px] font-bold w-full btn-primary rounded-xl shadow-lg hover:shadow-xl hover:scale-[1.02] transition-all"
+            onClick={() => {
+              console.log('🔵 按钮被点击了！isConfigured:', isConfigured);
+              onGenerate();
+            }}
+            disabled={isGenerating}
+            className="h-11 text-[13px] font-bold w-full btn-primary rounded-xl shadow-lg hover:shadow-xl hover:scale-[1.02] transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
             size="lg"
           >
             {!isConfigured ? (
               <>
                 <Zap size={14} className="mr-2 animate-spin-slow" />
                 请先配置API
+              </>
+            ) : isGenerating ? (
+              <>
+                <Zap size={14} className="mr-2 animate-spin" />
+                生成中...
               </>
             ) : (
               <>

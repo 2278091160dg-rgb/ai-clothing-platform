@@ -23,11 +23,16 @@ export class TaskRepository {
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + 7);
 
+    // 处理userId - 将其转换为必需字段
+    const userId = data.userId || 'default-user';
+
+    // 使用 Prisma 的类型安全方式创建
     return prisma.task.create({
       data: {
         ...data,
+        userId,
         expiresAt,
-      },
+      } as Prisma.TaskUncheckedCreateInput,
     });
   }
 
@@ -39,10 +44,14 @@ export class TaskRepository {
     expiresAt.setDate(expiresAt.getDate() + 7);
 
     return prisma.task.createMany({
-      data: data.map(item => ({
-        ...item,
-        expiresAt,
-      })),
+      data: data.map(
+        item =>
+          ({
+            ...item,
+            userId: item.userId || 'default-user',
+            expiresAt,
+          }) as Prisma.TaskUncheckedCreateInput
+      ),
     });
   }
 
@@ -77,9 +86,17 @@ export class TaskRepository {
    * 更新任务
    */
   async update(id: string, data: UpdateTaskInput): Promise<Task> {
+    // 处理resultImageUrls - 转换为JSON字符串
+    const { resultImageUrls, ...restData } = data;
+
     return prisma.task.update({
       where: { id },
-      data,
+      data: {
+        ...restData,
+        ...(resultImageUrls && {
+          resultImageUrls: JSON.stringify(resultImageUrls) as Prisma.InputJsonValue,
+        }),
+      } as Prisma.TaskUpdateInput,
     });
   }
 
@@ -281,6 +298,7 @@ export class TaskRepository {
       throw new VersionConflictError({
         taskId,
         currentVersion: current.version,
+        attemptedVersion: expectedVersion,
         expectedVersion,
         actualData: current,
         conflict: conflictInfo,
@@ -288,14 +306,20 @@ export class TaskRepository {
     }
 
     // 更新并递增版本号
+    // 处理resultImageUrls转换为JSON字符串
+    const { resultImageUrls, ...restUpdates } = updates;
+
     return prisma.task.update({
       where: { id: taskId },
       data: {
-        ...updates,
+        ...restUpdates,
+        ...(resultImageUrls && {
+          resultImageUrls: JSON.stringify(resultImageUrls) as Prisma.InputJsonValue,
+        }),
         version: { increment: 1 },
         lastModifiedAt: new Date(),
         lastModifiedBy: modifier,
-      },
+      } as Prisma.TaskUpdateInput,
     });
   }
 
@@ -307,8 +331,8 @@ export class TaskRepository {
     current: Task,
     updates: UpdateTaskInput
   ): Promise<import('./task.repository.types').ConflictInfo> {
-    const conflicts: string[] = [];
-    const remoteChanges: Record<string, any> = {};
+    const conflictDetails: Array<{ field: string; local: unknown; remote: unknown }> = [];
+    const remoteChanges: Record<string, unknown> = {};
 
     // 检查关键字段是否被修改
     const fieldsToCheck = ['prompt', 'status', 'progress', 'originalPrompt', 'optimizedPrompt'];
@@ -316,7 +340,11 @@ export class TaskRepository {
       const updatesRecord = updates as Record<string, unknown>;
       const currentRecord = current as Record<string, unknown>;
       if (updatesRecord[field] !== undefined && updatesRecord[field] !== currentRecord[field]) {
-        conflicts.push(field);
+        conflictDetails.push({
+          field,
+          local: updatesRecord[field],
+          remote: currentRecord[field],
+        });
         remoteChanges[field] = currentRecord[field];
       }
     }
@@ -332,8 +360,11 @@ export class TaskRepository {
 
         // 如果飞书记录更新时间晚于本地记录
         if (feishuModified > current.lastModifiedAt) {
-          conflicts.push('feishu_data');
-          // 可以添加更多字段级别的冲突检测
+          conflictDetails.push({
+            field: 'feishu_data',
+            local: 'local_changes',
+            remote: 'feishu_changes',
+          });
         }
       } catch (error) {
         // 飞书记录不可访问，记录警告但不影响主流程
@@ -343,7 +374,11 @@ export class TaskRepository {
 
     return {
       taskId,
-      conflicts,
+      currentVersion: current.version,
+      attemptedVersion: current.version,
+      currentData: current,
+      attemptedData: updates as Partial<Task>,
+      conflicts: conflictDetails.length > 0 ? conflictDetails : undefined,
       localVersion: current.version,
       lastModifiedBy: current.lastModifiedBy || 'unknown',
       lastModifiedAt: current.lastModifiedAt,

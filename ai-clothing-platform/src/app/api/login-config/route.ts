@@ -4,6 +4,7 @@
  * 本地使用 SQLite，生产使用 Supabase
  */
 
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { NextRequest, NextResponse } from 'next/server';
 import { DEFAULT_LOGIN_CONFIG } from '@/config/login-defaults';
 import type { PrismaClient } from '@prisma/client';
@@ -120,7 +121,7 @@ export async function PUT(req: NextRequest) {
     if (prismaInstance) {
       try {
         await prismaInstance.$disconnect();
-      } catch (e) {
+      } catch (_e) {
         // 忽略断开连接的错误
       }
     }

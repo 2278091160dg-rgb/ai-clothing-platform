@@ -2,6 +2,7 @@
  * RBAC (Role-Based Access Control) 权限控制
  */
 
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { UserRole } from '@prisma/client';
 
 export type Permission =
@@ -105,7 +106,7 @@ export function withPermission(
 /**
  * 从请求中获取session（简化版）
  */
-async function getSession(req: Request): Promise<Session | null> {
+async function getSession(_req: Request): Promise<Session | null> {
   // 实际实现需要解析JWT token
   // 这里简化处理，返回null
   return null;

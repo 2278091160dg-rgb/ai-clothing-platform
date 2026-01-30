@@ -6,6 +6,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getTaskRepository } from '@/lib/repositories/task.repository';
 import { ensureDefaultUser, getDefaultUserId, parseTaskQueryParams } from '../../tasks-api.utils';
+import { TaskStatus } from '@prisma/client';
 
 /**
  * 处理 GET /api/tasks 请求
@@ -30,7 +31,7 @@ export async function handleGetTasks(req: NextRequest) {
     const tasks = await taskRepo.findMany(
       {
         userId,
-        status: params.status as any,
+        status: params.status as TaskStatus | undefined,
         batchId: params.batchId,
       },
       {
@@ -42,7 +43,7 @@ export async function handleGetTasks(req: NextRequest) {
     // 获取总数
     const total = await taskRepo.count({
       userId,
-      status: params.status as any,
+      status: params.status as TaskStatus | undefined,
       batchId: params.batchId,
     });
 

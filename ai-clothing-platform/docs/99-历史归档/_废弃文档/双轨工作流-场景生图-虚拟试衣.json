@@ -1,0 +1,400 @@
+{
+  "name": "AI服装平台双轨工作流 - 场景生图 & 虚拟试衣",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "ai-clothing-generation",
+        "options": {}
+      },
+      "id": "webhook-trigger",
+      "name": "Webhook接收",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [250, 300],
+      "webhookId": "your-webhook-id-here"
+    },
+    {
+      "parameters": {
+        "mode": "mode",
+        "modeOptions": {
+          "mode": {
+            "name": "mode",
+            "value": "={{ $json.body.mode }}",
+            "type": "string"
+          }
+        }
+      },
+      "id": "switch-mode",
+      "name": "模式分发",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 1,
+      "position": [450, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $json.mode }}",
+              "operation": "equals",
+              "value2": "scene"
+            }
+          ]
+        }
+      },
+      "id": "check-scene",
+      "name": "场景生图?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [650, 200]
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.productImageUrl }}",
+        "options": {}
+      },
+      "id": "download-product",
+      "name": "下载商品图",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [850, 100],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.sceneImageUrl }}",
+        "options": {}
+      },
+      "id": "download-scene",
+      "name": "下载场景图",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [850, 200],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "modelId": "your-flux-model-id",
+        "prompt": "={{ $json.prompt }}",
+        "productImage": "={{ $node['下载商品图'].binary.data }}",
+        "sceneImage": "={{ $node['下载场景图'].binary.data }}",
+        "aspectRatio": "={{ $json.aspectRatio || '1:1' }}",
+        "imageCount": "={{ $json.imageCount || 4 }}",
+        "quality": "={{ $json.quality || 'high' }}"
+      },
+      "id": "ai-generation-scene",
+      "name": "AI生成-场景图",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [1050, 150]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $json.mode }}",
+              "operation": "equals",
+              "value2": "tryon"
+            }
+          ]
+        }
+      },
+      "id": "check-tryon",
+      "name": "虚拟试衣?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [650, 400]
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.modelImageUrl }}",
+        "options": {}
+      },
+      "id": "download-model",
+      "name": "下载模特图",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [850, 350],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.clothingImageUrl }}",
+        "options": {}
+      },
+      "id": "download-clothing",
+      "name": "下载服装图",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [850, 450],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "modelId": "your-viton-model-id",
+        "prompt": "={{ $json.prompt }}",
+        "modelImage": "={{ $node['下载模特图'].binary.data }}",
+        "clothingImage": "={{ $node['下载服装图'].binary.data }}",
+        "imageCount": "={{ $json.imageCount || 4 }}",
+        "quality": "={{ $json.quality || 'high' }}"
+      },
+      "id": "ai-generation-tryon",
+      "name": "AI生成-虚拟试衣",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [1050, 400]
+    },
+    {
+      "parameters": {
+        "url": "=https://api.deerapi.com/upload",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "deerApi",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "file",
+              "value": "={{ $binary.data }}"
+            }
+          ]
+        }
+      },
+      "id": "upload-results",
+      "name": "上传结果图",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [1250, 300]
+    },
+    {
+      "parameters": {
+        "url": "=http://your-domain.com/api/webhooks/n8n/callback",
+        "authentication": "none",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "taskId",
+              "value": "={{ $json.taskId }}"
+            },
+            {
+              "name": "mode",
+              "value": "={{ $json.mode }}"
+            },
+            {
+              "name": "status",
+              "value": "COMPLETED"
+            },
+            {
+              "name": "resultImageUrls",
+              "value": "={{ JSON.stringify($node['上传结果图'].json.urls) }}"
+            }
+          ]
+        }
+      },
+      "id": "callback",
+      "name": "回调通知",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [1450, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "wear",
+              "operation": "equals",
+              "value2": "={{ $json.mode }}"
+            }
+          ]
+        }
+      },
+      "id": "check-wear",
+      "name": "智能穿戴?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [650, 600],
+      "disabled": true,
+      "notes": "待实现"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "combine",
+              "operation": "equals",
+              "value2": "={{ $json.mode }}"
+            }
+          ]
+        }
+      },
+      "id": "check-combine",
+      "name": "自由搭配?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [650, 800],
+      "disabled": true,
+      "notes": "待实现"
+    }
+  ],
+  "connections": {
+    "Webhook接收": {
+      "main": [
+        [
+          {
+            "node": "模式分发",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "模式分发": {
+      "main": [
+        [
+          {
+            "node": "场景生图?",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "虚拟试衣?",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "智能穿戴?",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "自由搭配?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "场景生图?": {
+      "main": [
+        [
+          {
+            "node": "下载商品图",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "下载场景图",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "虚拟试衣?": {
+      "main": [
+        [
+          {
+            "node": "下载模特图",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "下载服装图",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "下载商品图": {
+      "main": [
+        [
+          {
+            "node": "AI生成-场景图",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "下载场景图": {
+      "main": [
+        [
+          {
+            "node": "AI生成-场景图",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "下载模特图": {
+      "main": [
+        [
+          {
+            "node": "AI生成-虚拟试衣",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "下载服装图": {
+      "main": [
+        [
+          {
+            "node": "AI生成-虚拟试衣",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI生成-场景图": {
+      "main": [
+        [
+          {
+            "node": "上传结果图",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI生成-虚拟试衣": {
+      "main": [
+        [
+          {
+            "node": "上传结果图",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "上传结果图": {
+      "main": [
+        [
+          {
+            "node": "回调通知",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [],
+  "pinData": {},
+  "meta": {
+    "instanceId": "your-instance-id"
+  }
+}

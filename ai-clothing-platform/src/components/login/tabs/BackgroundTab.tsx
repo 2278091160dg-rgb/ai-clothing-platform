@@ -4,6 +4,7 @@
 
 import { Button } from '@/components/ui/button';
 import { LOGIN_BACKGROUNDS, BACKGROUND_CATEGORIES } from '@/config/login-backgrounds';
+import Image from 'next/image';
 
 interface LoginConfig {
   backgroundImageUrl?: string;
@@ -90,7 +91,14 @@ export function BackgroundTab({
                 : 'border-transparent hover:border-cyan-500/50'
             }`}
           >
-            <img src={bg.thumbnail} alt={bg.name} className="w-full h-full object-cover" />
+            <Image
+              src={bg.thumbnail}
+              alt={bg.name}
+              width={200}
+              height={112}
+              className="w-full h-full object-cover"
+              unoptimized
+            />
             <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
             <div className="absolute bottom-0 left-0 right-0 p-2">
               <p className="text-white text-xs font-medium truncate">{bg.name}</p>

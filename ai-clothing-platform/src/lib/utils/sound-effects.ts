@@ -8,7 +8,13 @@ export class SoundEffects {
 
   constructor() {
     if (typeof window !== 'undefined') {
-      this.audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+      // Support both standard AudioContext and webkit-prefixed version
+      const AudioContextCtor =
+        window.AudioContext ||
+        (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+      if (AudioContextCtor) {
+        this.audioContext = new AudioContextCtor();
+      }
     }
   }
 

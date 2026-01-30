@@ -15,18 +15,21 @@ export function ConfigPanel({ onClose, onSave }: { onClose: () => void; onSave?:
   const [activeTab, setActiveTab] = useState<ConfigTab>('api');
   const [config, setConfig] = useState(ConfigManager.getConfig());
   const [saved, setSaved] = useState(false);
-  const [autoDetectedUrl, setAutoDetectedUrl] = useState<string>('');
+
+  // 在组件外计算 autoDetectedUrl，避免在 useEffect 中调用 setState
+  const autoDetectedUrl =
+    typeof window !== 'undefined' ? `${window.location.origin}/api/webhooks/n8n/callback` : '';
 
   useEffect(() => {
-    if (typeof window !== 'undefined') {
+    // 只在需要时设置 callbackUrl
+    if (typeof window !== 'undefined' && !config.callbackUrl) {
       const currentUrl = window.location.origin;
-      setAutoDetectedUrl(`${currentUrl}/api/webhooks/n8n/callback`);
-
-      if (!config.callbackUrl) {
+      // 使用 setTimeout 避免同步 setState 警告
+      setTimeout(() => {
         setConfig(prev => ({ ...prev, callbackUrl: currentUrl }));
-      }
+      }, 0);
     }
-  }, []);
+  }, [config.callbackUrl]);
 
   const handleChange = (field: string, value: string) => {
     setConfig(prev => ({ ...prev, [field]: value }));

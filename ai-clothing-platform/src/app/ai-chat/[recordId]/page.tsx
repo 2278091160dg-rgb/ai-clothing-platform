@@ -5,7 +5,7 @@
 
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -37,6 +37,7 @@ export default function AIChatPage() {
     if (recordId) {
       initializeConversation();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [recordId]);
 
   // 滚动到底部

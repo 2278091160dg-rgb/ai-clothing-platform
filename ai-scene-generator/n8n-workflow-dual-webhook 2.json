@@ -1,0 +1,333 @@
+{
+  "name": "AI场景图生成器 - 双Webhook入口",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "4eebc87c-b884-47c6-a6b1-80ff6b62ce8a",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-frontend",
+      "name": "Webhook A (前端入口)",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1.1,
+      "position": [250, 300],
+      "webhookId": "4eebc87c-b884-47c6-a6b1-80ff6b62ce8a"
+    },
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "source",
+              "value": "frontend"
+            },
+            {
+              "name": "productImage",
+              "value": "={{ $binary.productImage }}"
+            },
+            {
+              "name": "sceneImage",
+              "value": "={{ $binary.sceneImage }}"
+            },
+            {
+              "name": "prompt",
+              "value": "={{ $json.prompt }}"
+            },
+            {
+              "name": "aspectRatio",
+              "value": "={{ $json.aspectRatio }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "set-frontend",
+      "name": "标记前端来源",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [470, 200]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "feishu-trigger",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "id": "webhook-feishu",
+      "name": "Webhook B (飞书入口)",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1.1,
+      "position": [250, 600],
+      "webhookId": "feishu-trigger-trigger"
+    },
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "source",
+              "value": "feishu"
+            },
+            {
+              "name": "record_id",
+              "value": "={{ $json.record_id }}"
+            },
+            {
+              "name": "table_id",
+              "value": "={{ $json.table_id }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "set-feishu",
+      "name": "标记飞书来源",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [470, 600]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "merged-data",
+              "name": "mergedData",
+              "value": "={{ $json }}",
+              "type": "object"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "merge-webhooks",
+      "name": "合并Webhook数据",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [700, 400]
+    },
+    {
+      "parameters": {
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth",
+        "url": "https://api.deerapi.com/v1/models/gemini-2.0-flash-exp-image-generation:generateContent",
+        "options": {}
+      },
+      "id": "gemini-generate",
+      "name": "Gemini生成场景图",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [920, 400],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "gemini-api-credential",
+          "name": "Gemini API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "imageUrl",
+              "value": "={{ $json.candidates[0].content.parts[0].inlineData.data }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "extract-imageurl",
+      "name": "提取imageUrl",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [1140, 400]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "tableId": {
+          "__rl": true,
+          "value": "={{ $json.table_id || 'YOUR_TABLE_ID' }}",
+          "mode": "name"
+        },
+        "data": "={{ JSON.stringify({ imageUrl: $json.imageUrl, prompt: $json.prompt, timestamp: $now.toISO() }) }}",
+        "options": {}
+      },
+      "id": "feishu-record",
+      "name": "保存到飞书记录",
+      "type": "n8n-nodes-base.feishuBitable",
+      "typeVersion": 1,
+      "position": [1360, 400],
+      "credentials": {
+        "feishuApi": {
+          "id": "feishu-credential",
+          "name": "飞书账号"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "dataType": "string",
+        "value1": "={{ $json.source }}",
+        "rules": {
+          "values": [
+            {
+              "output": "frontend-response"
+            },
+            {
+              "output": "feishu-end"
+            }
+          ]
+        }
+      },
+      "id": "switch-source",
+      "name": "判断来源",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3,
+      "position": [1580, 400]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { imageUrl: $json.imageUrl } }}",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "id": "respond-frontend",
+      "name": "Respond to Webhook (前端)",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [1800, 300]
+    },
+    {
+      "parameters": {},
+      "id": "end-feishu",
+      "name": "结束(飞书)",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [1800, 600]
+    }
+  ],
+  "connections": {
+    "Webhook A (前端入口)": {
+      "main": [
+        [
+          {
+            "node": "标记前端来源",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "标记前端来源": {
+      "main": [
+        [
+          {
+            "node": "合并Webhook数据",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook B (飞书入口)": {
+      "main": [
+        [
+          {
+            "node": "标记飞书来源",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "标记飞书来源": {
+      "main": [
+        [
+          {
+            "node": "合并Webhook数据",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "合并Webhook数据": {
+      "main": [
+        [
+          {
+            "node": "Gemini生成场景图",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gemini生成场景图": {
+      "main": [
+        [
+          {
+            "node": "提取imageUrl",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "提取imageUrl": {
+      "main": [
+        [
+          {
+            "node": "保存到飞书记录",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "保存到飞书记录": {
+      "main": [
+        [
+          {
+            "node": "判断来源",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "判断来源": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook (前端)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "结束(飞书)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 2,
+  "updatedAt": "2025-01-26T00:00:00.000Z",
+  "versionId": "1"
+}

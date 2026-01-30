@@ -4,11 +4,6 @@
 
 import { useState, useCallback } from 'react';
 
-interface ImageUploadState {
-  file: File | null;
-  preview: string;
-}
-
 interface UseImageUploadReturn {
   productImage: File | null;
   productImagePreview: string;

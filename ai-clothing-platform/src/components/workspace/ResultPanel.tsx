@@ -5,10 +5,7 @@
 import { Button } from '@/components/ui/button';
 import {
   Sparkles,
-  Palette,
   Download,
-  RefreshCw,
-  Database,
   Zap,
   Coins,
   Clock,
@@ -17,19 +14,50 @@ import {
   Image as ImageIcon,
 } from 'lucide-react';
 import type { ImageModel, TaskData } from '@/lib/types';
+import { useState, useEffect } from 'react';
+import { ImageComparison } from '@/components/ImageComparison';
 
 interface ResultPanelProps {
   tasks: TaskData[];
   imageModel: ImageModel;
   isPolling?: boolean;
+  isGenerating?: boolean;
   onReset?: () => void;
 }
 
-export function ResultPanel({ tasks, imageModel, isPolling = false, onReset }: ResultPanelProps) {
+// 生成状态文案轮播
+const GENERATION_STATUS_MESSAGES = [
+  '正在解析场景语义...',
+  '正在分配高性能GPU...',
+  'AI 正在构图与光影渲染...',
+  '正在进行细节精修...',
+  '即将完成，请稍候...',
+];
+
+export function ResultPanel({ tasks, imageModel, isPolling = false, isGenerating = false, onReset }: ResultPanelProps) {
   const currentTask = tasks[0];
-  const isGenerating = currentTask?.status === 'generating' || currentTask?.status === 'processing' || currentTask?.status === 'pending';
+  const [currentStatusIndex, setCurrentStatusIndex] = useState(0);
+
+  // 每 4 秒切换状态文案
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentStatusIndex((prev) => (prev + 1) % GENERATION_STATUS_MESSAGES.length);
+    }, 4000);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  // Debug logging
+  useEffect(() => {
+    console.log('[ResultPanel] isGenerating prop:', isGenerating, 'tasks.length:', tasks.length, 'currentTask:', currentTask?.id, currentTask?.status);
+  }, [isGenerating, tasks.length, currentTask]);
+
+  const isTaskGenerating = currentTask?.status === 'generating' || currentTask?.status === 'processing' || currentTask?.status === 'pending';
+const shouldShowGenerating = isGenerating || isTaskGenerating;
   const isCompleted = currentTask?.status === 'completed' && currentTask?.resultImages?.[0];
   const resultUrl = currentTask?.resultImages?.[0];
+  const productImage = typeof currentTask?.productImage === 'string' ? currentTask.productImage : undefined;
+  const showComparison = isCompleted && resultUrl && productImage;
 
   // 下载图片
   const handleDownload = () => {
@@ -50,7 +78,7 @@ export function ResultPanel({ tasks, imageModel, isPolling = false, onReset }: R
         <div className="absolute top-0 right-0 w-96 h-96 bg-blue-500/5 rounded-full blur-3xl" />
 
         {/* 任务进行中 */}
-        {isGenerating && (
+        {shouldShowGenerating && (
           <div className="relative text-center">
             {/* AI生成中动效 */}
             <div className="relative mb-6">
@@ -83,7 +111,10 @@ export function ResultPanel({ tasks, imageModel, isPolling = false, onReset }: R
             </div>
 
             <h3 className="text-2xl font-bold text-foreground mb-3">AI正在生成中...</h3>
-            <p className="text-sm text-muted-foreground max-w-md mb-6">
+            <p className="text-sm font-semibold text-primary max-w-md mb-2 animate-pulse">
+              {GENERATION_STATUS_MESSAGES[currentStatusIndex]}
+            </p>
+            <p className="text-xs text-muted-foreground max-w-md mb-6">
               请耐心等待，预计需要30-60秒完成生成
             </p>
 
@@ -122,48 +153,60 @@ export function ResultPanel({ tasks, imageModel, isPolling = false, onReset }: R
         {/* 任务完成 - 显示结果 */}
         {isCompleted && resultUrl && (
           <div className="relative text-center w-full h-full flex flex-col items-center justify-center">
-            {/* 结果图片 */}
-            <div className="relative mb-6">
-              <img
-                src={resultUrl}
-                alt="AI生成的图片"
-                className="max-w-full max-h-[400px] rounded-lg shadow-2xl"
-              />
-              {/* 完成标记 */}
-              <div className="absolute -top-3 -right-3 w-12 h-12 bg-green-500 rounded-full flex items-center justify-center shadow-lg">
-                <Sparkles size={24} className="text-white" />
+            {showComparison ? (
+              <div className="w-full h-full min-h-[400px]">
+                <ImageComparison
+                  before={productImage!}
+                  after={resultUrl}
+                  onDownload={handleDownload}
+                />
               </div>
-            </div>
+            ) : (
+              <>
+                {/* 结果图片 */}
+                <div className="relative mb-6">
+                  <img
+                    src={resultUrl}
+                    alt="AI生成的图片"
+                    className="max-w-full max-h-[400px] rounded-lg shadow-2xl"
+                  />
+                  {/* 完成标记 */}
+                  <div className="absolute -top-3 -right-3 w-12 h-12 bg-green-500 rounded-full flex items-center justify-center shadow-lg">
+                    <Sparkles size={24} className="text-white" />
+                  </div>
+                </div>
 
-            <h3 className="text-2xl font-bold text-foreground mb-3">生成完成!</h3>
-            <p className="text-sm text-muted-foreground max-w-md mb-6">
-              您的AI生成图片已准备就绪
-            </p>
+                <h3 className="text-2xl font-bold text-foreground mb-3">生成完成!</h3>
+                <p className="text-sm text-muted-foreground max-w-md mb-6">
+                  您的AI生成图片已准备就绪
+                </p>
 
-            {/* 结果操作按钮 */}
-            <div className="relative flex gap-3">
-              <Button
-                onClick={handleDownload}
-                variant="outline"
-                className="bg-card/40 backdrop-blur-sm border-border/30 hover:bg-card/60 text-foreground rounded-full"
-              >
-                <Download size={16} className="mr-2" />
-                下载图片
-              </Button>
-              <Button
-                onClick={onReset}
-                variant="outline"
-                className="bg-card/40 backdrop-blur-sm border-border/30 hover:bg-card/60 text-foreground rounded-full"
-              >
-                <X size={16} className="mr-2" />
-                清空结果
-              </Button>
-            </div>
+                {/* 结果操作按钮 */}
+                <div className="relative flex gap-3">
+                  <Button
+                    onClick={handleDownload}
+                    variant="outline"
+                    className="bg-card/40 backdrop-blur-sm border-border/30 hover:bg-card/60 text-foreground rounded-full"
+                  >
+                    <Download size={16} className="mr-2" />
+                    下载图片
+                  </Button>
+                  <Button
+                    onClick={onReset}
+                    variant="outline"
+                    className="bg-card/40 backdrop-blur-sm border-border/30 hover:bg-card/60 text-foreground rounded-full"
+                  >
+                    <X size={16} className="mr-2" />
+                    清空结果
+                  </Button>
+                </div>
+              </>
+            )}
           </div>
         )}
 
         {/* 等待状态 */}
-        {!isGenerating && !isCompleted && (
+        {!shouldShowGenerating && !isCompleted && (
           <div className="relative text-center">
             <ImageIcon size={64} className="mx-auto mb-5 float-animation opacity-30 text-primary" />
             <h3 className="text-2xl font-bold text-foreground mb-3">等待生成</h3>

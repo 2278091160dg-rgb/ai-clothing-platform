@@ -3,12 +3,23 @@
  * 用于检查数据库连接状态和诊断问题
  */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
+
+interface DiagnosticTest {
+  name: string;
+  status: 'running' | 'success' | 'failed';
+  result: string;
+  url?: string;
+  host?: string;
+  hint?: string;
+  error?: string;
+  count?: number;
+}
 
 export async function GET() {
   const diagnostics = {
     timestamp: new Date().toISOString(),
-    tests: [] as any[],
+    tests: [] as DiagnosticTest[],
   };
 
   try {
@@ -58,8 +69,8 @@ export async function GET() {
         const count = await prisma.loginPageConfig.count();
         diagnostics.tests[2].status = 'success';
         diagnostics.tests[2].result = `✅ 表存在，当前有 ${count} 条配置记录`;
-      } catch (error: any) {
-        if (error.code === 'P2021') {
+      } catch (error) {
+        if (error instanceof Error && 'code' in error && error.code === 'P2021') {
           diagnostics.tests[2].status = 'failed';
           diagnostics.tests[2].result = '❌ 表不存在';
           diagnostics.tests[2].hint = "需要点击'初始化数据库'按钮创建表";
@@ -69,18 +80,18 @@ export async function GET() {
       }
 
       await prisma.$disconnect();
-    } catch (error: any) {
+    } catch (error) {
       diagnostics.tests[1].status = 'failed';
       diagnostics.tests[1].result = '❌ 数据库连接失败';
-      diagnostics.tests[1].error = error.message;
+      diagnostics.tests[1].error = error instanceof Error ? error.message : String(error);
 
       // 分析常见错误
-      if (error.code === 'P1001') {
+      if (error instanceof Error && 'code' in error && error.code === 'P1001') {
         diagnostics.tests[1].hint =
           '无法连接到数据库服务器。可能原因：1) Supabase 项目未暂停 2) 连接字符串错误 3) 网络防火墙';
-      } else if (error.code === 'P3007') {
+      } else if (error instanceof Error && 'code' in error && error.code === 'P3007') {
         diagnostics.tests[1].hint = '数据库认证失败。请检查密码是否正确';
-      } else if (error.code === 'P3A000') {
+      } else if (error instanceof Error && 'code' in error && error.code === 'P3A000') {
         diagnostics.tests[1].hint = '连接被拒绝。可能数据库正在重启或连接数已达上限';
       }
     }
@@ -89,13 +100,13 @@ export async function GET() {
       success: true,
       diagnostics,
     });
-  } catch (error: any) {
+  } catch (error) {
     return NextResponse.json(
       {
         success: false,
         error: '诊断失败',
         diagnostics,
-        details: error.message,
+        details: error instanceof Error ? error.message : String(error),
       },
       { status: 500 }
     );

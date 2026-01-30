@@ -3,7 +3,6 @@
  * 同步状态提示组件 - 显示飞书同步状态
  */
 
-import { useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import { Alert, AlertCircle, AlertTriangle, CheckCircle, Loader2 } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';

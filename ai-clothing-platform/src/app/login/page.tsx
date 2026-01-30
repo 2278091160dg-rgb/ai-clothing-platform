@@ -3,10 +3,12 @@
  * 支持自定义配置和设置
  */
 
+/* eslint-disable @typescript-eslint/no-unused-vars */
 'use client';
 
 import { useState, FormEvent, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
@@ -53,7 +55,7 @@ export default function LoginPage() {
             setConfig(data.data);
             console.log('Loaded config from database:', data.data);
           }
-        } catch (e) {
+        } catch (_e) {
           // 返回的不是 JSON，使用默认配置
           console.warn('API returned non-JSON, using defaults');
           setConfig(DEFAULT_LOGIN_CONFIG);
@@ -214,7 +216,14 @@ export default function LoginPage() {
         <div className="p-8 text-center border-b border-cyan-500/20">
           <div className="w-20 h-20 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-cyan-400 via-blue-500 to-purple-600 flex items-center justify-center shadow-lg shadow-cyan-500/50 animate-float-icon hover:scale-110 transition-transform duration-300 cursor-pointer">
             {config.logoUrl ? (
-              <img src={config.logoUrl} alt="Logo" className="w-16 h-16 object-contain" />
+              <Image
+                src={config.logoUrl}
+                alt="Logo"
+                width={64}
+                height={64}
+                className="w-16 h-16 object-contain"
+                unoptimized
+              />
             ) : (
               <span className="text-4xl">{config.logoEmoji}</span>
             )}

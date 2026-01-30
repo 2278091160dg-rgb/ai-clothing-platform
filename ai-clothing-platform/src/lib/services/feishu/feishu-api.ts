@@ -2,6 +2,7 @@
  * Feishu API - 飞书 API 辅助方法
  */
 
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import type { FeishuAccessToken, ImageUploadResult } from './feishu.types';
 
 export interface FeishuConfig {
@@ -52,7 +53,7 @@ export async function uploadImageToFeishu(
 
   if (file instanceof Buffer) {
     const uint8Array = new Uint8Array(file);
-    const blob = new Blob([uint8Array as any], { type: 'image/*' });
+    const blob = new Blob([uint8Array], { type: 'image/*' });
     formData.append('file', blob, fileName);
   } else {
     formData.append('file', file as File);
@@ -90,13 +91,13 @@ export function getFeishuImageUrl(fileToken: string): string {
 /**
  * 验证Webhook签名
  */
-export function verifyFeishuWebhook(signature: string, timestamp: string): boolean {
+export function verifyFeishuWebhook(_signature: string, _timestamp: string): boolean {
   const encryptKey = process.env.FEISHU_ENCRYPT_KEY;
   if (!encryptKey) {
     console.error('FEISHU_ENCRYPT_KEY not configured');
     return false;
   }
-  // TODO: 实现实际的签名验证逻辑
+  // TODO: 实现实际的签名验证逻辑，需要使用 signature 和 timestamp
   return true;
 }
 

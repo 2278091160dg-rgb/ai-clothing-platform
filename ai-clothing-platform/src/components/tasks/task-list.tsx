@@ -6,22 +6,25 @@
 
 import { TaskData } from '@/lib/types';
 import { Button } from '@/components/ui/button';
+import Image from 'next/image';
 import { GENERATION_STEPS, formatTimeRemaining } from '@/lib/progress';
 import { ImageIcon, Loader2, CheckCircle2, XCircle, Download, Eye, Clock, Zap } from 'lucide-react';
 
 interface TaskListProps {
   tasks: TaskData[];
   onPreview?: (src: string) => void;
+  isBatchMode?: boolean;
+  selectedIds?: Set<string>;
+  onToggleSelection?: (taskId: string, selected: boolean) => void;
 }
 
-export function TaskList({ tasks, onPreview }: TaskListProps) {
+export function TaskList({ tasks, onPreview, isBatchMode = false, selectedIds = new Set(), onToggleSelection }: TaskListProps) {
   if (tasks.length === 0) {
     return (
       <div className="flex-1 flex items-center justify-center p-8">
         <div className="text-center">
           <ImageIcon size={48} className="mx-auto mb-3 opacity-20 text-muted-foreground" />
-          <p className="text-sm text-muted-foreground font-medium">暂无历史记录</p>
-          <p className="text-xs text-muted-foreground/50 mt-1">生成的任务会显示在这里</p>
+          <p className="text-sm text-muted-foreground font-medium">暂无历史记录，快去生成第一张图片吧！</p>
         </div>
       </div>
     );
@@ -30,7 +33,14 @@ export function TaskList({ tasks, onPreview }: TaskListProps) {
   return (
     <div className="flex-1 overflow-y-auto p-4 space-y-3 scroll-smooth">
       {tasks.map(task => (
-        <TaskItem key={task.id} task={task} onPreview={onPreview} />
+        <TaskItem
+          key={task.id}
+          task={task}
+          onPreview={onPreview}
+          isBatchMode={isBatchMode}
+          isSelected={selectedIds.has(task.id)}
+          onToggleSelection={onToggleSelection}
+        />
       ))}
       {tasks.length > 0 && (
         <div className="text-center py-4">
@@ -44,9 +54,12 @@ export function TaskList({ tasks, onPreview }: TaskListProps) {
 interface TaskItemProps {
   task: TaskData;
   onPreview?: (src: string) => void;
+  isBatchMode?: boolean;
+  isSelected?: boolean;
+  onToggleSelection?: (taskId: string, selected: boolean) => void;
 }
 
-function TaskItem({ task, onPreview }: TaskItemProps) {
+function TaskItem({ task, onPreview, isBatchMode = false, isSelected = false, onToggleSelection }: TaskItemProps) {
   const isPending = task.status === 'pending';
   const isProcessing = task.status === 'processing' || task.status === 'generating';
   const isCompleted = task.status === 'completed';
@@ -56,10 +69,45 @@ function TaskItem({ task, onPreview }: TaskItemProps) {
     <div className="rounded-xl bg-card/40 border border-border/20 p-4 hover:bg-card/60 hover:border-border/30 transition-all duration-200">
       {/* 任务头部 */}
       <div className="flex items-start gap-3 mb-3">
-        {/* 缩略图 */}
-        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary/10 to-primary/20 flex items-center justify-center overflow-hidden flex-shrink-0 border border-primary/10">
+        {/* 批量模式复选框 */}
+        {isBatchMode && onToggleSelection && (
+          <input
+            type="checkbox"
+            checked={isSelected}
+            onChange={e => onToggleSelection(task.id, e.target.checked)}
+            className="w-4 h-4 mt-1 rounded border-border/30 bg-card/50 text-primary focus:ring-primary/50 focus:ring-2"
+          />
+        )}
+        {/* 缩略图 - 添加点击预览功能 */}
+        <div
+          className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary/10 to-primary/20 flex items-center justify-center overflow-hidden flex-shrink-0 border border-primary/10 cursor-pointer hover:ring-2 hover:ring-primary/50 transition-all"
+          onClick={() => {
+            // 优先打开结果图，其次商品图
+            const imageUrl = task.resultImages?.[0] || (typeof task.productImage === 'string' ? task.productImage : null);
+            if (imageUrl) {
+              window.open(imageUrl, '_blank');
+            }
+          }}
+          title="点击查看大图"
+        >
           {task.resultImages && task.resultImages.length > 0 ? (
-            <img src={task.resultImages[0]} alt="" className="w-full h-full object-cover" />
+            <Image
+              src={task.resultImages[0]}
+              alt=""
+              width={48}
+              height={48}
+              className="w-full h-full object-cover"
+              unoptimized
+            />
+          ) : task.productImage && typeof task.productImage === 'string' ? (
+            <Image
+              src={task.productImage}
+              alt=""
+              width={48}
+              height={48}
+              className="w-full h-full object-cover"
+              unoptimized
+            />
           ) : isProcessing ? (
             <Loader2 size={24} className="animate-pulse text-primary" />
           ) : (
@@ -70,7 +118,7 @@ function TaskItem({ task, onPreview }: TaskItemProps) {
         {/* 任务信息 */}
         <div className="flex-1 min-w-0">
           <p className="text-sm font-semibold text-foreground truncate">
-            {task.productName || `任务 ${task.id.slice(0, 6)}`}
+            {task.productName || (task.prompt ? (task.prompt.length > 15 ? task.prompt.slice(0, 15) + '...' : task.prompt) : `任务 ${task.id.slice(0, 6)}`)}
           </p>
           <p className="text-xs text-muted-foreground truncate mt-1">{task.prompt || '无提示词'}</p>
         </div>
@@ -96,7 +144,7 @@ function TaskItem({ task, onPreview }: TaskItemProps) {
       {isProcessing && (
         <div className="space-y-3">
           {/* 当前步骤信息 */}
-          {task.currentStep && (
+          {task.currentStep ? (
             <div className="flex items-center gap-2 text-xs">
               <Zap size={14} className="text-primary animate-pulse" />
               <span className="font-medium text-foreground">
@@ -105,6 +153,11 @@ function TaskItem({ task, onPreview }: TaskItemProps) {
               <span className="text-muted-foreground">
                 - {GENERATION_STEPS[task.currentStep].description}
               </span>
+            </div>
+          ) : (
+            <div className="flex items-center gap-2 text-xs">
+              <Zap size={14} className="text-primary animate-pulse" />
+              <span className="font-medium text-blue-400">生成中...</span>
             </div>
           )}
 
@@ -142,8 +195,9 @@ function TaskItem({ task, onPreview }: TaskItemProps) {
               size="sm"
               className="h-7 px-3 text-xs bg-card/40 hover:bg-card/60 text-foreground rounded-lg"
               onClick={() => {
-                if (task.resultImages && task.resultImages.length > 0 && onPreview) {
-                  onPreview(task.resultImages[0]);
+                // 在新标签页打开图片
+                if (task.resultImages && task.resultImages.length > 0) {
+                  window.open(task.resultImages[0], '_blank');
                 }
               }}
             >

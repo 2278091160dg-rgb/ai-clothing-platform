@@ -1,0 +1,804 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI服装平台 - 提示词模板Demo</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+    }
+    .glass-card {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    .template-card {
+      transition: all 0.3s ease;
+    }
+    .template-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+    }
+    .template-card.selected {
+      border-color: #667eea;
+      background: linear-gradient(135deg, #667eea15 0%, #764ba215 100%);
+    }
+    .layer-section {
+      border-left: 3px solid #667eea;
+      padding-left: 1rem;
+    }
+  </style>
+</head>
+<body class="p-4 md:p-8">
+  <div class="max-w-6xl mx-auto">
+    <!-- 主标题 -->
+    <div class="text-center mb-8">
+      <h1 class="text-3xl md:text-4xl font-bold text-white mb-2">
+        🎨 AI服装平台 - 完整系统Demo v2.0
+      </h1>
+      <p class="text-white/80">
+        完整系统演示 - 前端Web ↔ N8N工作流 ↔ 飞书多维表格 三端联动
+      </p>
+      <div class="mt-4 flex justify-center gap-4 text-sm">
+        <span class="bg-white/20 px-3 py-1 rounded-full">✅ AI提示词优化</span>
+        <span class="bg-white/20 px-3 py-1 rounded-full">✅ 多模板系统</span>
+        <span class="bg-white/20 px-3 py-1 rounded-full">✅ 100+参数</span>
+      </div>
+    </div>
+
+    <!-- 主容器 -->
+    <div class="glass-card rounded-2xl shadow-2xl overflow-hidden">
+      <!-- 步骤指示器 -->
+      <div class="bg-gradient-to-r from-purple-50 to-blue-50 p-4 md:p-6 border-b">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-lg font-semibold">第一步：选择提示词模板</h2>
+          <div class="text-sm text-gray-500">根据您的产品类型选择合适的模板</div>
+        </div>
+
+        <!-- 模板选择网格 -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <!-- 模板1：服装模特展示 -->
+          <button
+            onclick="selectTemplate('fashion_model')"
+            id="template-fashion_model"
+            class="template-card text-left p-4 border-2 border-gray-200 rounded-lg hover:border-purple-300 transition-all"
+          >
+            <div class="flex items-start gap-3">
+              <span class="text-3xl">👔</span>
+              <div class="flex-1">
+                <div class="font-semibold text-gray-900">服装模特展示</div>
+                <div class="text-sm text-gray-600 mt-1">
+                  将白底产品图转化为真人模特场景展示图
+                </div>
+                <div class="text-xs text-purple-600 mt-2 font-medium">
+                  适用：服装、配饰、鞋包
+                </div>
+              </div>
+            </div>
+          </button>
+
+          <!-- 模板2：产品静物展示 -->
+          <button
+            onclick="selectTemplate('product_still')"
+            id="template-product_still"
+            class="template-card text-left p-4 border-2 border-gray-200 rounded-lg hover:border-purple-300 transition-all"
+          >
+            <div class="flex items-start gap-3">
+              <span class="text-3xl">🏺</span>
+              <div class="flex-1">
+                <div class="font-semibold text-gray-900">产品静物展示</div>
+                <div class="text-sm text-gray-600 mt-1">
+                  通过分层逻辑精准控制产品静物展示效果
+                </div>
+                <div class="text-xs text-purple-600 mt-2 font-medium">
+                  适用：家居、器皿、电子产品
+                </div>
+              </div>
+            </div>
+          </button>
+
+          <!-- 模板3：分层逻辑控制 -->
+          <button
+            onclick="selectTemplate('layered_logic')"
+            id="template-layered_logic"
+            class="template-card text-left p-4 border-2 border-gray-200 rounded-lg hover:border-purple-300 transition-all"
+          >
+            <div class="flex items-start gap-3">
+              <span class="text-3xl">🎯</span>
+              <div class="flex-1">
+                <div class="font-semibold text-gray-900">分层逻辑控制</div>
+                <div class="text-sm text-gray-600 mt-1">
+                  专业级分层控制，适合高级用户
+                </div>
+                <div class="text-xs text-purple-600 mt-2 font-medium">
+                  适用：专业摄影、艺术创作
+                </div>
+              </div>
+            </div>
+          </button>
+
+          <!-- 模板4：自定义提示词 -->
+          <button
+            onclick="selectTemplate('custom')"
+            id="template-custom"
+            class="template-card text-left p-4 border-2 border-gray-200 rounded-lg hover:border-purple-300 transition-all"
+          >
+            <div class="flex items-start gap-3">
+              <span class="text-3xl">✏️</span>
+              <div class="flex-1">
+                <div class="font-semibold text-gray-900">自定义提示词</div>
+                <div class="text-sm text-gray-600 mt-1">
+                  完全自定义提示词，适合特殊需求
+                </div>
+                <div class="text-xs text-purple-600 mt-2 font-medium">
+                  适用：特殊场景、实验性创作
+                </div>
+              </div>
+            </div>
+          </button>
+        </div>
+      </div>
+
+      <!-- 动态表单区域 -->
+      <div class="p-4 md:p-6 bg-white">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-lg font-semibold">第二步：填写参数</h2>
+          <span id="selected-template-name" class="text-sm text-purple-600 font-medium"></span>
+        </div>
+
+        <!-- 动态表单容器 -->
+        <div id="dynamic-form">
+          <!-- 表单内容将通过JavaScript动态插入 -->
+        </div>
+
+        <!-- 生成的提示词预览 -->
+        <div id="prompt-preview" class="hidden mt-6 p-4 bg-gray-50 rounded-lg">
+          <h3 class="font-semibold mb-3 flex items-center gap-2">
+            <span>📝</span> 生成的提示词预览
+          </h3>
+          <div class="bg-white p-4 rounded-lg border">
+            <pre id="prompt-content" class="text-sm text-gray-700 whitespace-pre-wrap font-mono"></pre>
+          </div>
+          <div class="mt-3 flex gap-2">
+            <button
+              onclick="copyPrompt()"
+              class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-sm"
+            >
+              📋 复制提示词
+            </button>
+            <span id="copy-success" class="hidden text-green-600 text-sm py-2">✅ 已复制!</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 系统流程说明 -->
+    <div class="mt-8 glass-card rounded-xl p-6">
+      <h3 class="text-lg font-semibold mb-4 text-center">🔄 完整系统流程</h3>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+        <div class="bg-purple-50 p-4 rounded-lg">
+          <div class="font-semibold text-purple-700 mb-2">📱 前端Web界面</div>
+          <ul class="text-gray-600 space-y-1">
+            <li>• 上传产品图片</li>
+            <li>• 选择提示词模板</li>
+            <li>• 填写参数（100+选项）</li>
+            <li>• AI对话优化（可选）</li>
+            <li>• 提交生成请求</li>
+          </ul>
+        </div>
+        <div class="bg-blue-50 p-4 rounded-lg">
+          <div class="font-semibold text-blue-700 mb-2">⚙️ N8N工作流</div>
+          <ul class="text-gray-600 space-y-1">
+            <li>• 接收前端请求</li>
+            <li>• 选择最终提示词</li>
+            <li>• 调用DeerAPI生成</li>
+            <li>• 创建飞书记录</li>
+            <li>• 回调前端结果</li>
+          </ul>
+        </div>
+        <div class="bg-green-50 p-4 rounded-lg">
+          <div class="font-semibold text-green-700 mb-2">📊 飞书多维表格</div>
+          <ul class="text-gray-600 space-y-1">
+            <li>• 保存任务记录</li>
+            <li>• 13+个字段存储</li>
+            <li>• AI对话入口</li>
+            <li>• 查看生成结果</li>
+            <li>• 统计与分析</li>
+          </ul>
+        </div>
+      </div>
+      <div class="mt-4 text-center text-xs text-gray-500">
+        💡 提示：点击模板卡片查看不同的表单参数。产品静物模板已扩展到100+参数选项。
+      </div>
+    </div>
+
+    <!-- 页脚说明 -->
+    <div class="mt-6 text-center text-white/80 text-sm">
+      <p>🎨 完整系统Demo v2.0 - 涵盖AI优化、多模板、扩展参数的完整方案</p>
+      <p class="mt-1">📄 详细文档见 <code class="bg-white/20 px-2 py-1 rounded">docs/完整交付清单-v2.md</code></p>
+    </div>
+  </div>
+
+  <script>
+    // 当前选中的模板
+    let currentTemplate = 'fashion_model';
+
+    // 模板配置
+    const templates = {
+      fashion_model: {
+        name: '服装模特展示',
+        formHtml: `
+          <div class="space-y-4">
+            <!-- 产品描述 -->
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">
+                产品描述 <span class="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                id="fashion-product-description"
+                class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                placeholder="例如：红色连衣裙、蓝色西装、白色衬衫"
+              >
+              <p class="mt-1 text-xs text-gray-500">
+                简单描述你的产品，系统会自动生成专业的商业摄影提示词
+              </p>
+            </div>
+
+            <!-- 模特类型 -->
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">
+                模特类型 <span class="text-gray-400">(可选)</span>
+              </label>
+              <select
+                id="fashion-model-type"
+                class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              >
+                <option value="">默认（亚洲模特）</option>
+                <option value="young_asian_female">年轻亚洲女性</option>
+                <option value="young_asian_male">年轻亚洲男性</option>
+                <option value="western_female">欧美女性</option>
+                <option value="western_male">欧美男性</option>
+                <option value="diverse">多元化模特</option>
+              </select>
+            </div>
+
+            <!-- 场景风格 -->
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">
+                场景风格 <span class="text-gray-400">(可选)</span>
+              </label>
+              <select
+                id="fashion-scene-style"
+                class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              >
+                <option value="">默认（极简高级环境）</option>
+                <option value="cozy_bedroom">温馨卧室</option>
+                <option value="modern_living">现代客厅</option>
+                <option value="urban_street">城市街头</option>
+                <option value="minimal_studio">极简摄影棚</option>
+                <option value="nature_outdoor">自然户外</option>
+              </select>
+            </div>
+
+            <!-- 生成按钮 -->
+            <button
+              onclick="generateFashionPrompt()"
+              class="w-full py-3 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-lg hover:from-purple-700 hover:to-blue-700 transition-all font-medium"
+            >
+              🎨 生成提示词
+            </button>
+          </div>
+        `
+      },
+
+      product_still: {
+        name: '产品静物展示',
+        formHtml: `
+          <div class="space-y-4">
+            <!-- 产品描述 -->
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">
+                产品描述 <span class="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                id="still-product-description"
+                class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                placeholder="例如：陶瓷花瓶、玻璃杯、金属摆件"
+              >
+            </div>
+
+            <!-- 材质 -->
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">
+                材质 <span class="text-gray-400">(可选)</span>
+              </label>
+              <select
+                id="still-material"
+                class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              >
+                <option value="">自动识别</option>
+                <option value="陶瓷">陶瓷</option>
+                <option value="金属">金属</option>
+                <option value="木材">木材</option>
+                <option value="塑料">塑料</option>
+                <option value="玻璃">玻璃</option>
+                <option value="石材">石材</option>
+              </select>
+            </div>
+
+            <!-- 空间位置 -->
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">
+                空间位置 <span class="text-gray-400">(可选)</span>
+              </label>
+              <select
+                id="still-position"
+                class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              >
+                <option value="">默认（台面）</option>
+                <option value="水泥台面">水泥台面</option>
+                <option value="木桌">木桌</option>
+                <option value="玻璃桌面">玻璃桌面</option>
+                <option value="地面">地面</option>
+              </select>
+            </div>
+
+            <!-- 光线方向 -->
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">
+                光线方向 <span class="text-gray-400">(可选)</span>
+              </label>
+              <select
+                id="still-light-direction"
+                class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              >
+                <option value="">默认（侧光）</option>
+                <option value="side">侧光</option>
+                <option value="back">逆光</option>
+                <option value="top">顶光</option>
+                <option value="natural">自然光</option>
+              </select>
+            </div>
+
+            <!-- 生成按钮 -->
+            <button
+              onclick="generateStillPrompt()"
+              class="w-full py-3 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-lg hover:from-purple-700 hover:to-blue-700 transition-all font-medium"
+            >
+              🎨 生成提示词
+            </button>
+          </div>
+        `
+      },
+
+      layered_logic: {
+        name: '分层逻辑控制',
+        formHtml: `
+          <div class="space-y-6">
+            <!-- 物理层 -->
+            <div class="layer-section">
+              <h4 class="font-semibold mb-3 flex items-center gap-2">
+                <span class="w-6 h-6 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-sm">1</span>
+                物理层 (Physics Layer)
+              </h4>
+              <p class="text-xs text-gray-500 mb-3">定义物体的客观属性（材质、体积、固有色）</p>
+              <div class="grid grid-cols-3 gap-3">
+                <input
+                  type="text"
+                  id="layer-material"
+                  class="px-3 py-2 border rounded-lg text-sm"
+                  placeholder="材质（如：陶瓷）"
+                >
+                <input
+                  type="text"
+                  id="layer-volume"
+                  class="px-3 py-2 border rounded-lg text-sm"
+                  placeholder="体积（如：高30cm）"
+                >
+                <input
+                  type="text"
+                  id="layer-color"
+                  class="px-3 py-2 border rounded-lg text-sm"
+                  placeholder="固有色（如：白色）"
+                >
+              </div>
+            </div>
+
+            <!-- 空间层 -->
+            <div class="layer-section">
+              <h4 class="font-semibold mb-3 flex items-center gap-2">
+                <span class="w-6 h-6 rounded-full bg-green-100 text-green-600 flex items-center justify-center text-sm">2</span>
+                空间层 (Space Layer)
+              </h4>
+              <p class="text-xs text-gray-500 mb-3">定义物体的位置与环境（在哪里，周围有什么）</p>
+              <div class="grid grid-cols-3 gap-3">
+                <input
+                  type="text"
+                  id="layer-position"
+                  class="px-3 py-2 border rounded-lg text-sm"
+                  placeholder="位置（如：台面）"
+                >
+                <input
+                  type="text"
+                  id="layer-environment"
+                  class="px-3 py-2 border rounded-lg text-sm"
+                  placeholder="环境（如：室内）"
+                >
+                <input
+                  type="text"
+                  id="layer-background"
+                  class="px-3 py-2 border rounded-lg text-sm"
+                  placeholder="背景（如：城市夜景）"
+                >
+              </div>
+            </div>
+
+            <!-- 光影层 -->
+            <div class="layer-section">
+              <h4 class="font-semibold mb-3 flex items-center gap-2">
+                <span class="w-6 h-6 rounded-full bg-yellow-100 text-yellow-600 flex items-center justify-center text-sm">3</span>
+                光影层 (Light Layer)
+              </h4>
+              <p class="text-xs text-gray-500 mb-3">定义光与物体的互动（光的来源、方向、效果）</p>
+              <div class="grid grid-cols-3 gap-3">
+                <select id="layer-direction" class="px-3 py-2 border rounded-lg text-sm">
+                  <option value="">光线方向</option>
+                  <option value="side">侧光</option>
+                  <option value="back">逆光</option>
+                  <option value="top">顶光</option>
+                  <option value="natural">自然光</option>
+                </select>
+                <select id="layer-tone" class="px-3 py-2 border rounded-lg text-sm">
+                  <option value="">光线色调</option>
+                  <option value="cold">冷色调</option>
+                  <option value="warm">暖色调</option>
+                  <option value="neutral">中性色调</option>
+                </select>
+                <input
+                  type="text"
+                  id="layer-quality"
+                  class="px-3 py-2 border rounded-lg text-sm"
+                  placeholder="光效（如：柔和）"
+                >
+              </div>
+            </div>
+
+            <!-- 感知层 -->
+            <div class="layer-section">
+              <h4 class="font-semibold mb-3 flex items-center gap-2">
+                <span class="w-6 h-6 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center text-sm">4</span>
+                感知层 (Sensor Layer)
+              </h4>
+              <p class="text-xs text-gray-500 mb-3">定义拍摄记录的方式（镜头、景深、焦点）</p>
+              <div class="grid grid-cols-3 gap-3">
+                <select id="layer-lens" class="px-3 py-2 border rounded-lg text-sm">
+                  <option value="">镜头类型</option>
+                  <option value="85mm">85mm（人像）</option>
+                  <option value="50mm">50mm（标准）</option>
+                  <option value="35mm">35mm（广角）</option>
+                  <option value="100mm">100mm（微距）</option>
+                </select>
+                <select id="layer-depth" class="px-3 py-2 border rounded-lg text-sm">
+                  <option value="">景深效果</option>
+                  <option value="shallow">浅景深</option>
+                  <option value="medium">中等景深</option>
+                  <option value="deep">深景深</option>
+                </select>
+                <input
+                  type="text"
+                  id="layer-focus"
+                  class="px-3 py-2 border rounded-lg text-sm"
+                  placeholder="焦点（如：产品中心）"
+                >
+              </div>
+            </div>
+
+            <!-- 生成按钮 -->
+            <button
+              onclick="generateLayeredPrompt()"
+              class="w-full py-3 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-lg hover:from-purple-700 hover:to-blue-700 transition-all font-medium"
+            >
+              🎨 生成提示词
+            </button>
+          </div>
+        `
+      },
+
+      custom: {
+        name: '自定义提示词',
+        formHtml: `
+          <div class="space-y-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">
+                自定义提示词 <span class="text-red-500">*</span>
+              </label>
+              <textarea
+                id="custom-prompt"
+                class="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent font-mono text-sm"
+                rows="10"
+                placeholder="输入你的自定义提示词..."
+              ></textarea>
+              <p class="mt-1 text-xs text-gray-500">
+                完全自定义提示词，适合有特殊需求的用户
+              </p>
+            </div>
+
+            <!-- 生成按钮 -->
+            <button
+              onclick="generateCustomPrompt()"
+              class="w-full py-3 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-lg hover:from-purple-700 hover:to-blue-700 transition-all font-medium"
+            >
+              🎨 生成提示词
+            </button>
+          </div>
+        `
+      }
+    };
+
+    // 选择模板
+    function selectTemplate(templateId) {
+      currentTemplate = templateId;
+
+      // 更新选中状态
+      document.querySelectorAll('.template-card').forEach(card => {
+        card.classList.remove('selected');
+      });
+      document.getElementById(`template-${templateId}`).classList.add('selected');
+
+      // 更新模板名称显示
+      document.getElementById('selected-template-name').textContent = templates[templateId].name;
+
+      // 插入对应的表单
+      document.getElementById('dynamic-form').innerHTML = templates[templateId].formHtml;
+
+      // 隐藏提示词预览
+      document.getElementById('prompt-preview').classList.add('hidden');
+    }
+
+    // 生成服装模特提示词
+    function generateFashionPrompt() {
+      const productDescription = document.getElementById('fashion-product-description').value;
+      const modelType = document.getElementById('fashion-model-type').value || '亚洲模特';
+      const sceneStyle = document.getElementById('fashion-scene-style').value || '极简高级环境';
+
+      if (!productDescription) {
+        alert('请输入产品描述');
+        return;
+      }
+
+      const prompt = `# Task Definition
+
+你是一位世界顶级的商业广告摄影师和后期修图专家，拥有20年的电商产品摄影经验。你的核心任务是将用户上传的白底产品图转化为高质量、专业的真人模特场景展示图。
+
+## Task Instructions
+
+### STEP 1: 产品特征提取
+请仔细分析上传的产品图片，提取以下信息：
+- **服装品类**：识别产品的具体类型（如连衣裙、西装、衬衫等）
+- **核心设计元素**：提取产品的关键设计特征（如领型、袖型、裙长、颜色、图案等）
+- **材质质感**：描述产品的面料质感（如丝绸、棉质、羊毛、牛仔等）
+
+**重要约束**：在后续生成中，必须严格保持产品的核心特征，严禁改变产品的颜色、图案、Logo、印花等设计元素。
+
+### STEP 2: 场景与模特设定
+根据以下设定构建场景：
+
+**模特描述**：
+- ${modelType}
+- 姿态自然，展现产品最佳效果
+- 表情专业，符合商业摄影标准
+
+**环境描述**：
+- ${sceneStyle}
+- 光线柔和自然，突出产品质感
+- 背景简洁，不喧宾夺主
+
+**构图要求**：
+- 全身或膝盖以上中景
+- 产品居中或采用三分法构图
+- 留有适当呼吸空间
+
+### STEP 3: 图像生成
+
+基于以上分析，使用以下提示词逻辑生成图像：
+
+**产品特征**：${productDescription}
+
+**完整生成指令**：
+Professional fashion photography, ${modelType}, ${sceneStyle}, ${productDescription}, realistic lighting, high fidelity, commercial product shot, 8k quality, studio lighting, sharp focus, authentic product representation, natural skin texture, professional photography, cinematic lighting, clean background
+
+## Constraints & Safety
+
+1. **产品真实性**：必须严格保持产品的原始颜色、图案、Logo、印花等核心设计元素，不得有任何改变
+2. **照片级真实感**：生成结果必须是照片级别的真实感，不得出现卡通、插画、过度磨皮等效果
+3. **商业摄影标准**：构图、光线、色彩必须符合专业商业摄影的标准
+4. **自然真实**：模特姿态、表情必须自然，避免僵硬或过度表演
+
+## User Input Variables
+
+- **[Input_Image]**: 用户上传的白底产品图
+- **[Product_Description]**: ${productDescription}
+- **[Model_Type]**: ${modelType}
+- **[Scene_Style]**: ${sceneStyle}
+
+请严格按照以上指令执行，确保生成高质量、真实、专业的商业产品展示图。`;
+
+      showPrompt(prompt);
+    }
+
+    // 生成产品静物提示词
+    function generateStillPrompt() {
+      const productDescription = document.getElementById('still-product-description').value;
+      const material = document.getElementById('still-material').value || '根据产品图片推断';
+      const position = document.getElementById('still-position').value || '台面';
+      const lightDirection = document.getElementById('still-light-direction').value || '侧光';
+
+      if (!productDescription) {
+        alert('请输入产品描述');
+        return;
+      }
+
+      const prompt = `# 分层逻辑提示词
+
+通过以下四个维度的分层描述，精准控制图像生成的每个环节：
+
+## 1. 物理层 (Physics Layer)
+
+**定义**：物体的客观属性，包括材质、体积、固有色等基础事实。
+
+**示例**：
+- 材质：${material}
+- 固有色：${productDescription}
+
+## 2. 空间层 (Space Layer)
+
+**定义**：物体的位置与环境，包括物体在哪里、周围有什么。
+
+**示例**：
+- 位置：${position}
+- 环境：室内
+
+## 3. 光影层 (Light Layer)
+
+**定义**：光与物体的互动，包括光的来源、方向、色调、质量。
+
+**示例**：
+- 光线方向：${lightDirection}
+- 光线色调：中性
+- 光线质量：自然柔和
+
+## 4. 感知层 (Sensor Layer)
+
+**定义**：拍摄记录的方式，包括镜头类型、景深效果、焦点位置。
+
+**示例**：
+- 镜头：85mm
+- 景深：浅景深
+- 焦点：产品中心
+
+---
+
+**完整生成指令**：
+
+Product photography, ${material} ${productDescription} product, positioned on ${position}, indoor environment, ${lightDirection} lighting, neutral tone, soft quality, 85mm lens, shallow depth of field, focus on product center, professional photography, high quality, sharp details, realistic lighting, 8k resolution, commercial product shot.
+
+请严格按照以上分层逻辑生成图像，确保每个维度的要求都得到满足。`;
+
+      showPrompt(prompt);
+    }
+
+    // 生成分层逻辑提示词
+    function generateLayeredPrompt() {
+      const material = document.getElementById('layer-material').value || '';
+      const volume = document.getElementById('layer-volume').value || '';
+      const color = document.getElementById('layer-color').value || '';
+      const position = document.getElementById('layer-position').value || '';
+      const environment = document.getElementById('layer-environment').value || '';
+      const background = document.getElementById('layer-background').value || '';
+      const direction = document.getElementById('layer-direction').value || '';
+      const tone = document.getElementById('layer-tone').value || '';
+      const quality = document.getElementById('layer-quality').value || '';
+      const lens = document.getElementById('layer-lens').value || '';
+      const depth = document.getElementById('layer-depth').value || '';
+      const focus = document.getElementById('layer-focus').value || '';
+
+      if (!material && !color) {
+        alert('请至少填写材质或颜色');
+        return;
+      }
+
+      const prompt = `# 分层逻辑提示词
+
+通过以下四个维度的分层描述，精准控制图像生成的每个环节：
+
+## 1. 物理层 (Physics Layer)
+
+**定义**：物体的客观属性，包括材质、体积、固有色等基础事实。
+
+**示例**：
+- 材质：${material || '根据产品图片推断'}
+- 体积：${volume || '根据产品图片推断'}
+- 固有色：${color}
+
+## 2. 空间层 (Space Layer)
+
+**定义**：物体的位置与环境，包括物体在哪里、周围有什么。
+
+**示例**：
+- 位置：${position || '台面'}
+- 环境：${environment || '室内'}
+- 背景：${background || '根据场景自动推断'}
+
+## 3. 光影层 (Light Layer)
+
+**定义**：光与物体的互动，包括光的来源、方向、色调、质量。
+
+**示例**：
+- 光线方向：${direction || '侧光'}
+- 光线色调：${tone || '中性'}
+- 光线质量：${quality || '自然柔和'}
+
+## 4. 感知层 (Sensor Layer)
+
+**定义**：拍摄记录的方式，包括镜头类型、景深效果、焦点位置。
+
+**示例**：
+- 镜头：${lens || '85mm'}
+- 景深：${depth || '浅景深'}
+- 焦点：${focus || '产品中心'}
+
+---
+
+**完整生成指令**：
+
+Product photography, ${material} ${color} product${volume ? ', ' + volume : ''}, positioned on ${position}, ${environment} environment${background ? ', ' + background : ''}, ${direction} lighting, ${tone} tone, ${quality || 'soft'} quality, ${lens} lens, ${depth} depth of field, focus on ${focus}, professional photography, high quality, sharp details, realistic lighting, 8k resolution, commercial product shot.
+
+请严格按照以上分层逻辑生成图像，确保每个维度的要求都得到满足。`;
+
+      showPrompt(prompt);
+    }
+
+    // 生成自定义提示词
+    function generateCustomPrompt() {
+      const customPrompt = document.getElementById('custom-prompt').value;
+
+      if (!customPrompt) {
+        alert('请输入自定义提示词');
+        return;
+      }
+
+      showPrompt(customPrompt);
+    }
+
+    // 显示提示词
+    function showPrompt(prompt) {
+      document.getElementById('prompt-content').textContent = prompt;
+      document.getElementById('prompt-preview').classList.remove('hidden');
+      document.getElementById('copy-success').classList.add('hidden');
+
+      // 滚动到提示词预览
+      document.getElementById('prompt-preview').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    // 复制提示词
+    function copyPrompt() {
+      const prompt = document.getElementById('prompt-content').textContent;
+      navigator.clipboard.writeText(prompt).then(() => {
+        document.getElementById('copy-success').classList.remove('hidden');
+        setTimeout(() => {
+          document.getElementById('copy-success').classList.add('hidden');
+        }, 2000);
+      });
+    }
+
+    // 初始化：默认选择第一个模板
+    selectTemplate('fashion_model');
+  </script>
+</body>
+</html>

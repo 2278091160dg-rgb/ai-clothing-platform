@@ -6,7 +6,8 @@
 'use client';
 
 import { useEffect } from 'react';
-import { X, Download, ZoomIn, ZoomOut, RotateCw } from 'lucide-react';
+import { X, Download } from 'lucide-react';
+import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 
 interface ImagePreviewProps {
@@ -66,14 +67,19 @@ export function ImagePreview({ src, alt = '预览图片', onClose }: ImagePrevie
 
         {/* 图片容器 - 全屏居中 */}
         <div className="relative flex items-center justify-center w-full h-full">
-          <img
+          <Image
             src={src}
             alt={alt}
+            width={0}
+            height={0}
             className="max-w-full max-h-full object-contain"
             style={{
               maxHeight: 'calc(100vh - 120px)',
               maxWidth: 'calc(100vw - 64px)',
+              width: 'auto',
+              height: 'auto',
             }}
+            unoptimized
           />
         </div>
 

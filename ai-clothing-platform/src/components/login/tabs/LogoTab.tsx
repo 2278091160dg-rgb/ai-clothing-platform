@@ -4,6 +4,7 @@
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import Image from 'next/image';
 
 interface LoginConfig {
   logoUrl?: string;
@@ -50,7 +51,14 @@ export function LogoTab({ config, uploading, onConfigChange, onUpload }: LogoTab
         <p className="text-xs text-cyan-100/50 mb-3">预览效果：</p>
         <div className="w-16 h-16 mx-auto rounded-xl bg-gradient-to-br from-cyan-400 via-blue-500 to-purple-600 flex items-center justify-center shadow-lg">
           {config.logoUrl ? (
-            <img src={config.logoUrl} alt="Logo" className="w-12 h-12 object-contain" />
+            <Image
+              src={config.logoUrl}
+              alt="Logo"
+              width={48}
+              height={48}
+              className="w-12 h-12 object-contain"
+              unoptimized
+            />
           ) : (
             <span className="text-3xl">{config.logoEmoji}</span>
           )}

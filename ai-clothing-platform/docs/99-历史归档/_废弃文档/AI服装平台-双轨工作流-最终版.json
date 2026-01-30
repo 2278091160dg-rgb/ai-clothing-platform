@@ -1,0 +1,502 @@
+{
+  "name": "AI服装平台双轨工作流-最终版",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "ai-clothing",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "8a1b2c3d-4e5f-6g7h-8i9j-0k1l2m3n4o5p",
+      "name": "【修改】Webhook接收",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [240, 400],
+      "webhookId": "需要替换为你的webhook-id"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "mode-assignment",
+              "name": "mode",
+              "value": "={{ $json.body.mode }}",
+              "type": "string"
+            },
+            {
+              "id": "taskId-assignment",
+              "name": "taskId",
+              "value": "={{ $json.body.taskId }}",
+              "type": "string"
+            },
+            {
+              "id": "userId-assignment",
+              "name": "userId",
+              "value": "={{ $json.body.userId }}",
+              "type": "string"
+            },
+            {
+              "id": "prompt-assignment",
+              "name": "prompt",
+              "value": "={{ $json.body.prompt }}",
+              "type": "string"
+            },
+            {
+              "id": "aspectRatio-assignment",
+              "name": "aspectRatio",
+              "value": "={{ $json.body.aspectRatio || '1:1' }}",
+              "type": "string"
+            },
+            {
+              "id": "imageCount-assignment",
+              "name": "imageCount",
+              "value": "={{ $json.body.imageCount || 4 }}",
+              "type": "number"
+            },
+            {
+              "id": "quality-assignment",
+              "name": "quality",
+              "value": "={{ $json.body.quality || 'high' }}",
+              "type": "string"
+            },
+            {
+              "id": "productImage-assignment",
+              "name": "productImageUrl",
+              "value": "={{ $json.body.productImageUrl }}",
+              "type": "string"
+            },
+            {
+              "id": "sceneImage-assignment",
+              "name": "sceneImageUrl",
+              "value": "={{ $json.body.sceneImageUrl }}",
+              "type": "string"
+            },
+            {
+              "id": "modelImage-assignment",
+              "name": "modelImageUrl",
+              "value": "={{ $json.body.modelImageUrl }}",
+              "type": "string"
+            },
+            {
+              "id": "clothingImage-assignment",
+              "name": "clothingImageUrl",
+              "value": "={{ $json.body.clothingImageUrl }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "1a2b3c4d-5e6f-7g8h-9i0j-1k2l3m4n5o6p",
+      "name": "提取请求参数",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [460, 400]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "scene-condition",
+              "leftValue": "={{ $json.mode }}",
+              "rightValue": "scene",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "2b3c4d5e-6f7g-8h9i-0j1k-2l3m4n5o6p7q",
+      "name": "判断：场景生图？",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.1,
+      "position": [680, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "tryon-condition",
+              "leftValue": "={{ $json.mode }}",
+              "rightValue": "tryon",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "3c4d5e6f-7g8h-9i0j-1k2l-3m4n5o6p7q8r",
+      "name": "判断：虚拟试衣？",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.1,
+      "position": [680, 500]
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.productImageUrl }}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file"
+            }
+          }
+        }
+      },
+      "id": "4d5e6f7g-8h9i-0j1k-2l3m-4n5o6p7q8r9s",
+      "name": "下载商品图",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [900, 200]
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.sceneImageUrl }}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file"
+            }
+          }
+        }
+      },
+      "id": "5e6f7g8h-9i0j-1k2l-3m4n-5o6p7q8r9s0t",
+      "name": "下载场景图",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [900, 320]
+    },
+    {
+      "parameters": {
+        "jsCode": "// 【修改】配置你的AI生成API\nconst AI_API_URL = 'https://your-ai-api.com/generate'; // ⚠️ 需要修改\nconst AI_API_KEY = 'your-api-key-here'; // ⚠️ 需要修改\n\n// 构建请求体\nconst requestBody = {\n  model: 'FLUX.1', // ⚠️ 需要修改为你的模型ID\n  prompt: $input.item.json.prompt,\n  product_image: $input.item.json.binary.productImage.data, // 二进制数据\n  scene_image: $input.item.json.binary.sceneImage.data,\n  aspect_ratio: $input.item.json.aspectRatio || '1:1',\n  num_images: $input.item.json.imageCount || 4,\n  quality: $input.item.json.quality || 'high',\n  mode: 'scene'\n};\n\n// 发送请求（示例代码，根据你的API调整）\nconst response = await fetch(AI_API_URL, {\n  method: 'POST',\n  headers: {\n    'Content-Type': 'application/json',\n    'Authorization': `Bearer ${AI_API_KEY}`\n  },\n  body: JSON.stringify(requestBody)\n});\n\nconst result = await response.json();\n\nreturn {\n  json: {\n    taskId: $input.item.json.taskId,\n    mode: 'scene',\n    success: result.success || true,\n    images: result.images || [],\n    message: result.message || '生成成功'\n  }\n};"
+      },
+      "id": "6f7g8h9i-0j1k-2l3m-4n5o-6p7q8r9s0t1u",
+      "name": "【修改】AI生成-场景生图",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1120, 260]
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.modelImageUrl }}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file"
+            }
+          }
+        }
+      },
+      "id": "7g8h9i0j-1k2l-3m4n-5o6p-7q8r9s0t1u2v",
+      "name": "下载模特图",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [900, 440]
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.clothingImageUrl }}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file"
+            }
+          }
+        }
+      },
+      "id": "8h9i0j1k-2l3m-4n5o-6p7q-8r9s0t1u2v3w",
+      "name": "下载服装图",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [900, 560]
+    },
+    {
+      "parameters": {
+        "jsCode": "// 【修改】配置你的虚拟试衣API\nconst TRYON_API_URL = 'https://your-tryon-api.com/generate'; // ⚠️ 需要修改\nconst TRYON_API_KEY = 'your-tryon-api-key-here'; // ⚠️ 需要修改\n\n// 构建请求体\nconst requestBody = {\n  model: 'VITON', // ⚠️ 需要修改为你的虚拟试衣模型ID\n  prompt: $input.item.json.prompt,\n  model_image: $input.item.json.binary.modelImage.data,\n  clothing_image: $input.item.json.binary.clothingImage.data,\n  num_images: $input.item.json.imageCount || 4,\n  quality: $input.item.json.quality || 'high',\n  mode: 'tryon'\n};\n\n// 发送请求\nconst response = await fetch(TRYON_API_URL, {\n  method: 'POST',\n  headers: {\n    'Content-Type': 'application/json',\n    'Authorization': `Bearer ${TRYON_API_KEY}`\n  },\n  body: JSON.stringify(requestBody)\n});\n\nconst result = await response.json();\n\nreturn {\n  json: {\n    taskId: $input.item.json.taskId,\n    mode: 'tryon',\n    success: result.success || true,\n    images: result.images || [],\n    message: result.message || '生成成功'\n  }\n};"
+      },
+      "id": "9i0j1k2l-3m4n-5o6p-7q8r-9s0t1u2v3w4x",
+      "name": "【修改】AI生成-虚拟试衣",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1120, 500]
+    },
+    {
+      "parameters": {
+        "jsCode": "// 【修改】配置图片上传服务（DeerAPI或其他）\nconst UPLOAD_API_URL = 'https://api.deerapi.com/upload'; // ⚠️ 需要修改\nconst UPLOAD_API_KEY = 'your-deerapi-key-here'; // ⚠️ 需要修改\n\nconst images = $input.item.json.images || [];\nconst uploadedUrls = [];\n\n// 上传每张图片\nfor (const imageData of images) {\n  // 假设imageData是base64或图片URL\n  // 根据你的API调整上传逻辑\n  try {\n    const formData = new FormData();\n    formData.append('file', imageData);\n    \n    const response = await fetch(UPLOAD_API_URL, {\n      method: 'POST',\n      headers: {\n        'Authorization': `Bearer ${UPLOAD_API_KEY}`\n      },\n      body: formData\n    });\n    \n    const result = await response.json();\n    uploadedUrls.push(result.url || result.data?.url);\n  } catch (error) {\n    console.error('图片上传失败:', error);\n  }\n}\n\nreturn {\n  json: {\n    ...$input.item.json,\n    resultImageUrls: uploadedUrls,\n    uploadCount: uploadedUrls.length\n  }\n};"
+      },
+      "id": "0j1k2l3m-4n5o-6p7q-8r9s-0t1u2v3w4x5y",
+      "name": "【修改】上传结果图",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1340, 380]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://your-domain.com/api/webhooks/n8n/callback",
+        "authentication": "none",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"taskId\": \"{{ $json.taskId }}\",\n  \"mode\": \"{{ $json.mode }}\",\n  \"status\": \"COMPLETED\",\n  \"resultImageUrls\": {{ JSON.stringify($json.resultImageUrls) }},\n  \"message\": \"{{ $json.message || '生成完成' }}\"\n}",
+        "options": {}
+      },
+      "id": "1k2l3m4n-5o6p-7q8r-9s0t-1u2v3w4x5y6z",
+      "name": "【修改】回调通知",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1560, 380]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"success\": true,\n  \"message\": \"任务已接收\",\n  \"taskId\": \"{{ $json.taskId }}\",\n  \"mode\": \"{{ $json.mode }}\"\n}",
+        "options": {}
+      },
+      "id": "2l3m4n5o-6p7q-8r9s-0t1u-2v3w4x5y6z7a",
+      "name": "Webhook响应",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [1780, 380]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "error-mode",
+              "name": "mode",
+              "value": "unsupported",
+              "type": "string"
+            },
+            {
+              "id": "error-message",
+              "name": "errorMessage",
+              "value": "不支持的模式: {{ $json.mode }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "3m4n5o6p-7q8r-9s0t-1u2v-3w4x5y6z7a8b",
+      "name": "设置错误-不支持的模式",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [900, 680]
+    }
+  ],
+  "connections": {
+    "【修改】Webhook接收": {
+      "main": [
+        [
+          {
+            "node": "提取请求参数",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "提取请求参数": {
+      "main": [
+        [
+          {
+            "node": "判断：场景生图？",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "判断：虚拟试衣？",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "判断：场景生图？": {
+      "main": [
+        [
+          {
+            "node": "下载商品图",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "下载场景图",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "设置错误-不支持的模式",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "判断：虚拟试衣？": {
+      "main": [
+        [
+          {
+            "node": "下载模特图",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "下载服装图",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "设置错误-不支持的模式",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "下载商品图": {
+      "main": [
+        [
+          {
+            "node": "【修改】AI生成-场景生图",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "下载场景图": {
+      "main": [
+        [
+          {
+            "node": "【修改】AI生成-场景生图",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "下载模特图": {
+      "main": [
+        [
+          {
+            "node": "【修改】AI生成-虚拟试衣",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "下载服装图": {
+      "main": [
+        [
+          {
+            "node": "【修改】AI生成-虚拟试衣",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "【修改】AI生成-场景生图": {
+      "main": [
+        [
+          {
+            "node": "【修改】上传结果图",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "【修改】AI生成-虚拟试衣": {
+      "main": [
+        [
+          {
+            "node": "【修改】上传结果图",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "【修改】上传结果图": {
+      "main": [
+        [
+          {
+            "node": "【修改】回调通知",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "【修改】回调通知": {
+      "main": [
+        [
+          {
+            "node": "Webhook响应",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "设置错误-不支持的模式": {
+      "main": [
+        [
+          {
+            "node": "Webhook响应",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner",
+    "errorWorkflow": ""
+  },
+  "staticData": null,
+  "tags": [
+    {
+      "createdAt": "2026-01-29T00:00:00.000Z",
+      "updatedAt": "2026-01-29T00:00:00.000Z",
+      "id": "tag-ai-clothing",
+      "name": "AI服装平台"
+    }
+  ],
+  "triggerCount": 1,
+  "updatedAt": "2026-01-29T00:00:00.000Z",
+  "versionId": "v1.0.0"
+}

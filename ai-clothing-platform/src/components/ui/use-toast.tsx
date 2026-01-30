@@ -17,8 +17,7 @@ type Toast = ToastProps & {
   id: string;
 };
 
-const TOAST_LIMIT = 1;
-const TOAST_REMOVE_DELAY = 1000000;
+// const TOAST_REMOVE_DELAY = 1000000;
 
 type ToasterToast = Toast & {
   id: string;
@@ -38,10 +37,6 @@ function toast({ ...props }: ToastProps) {
   };
 
   const dismiss = () => removeToast(id);
-
-  const timeout = setTimeout(() => {
-    dismiss();
-  }, props.duration || TOAST_REMOVE_DELAY);
 
   // Stub: store toasts in memory (real implementation would use state)
   const toasts = new Map<string, ToasterToast>();

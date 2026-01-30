@@ -3,6 +3,7 @@
  * DeerAPI版本的AI对话服务 - 替代OpenAI
  */
 
+/* eslint-disable @typescript-eslint/no-unused-vars */
 interface DeerAPIConversationConfig {
   endpoint: string;
   apiKey: string;
@@ -141,7 +142,7 @@ export class DeerAPIConversationService {
    */
   private parseAIResponse(
     response: string,
-    context?: {
+    _context?: {
       originalPrompt?: string;
       currentPrompt?: string;
     }

@@ -4,6 +4,7 @@
 
 import { Input } from '@/components/ui/input';
 import { compressImage } from '@/lib/utils/image';
+import Image from 'next/image';
 
 interface BrandConfigFormProps {
   config: {
@@ -81,10 +82,13 @@ export function BrandConfigForm({ config, onConfigChange }: BrandConfigFormProps
           >
             {config.brandLogoImage ? (
               <div className="relative w-full h-full flex items-center justify-center p-1">
-                <img
+                <Image
                   src={config.brandLogoImage}
                   alt="Logo"
+                  width={32}
+                  height={32}
                   className="max-w-full max-h-full object-contain"
+                  unoptimized
                 />
                 <button
                   onClick={e => {
@@ -111,7 +115,14 @@ export function BrandConfigForm({ config, onConfigChange }: BrandConfigFormProps
           <p className="text-[10px] text-muted-foreground mb-2">预览效果</p>
           <div className="flex items-center gap-3">
             {config.brandLogoImage ? (
-              <img src={config.brandLogoImage} alt="Logo" className="w-8 h-8 rounded" />
+              <Image
+                src={config.brandLogoImage}
+                alt="Logo"
+                width={32}
+                height={32}
+                className="w-8 h-8 rounded"
+                unoptimized
+              />
             ) : config.brandIcon ? (
               <span className="text-2xl">{config.brandIcon}</span>
             ) : (

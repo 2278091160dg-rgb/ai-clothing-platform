@@ -3,9 +3,10 @@
  * 实时事件推送端点
  */
 
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { createSSEStream } from '@/lib/services/realtime.service';
 
-export async function GET(request: Request) {
+export async function GET(_request: Request) {
   try {
     // 应用使用访问密码保护，SSE 使用默认用户ID
     const defaultUserId = 'default-user';

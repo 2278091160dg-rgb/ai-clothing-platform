@@ -4,6 +4,7 @@
  * 包含断路器保护和降级策略
  */
 
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { getEventBus } from './event-bus';
 import { getFeishuService } from '../services/feishu.service';
 import { getTaskRepository } from '../repositories/task.repository';
@@ -179,7 +180,7 @@ export function initializeFeishuListeners(): void {
         });
 
         console.log('[FeishuListener] Progress updated:', data.progress);
-      } catch (error) {
+      } catch (_error) {
         // 进度更新失败不记录日志（避免日志过多）
         // 仅在断路器打开时记录
         const state = feishuCircuitBreaker.getState();

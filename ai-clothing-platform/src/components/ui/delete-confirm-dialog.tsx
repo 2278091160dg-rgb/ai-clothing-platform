@@ -130,7 +130,7 @@ export function DeleteConfirmDialog({
               <Alert variant="warning">
                 <AlertTriangle className="h-4 w-4" />
                 <AlertDescription>
-                  选择"仅删除本地记录"后，飞书记录仍会保留，可能导致数据不一致
+                  选择&ldquo;仅删除本地记录&rdquo;后，飞书记录仍会保留，可能导致数据不一致
                 </AlertDescription>
               </Alert>
             )}

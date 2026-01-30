@@ -3,11 +3,12 @@
  * 实现事件驱动架构的核心
  */
 
-type EventHandler<T = any> = (event: T) => Promise<void> | void;
+/* eslint-disable @typescript-eslint/no-unused-vars */
+type EventHandler<T = unknown> = (event: T) => Promise<void> | void;
 
 interface EventBusConfig {
   maxListeners?: number;
-  errorHandler?: (error: Error, event: any, handler: EventHandler) => void;
+  errorHandler?: (error: Error, event: unknown, handler: EventHandler) => void;
 }
 
 export class EventBus {
@@ -21,14 +22,14 @@ export class EventBus {
     };
   }
 
-  private defaultErrorHandler(error: Error, event: any, handler: EventHandler) {
+  private defaultErrorHandler(error: Error, event: unknown, _handler: EventHandler) {
     console.error(`Error in event handler for ${event}:`, error);
   }
 
   /**
    * 订阅事件
    */
-  on<T = any>(eventName: string, handler: EventHandler<T>): () => void {
+  on<T = unknown>(eventName: string, handler: EventHandler<T>): () => void {
     if (!this.listeners.has(eventName)) {
       this.listeners.set(eventName, new Set());
     }
@@ -39,11 +40,11 @@ export class EventBus {
       console.warn(`Max listeners (${this.config.maxListeners}) reached for event: ${eventName}`);
     }
 
-    handlers.add(handler);
+    handlers.add(handler as EventHandler);
 
     // 返回取消订阅函数
     return () => {
-      this.off(eventName, handler);
+      this.off(eventName, handler as EventHandler);
     };
   }
 
@@ -53,7 +54,7 @@ export class EventBus {
   off(eventName: string, handler: EventHandler): void {
     const handlers = this.listeners.get(eventName);
     if (handlers) {
-      handlers.delete(handler);
+      handlers.delete(handler as EventHandler);
       if (handlers.size === 0) {
         this.listeners.delete(eventName);
       }
@@ -63,7 +64,7 @@ export class EventBus {
   /**
    * 发布事件（同步）
    */
-  emit<T = any>(eventName: string, event: T): void {
+  emit<T = unknown>(eventName: string, event: T): void {
     const handlers = this.listeners.get(eventName);
     if (!handlers || handlers.size === 0) {
       return;
@@ -75,7 +76,7 @@ export class EventBus {
         // 如果返回Promise，处理错误但不等待
         if (result instanceof Promise) {
           result.catch(error => {
-            this.config.errorHandler(error, event, handler);
+            this.config.errorHandler(error as Error, event, handler);
           });
         }
       } catch (error) {
@@ -87,7 +88,7 @@ export class EventBus {
   /**
    * 发布事件（异步，等待所有处理器完成）
    */
-  async emitAsync<T = any>(eventName: string, event: T): Promise<void> {
+  async emitAsync<T = unknown>(eventName: string, event: T): Promise<void> {
     const handlers = this.listeners.get(eventName);
     if (!handlers || handlers.size === 0) {
       return;
@@ -107,13 +108,13 @@ export class EventBus {
   /**
    * 一次性订阅
    */
-  once<T = any>(eventName: string, handler: EventHandler<T>): () => void {
+  once<T = unknown>(eventName: string, handler: EventHandler<T>): () => void {
     const wrappedHandler: EventHandler<T> = event => {
       handler(event);
-      this.off(eventName, wrappedHandler);
+      this.off(eventName, wrappedHandler as EventHandler);
     };
 
-    return this.on(eventName, wrappedHandler);
+    return this.on(eventName, wrappedHandler as EventHandler);
   }
 
   /**

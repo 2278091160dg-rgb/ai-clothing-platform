@@ -18,7 +18,7 @@ interface N8NCallbackBody {
   resultImageTokens?: string | string[]; // 可选字段，N8N可能不发送
   error?: string; // 可选字段，N8N可能不发送
   progress?: number;
-  [key: string]: any; // 允许额外字段
+  [key: string]: string | number | string[] | undefined; // 允许额外字段
 }
 
 /**
@@ -49,7 +49,7 @@ function parseImageUrls(urls: string | string[] | undefined): string[] {
     try {
       const parsed = JSON.parse(urls);
       if (Array.isArray(parsed)) {
-        return parsed.filter((url: any) => typeof url === 'string' && url.length > 0);
+        return parsed.filter((url: unknown) => typeof url === 'string' && url.length > 0);
       }
       // 如果解析结果不是数组，将原字符串作为单个URL
       return [urls];
@@ -78,7 +78,7 @@ function parseImageTokens(tokens: string | string[] | undefined): string[] | nul
     try {
       const parsed = JSON.parse(tokens);
       if (Array.isArray(parsed)) {
-        return parsed.filter((token: any) => typeof token === 'string' && token.length > 0);
+        return parsed.filter((token: unknown) => typeof token === 'string' && token.length > 0);
       }
       // 如果解析结果不是数组，将原字符串作为单个token
       return [tokens];

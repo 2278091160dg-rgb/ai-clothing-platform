@@ -15,9 +15,6 @@ type RouteContext = {
  */
 export async function GET(req: NextRequest, context: RouteContext) {
   try {
-    // 应用使用访问密码保护，API 跳过 OAuth 认证
-    const defaultUserId = 'default-user';
-
     const { id } = await context.params;
     const taskRepo = getTaskRepository();
 
@@ -53,9 +50,13 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
     }
 
     // 只允许更新特定字段
-    const allowedUpdates = ['prompt', 'aiModel', 'aspectRatio', 'imageCount', 'quality'];
+    const allowedUpdates = ['prompt', 'aiModel', 'aspectRatio', 'imageCount', 'quality'] as const;
 
-    const updates: any = {};
+    type TaskUpdates = {
+      [K in (typeof allowedUpdates)[number]]?: string | number;
+    };
+
+    const updates: TaskUpdates = {};
     for (const key of allowedUpdates) {
       if (key in body) {
         updates[key] = body[key];
