@@ -1,6 +1,7 @@
 /**
  * 深蓝色科技风主页 - AI电商商拍平台
  * Dark Mode + Future Tech + Bento Grid
+ * 集成飞书 Bitable + N8N 工作流
  */
 
 'use client';
@@ -20,7 +21,7 @@ import { TaskHistoryPanel } from '@/components/workspace/TaskHistoryPanel';
 import { StatsPanel } from '@/components/workspace/StatsPanel';
 import { useBrandConfig } from '@/hooks/use-brand-config';
 import { useImageUpload } from '@/hooks/use-image-upload';
-import { useTaskManagement } from '@/hooks/use-task-management';
+import { useFeishuTaskManagement } from '@/hooks/use-feishu-task-management';
 
 export default function HomePage() {
   // UI 状态
@@ -39,6 +40,9 @@ export default function HomePage() {
   const [aspectRatio, setAspectRatio] = useState<'1:1' | '3:4' | '16:9' | '9:16'>('3:4');
   const [quality] = useState<'standard' | 'high'>('high');
 
+  // 飞书任务管理
+  const { currentTask, executeGeneration, resetTask, isPolling } = useFeishuTaskManagement();
+
   // 模式切换处理 - 清空提示词，保留其他通用参数
   const handleModeChange = useCallback((newMode: 'scene' | 'tryon' | 'wear' | 'combine') => {
     setMode(newMode);
@@ -56,7 +60,6 @@ export default function HomePage() {
     handleSceneUpload,
     resetImages,
   } = useImageUpload();
-  const { tasks, handleGenerate, handleClearHistory } = useTaskManagement();
 
   const isConfigured = ConfigManager.isConfigured();
 
@@ -102,45 +105,55 @@ export default function HomePage() {
     }
   };
 
+  // 生成按钮点击处理
   const handleGenerateClick = useCallback(async () => {
-    const resetForm = () => {
-      setProductName('');
-      setPrompt('');
-      setNegativePrompt('');
-      resetImages();
-    };
+    if (!isConfigured) {
+      setShowConfig(true);
+      return;
+    }
 
-    const result = await handleGenerate(
-      mode,
-      productName,
-      prompt,
-      negativePrompt,
+    if (!productImage || !prompt) {
+      alert('请上传商品图片并输入提示词');
+      return;
+    }
+
+    // 执行飞书任务流程
+    await executeGeneration(
       productImage,
       sceneImage,
+      prompt,
+      negativePrompt,
+      aspectRatio,
+      imageModel
+    );
+  }, [
+    isConfigured,
+    productImage,
+    sceneImage,
+    prompt,
+    negativePrompt,
+    aspectRatio,
+    imageModel,
+    executeGeneration,
+  ]);
+
+  // 转换当前任务为 ResultPanel 兼容格式
+  const displayTasks = currentTask ? [{
+    id: currentTask.id,
+    productName: productName || '当前任务',
+    prompt,
+    config: {
       textModel,
       imageModel,
       aspectRatio,
+      imageCount: 1,
       quality,
-      resetForm
-    );
-
-    if (result?.needConfig) {
-      setShowConfig(true);
-    }
-  }, [
-    mode,
-    productName,
-    prompt,
-    negativePrompt,
-    productImage,
-    sceneImage,
-    textModel,
-    imageModel,
-    aspectRatio,
-    quality,
-    handleGenerate,
-    resetImages,
-  ]);
+    },
+    status: currentTask.status,
+    progress: currentTask.progress,
+    resultImages: currentTask.resultUrl ? [currentTask.resultUrl] : undefined,
+    createdAt: currentTask.createdAt,
+  }] : [];
 
   return (
     <div className="min-h-screen bg-grid-pattern">
@@ -190,16 +203,25 @@ export default function HomePage() {
 
           {/* 中间栏 - 结果展示 */}
           <div className="flex-1 flex flex-col gap-4">
-            <ResultPanel tasks={tasks} imageModel={imageModel} />
+            <ResultPanel
+              tasks={displayTasks}
+              imageModel={imageModel}
+              isPolling={isPolling}
+              onReset={resetTask}
+            />
           </div>
 
           {/* 右侧栏 - 历史记录 */}
           <div className="w-[300px] flex flex-col gap-4">
-            <StatsPanel tasks={tasks} />
+            <StatsPanel tasks={displayTasks} />
             <TaskHistoryPanel
-              tasks={tasks}
+              tasks={displayTasks}
               onPreview={handlePreviewImage}
-              onClearHistory={handleClearHistory}
+              onClearHistory={() => {
+                if (confirm('确定要清空当前任务吗？')) {
+                  resetTask();
+                }
+              }}
             />
           </div>
         </div>

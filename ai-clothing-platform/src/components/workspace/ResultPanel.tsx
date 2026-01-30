@@ -13,16 +13,33 @@ import {
   Coins,
   Clock,
   Loader2,
+  X,
+  Image as ImageIcon,
 } from 'lucide-react';
 import type { ImageModel, TaskData } from '@/lib/types';
 
 interface ResultPanelProps {
   tasks: TaskData[];
   imageModel: ImageModel;
+  isPolling?: boolean;
+  onReset?: () => void;
 }
 
-export function ResultPanel({ tasks, imageModel }: ResultPanelProps) {
-  const isGenerating = tasks.some(t => t.status === 'generating' || t.status === 'processing');
+export function ResultPanel({ tasks, imageModel, isPolling = false, onReset }: ResultPanelProps) {
+  const currentTask = tasks[0];
+  const isGenerating = currentTask?.status === 'generating' || currentTask?.status === 'processing' || currentTask?.status === 'pending';
+  const isCompleted = currentTask?.status === 'completed' && currentTask?.resultImages?.[0];
+  const resultUrl = currentTask?.resultImages?.[0];
+
+  // 下载图片
+  const handleDownload = () => {
+    if (resultUrl) {
+      const link = document.createElement('a');
+      link.href = resultUrl;
+      link.download = `ai-generated-${Date.now()}.png`;
+      link.click();
+    }
+  };
 
   return (
     <>
@@ -32,8 +49,8 @@ export function ResultPanel({ tasks, imageModel }: ResultPanelProps) {
         <div className="absolute inset-0 bg-grid-pattern opacity-50" />
         <div className="absolute top-0 right-0 w-96 h-96 bg-blue-500/5 rounded-full blur-3xl" />
 
-        {/* 根据是否有正在生成的任务显示不同内容 */}
-        {isGenerating ? (
+        {/* 任务进行中 */}
+        {isGenerating && (
           <div className="relative text-center">
             {/* AI生成中动效 */}
             <div className="relative mb-6">
@@ -70,6 +87,19 @@ export function ResultPanel({ tasks, imageModel }: ResultPanelProps) {
               请耐心等待，预计需要30-60秒完成生成
             </p>
 
+            {/* 进度条 */}
+            {currentTask?.progress !== undefined && (
+              <div className="w-64 mx-auto mb-4">
+                <div className="h-2 bg-card/60 rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-gradient-to-r from-primary to-blue-600 transition-all duration-500"
+                    style={{ width: `${currentTask.progress}%` }}
+                  />
+                </div>
+                <p className="text-xs text-muted-foreground mt-2">{currentTask.progress}%</p>
+              </div>
+            )}
+
             {/* 模型信息卡片 */}
             <div className="bg-card/60 backdrop-blur-xl border border-border/30 rounded-xl p-4 max-w-md mx-auto mb-4">
               <div className="flex items-center justify-between text-sm">
@@ -84,42 +114,64 @@ export function ResultPanel({ tasks, imageModel }: ResultPanelProps) {
             {/* 进度提示 */}
             <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
               <Loader2 size={14} className="animate-spin" />
-              <span>正在调用DeerAPI进行图像生成...</span>
+              <span>{isPolling ? '正在轮询任务状态...' : '正在处理中...'}</span>
             </div>
           </div>
-        ) : (
+        )}
+
+        {/* 任务完成 - 显示结果 */}
+        {isCompleted && resultUrl && (
+          <div className="relative text-center w-full h-full flex flex-col items-center justify-center">
+            {/* 结果图片 */}
+            <div className="relative mb-6">
+              <img
+                src={resultUrl}
+                alt="AI生成的图片"
+                className="max-w-full max-h-[400px] rounded-lg shadow-2xl"
+              />
+              {/* 完成标记 */}
+              <div className="absolute -top-3 -right-3 w-12 h-12 bg-green-500 rounded-full flex items-center justify-center shadow-lg">
+                <Sparkles size={24} className="text-white" />
+              </div>
+            </div>
+
+            <h3 className="text-2xl font-bold text-foreground mb-3">生成完成!</h3>
+            <p className="text-sm text-muted-foreground max-w-md mb-6">
+              您的AI生成图片已准备就绪
+            </p>
+
+            {/* 结果操作按钮 */}
+            <div className="relative flex gap-3">
+              <Button
+                onClick={handleDownload}
+                variant="outline"
+                className="bg-card/40 backdrop-blur-sm border-border/30 hover:bg-card/60 text-foreground rounded-full"
+              >
+                <Download size={16} className="mr-2" />
+                下载图片
+              </Button>
+              <Button
+                onClick={onReset}
+                variant="outline"
+                className="bg-card/40 backdrop-blur-sm border-border/30 hover:bg-card/60 text-foreground rounded-full"
+              >
+                <X size={16} className="mr-2" />
+                清空结果
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {/* 等待状态 */}
+        {!isGenerating && !isCompleted && (
           <div className="relative text-center">
-            <Palette size={64} className="mx-auto mb-5 float-animation opacity-30 text-primary" />
+            <ImageIcon size={64} className="mx-auto mb-5 float-animation opacity-30 text-primary" />
             <h3 className="text-2xl font-bold text-foreground mb-3">等待生成</h3>
             <p className="text-sm text-muted-foreground max-w-md">
               上传商品图片并填写提示词后，点击生成按钮开始创作
             </p>
           </div>
         )}
-
-        {/* 结果操作按钮 */}
-        <div className="relative flex gap-3 mt-10">
-          <Button
-            variant="outline"
-            className="bg-card/40 backdrop-blur-sm border-border/30 hover:bg-card/60 text-foreground rounded-full"
-            disabled
-          >
-            <Download size={16} className="mr-2" />
-            下载图片
-          </Button>
-          <Button
-            variant="outline"
-            className="bg-card/40 backdrop-blur-sm border-border/30 hover:bg-card/60 text-foreground rounded-full"
-            disabled
-          >
-            <RefreshCw size={16} className="mr-2" />
-            重新生成
-          </Button>
-          <Button className="btn-success rounded-full" disabled>
-            <Database size={16} className="mr-2" />
-            保存到飞书
-          </Button>
-        </div>
       </div>
 
       {/* 模型信息和统计卡片 */}
@@ -158,8 +210,10 @@ export function ResultPanel({ tasks, imageModel }: ResultPanelProps) {
           </div>
 
           <div className="text-right">
-            <p className="text-[10px] text-muted-foreground">DeerAPI状态</p>
-            <p className="text-sm font-semibold text-green-400">在线</p>
+            <p className="text-[10px] text-muted-foreground">服务状态</p>
+            <p className="text-sm font-semibold text-green-400">
+              {isPolling ? '轮询中...' : '在线'}
+            </p>
           </div>
         </div>
       </div>
