@@ -1,12 +1,16 @@
+/**
+ * VirtualTryOnForm - 虚拟试穿表单组件
+ *
+ * 拆分后的结构：
+ * - hooks/use-virtual-tryon-form.ts: 表单状态和逻辑
+ * - VirtualTryOnForm.module.css: 样式文件
+ */
+
 'use client';
 
-import { useState } from 'react';
 import Image from 'next/image';
-
-interface VirtualTryOnFormProps {
-  onSubmit: (data: VirtualTryOnFormData) => void;
-  loading?: boolean;
-}
+import { useVirtualTryOnForm } from '@/hooks/use-virtual-tryon-form';
+import './VirtualTryOnForm.module.css';
 
 export interface VirtualTryOnFormData {
   clothingImage: string;
@@ -20,26 +24,15 @@ export interface VirtualTryOnFormData {
   aspectRatio: '3:4' | '1:1' | '16:9';
 }
 
-export function VirtualTryOnForm({ onSubmit, loading = false }: VirtualTryOnFormProps) {
-  const [formData, setFormData] = useState<VirtualTryOnFormData>({
-    clothingImage: '',
-    referenceImage: '',
-    modelImage: '',
-    clothingDescription: '',
-    modelDescription: '',
-    sceneDescription: '',
-    tryonMode: 'single',
-    aiModel: 'Gemini 3.0 Pro',
-    aspectRatio: '3:4',
-  });
+interface VirtualTryOnFormProps {
+  onSubmit: (data: VirtualTryOnFormData) => void;
+  loading?: boolean;
+}
 
-  const handleSubmit = () => {
-    if (!formData.clothingImage || !formData.clothingDescription) {
-      alert('请上传服装图并填写服装描述');
-      return;
-    }
-    onSubmit(formData);
-  };
+export function VirtualTryOnForm({ onSubmit, loading = false }: VirtualTryOnFormProps) {
+  const { formData, setFormData, handleSubmit, handleUpload } = useVirtualTryOnForm({
+    onSubmit,
+  });
 
   return (
     <div className="form-section">
@@ -215,175 +208,6 @@ export function VirtualTryOnForm({ onSubmit, loading = false }: VirtualTryOnForm
       <button className="btn-primary" onClick={handleSubmit} disabled={loading}>
         {loading ? '生成中...' : '🎨 开始试穿'}
       </button>
-
-      <style jsx>{`
-        .form-section {
-          padding: 1.5rem;
-        }
-
-        .form-title {
-          font-size: 1.125rem;
-          font-weight: 600;
-          margin-bottom: 1.5rem;
-          color: #1f2937;
-        }
-
-        .form-step {
-          display: flex;
-          gap: 1rem;
-          margin-bottom: 1.5rem;
-        }
-
-        .step-number {
-          flex-shrink: 0;
-          width: 2rem;
-          height: 2rem;
-          border-radius: 9999px;
-          background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
-          color: white;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-weight: 600;
-        }
-
-        .step-content {
-          flex: 1;
-        }
-
-        .step-title {
-          font-weight: 600;
-          margin-bottom: 0.5rem;
-          color: #1f2937;
-        }
-
-        .form-group {
-          margin-bottom: 1.5rem;
-        }
-
-        .form-label {
-          display: block;
-          font-weight: 500;
-          margin-bottom: 0.5rem;
-          color: #374151;
-        }
-
-        .form-label.required::after {
-          content: ' *';
-          color: #ef4444;
-        }
-
-        .upload-area {
-          border: 2px dashed #d1d5db;
-          border-radius: 0.5rem;
-          padding: 2rem;
-          text-align: center;
-          cursor: pointer;
-          transition: all 0.2s;
-        }
-
-        .upload-area:hover {
-          border-color: #8b5cf6;
-          background: #f5f3ff;
-        }
-
-        .preview-image {
-          max-width: 100%;
-          max-height: 200px;
-          object-fit: contain;
-        }
-
-        .upload-placeholder {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          gap: 0.5rem;
-          color: #6b7280;
-        }
-
-        .upload-icon {
-          font-size: 2rem;
-        }
-
-        .form-hint {
-          font-size: 0.875rem;
-          color: #9ca3af;
-          margin-top: 0.5rem;
-        }
-
-        .form-input {
-          width: 100%;
-          padding: 0.75rem;
-          border: 1px solid #d1d5db;
-          border-radius: 0.5rem;
-        }
-
-        .radio-group {
-          display: flex;
-          gap: 1.5rem;
-        }
-
-        .radio-label {
-          display: flex;
-          align-items: center;
-          gap: 0.5rem;
-          cursor: pointer;
-        }
-
-        .ratio-selector {
-          display: flex;
-          gap: 0.5rem;
-        }
-
-        .ratio-btn {
-          flex: 1;
-          padding: 0.75rem;
-          border: 1px solid #d1d5db;
-          background: white;
-          border-radius: 0.5rem;
-          cursor: pointer;
-          transition: all 0.2s;
-        }
-
-        .ratio-btn:hover {
-          border-color: #8b5cf6;
-        }
-
-        .ratio-btn.active {
-          background: #8b5cf6;
-          color: white;
-          border-color: #8b5cf6;
-        }
-
-        .btn-primary {
-          width: 100%;
-          padding: 1rem;
-          background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
-          color: white;
-          border: none;
-          border-radius: 0.5rem;
-          font-weight: 600;
-          cursor: pointer;
-          transition: all 0.2s;
-        }
-
-        .btn-primary:hover:not(:disabled) {
-          transform: translateY(-2px);
-          box-shadow: 0 4px 12px rgba(139, 92, 246, 0.4);
-        }
-
-        .btn-primary:disabled {
-          opacity: 0.6;
-          cursor: not-allowed;
-        }
-      `}</style>
     </div>
   );
-
-  function handleUpload(type: 'clothing' | 'reference' | 'model') {
-    // TODO: 实现文件上传逻辑
-    alert(
-      `上传${type === 'clothing' ? '服装' : type === 'reference' ? '参考' : '模特'}图功能待实现`
-    );
-  }
 }

@@ -1,7 +1,19 @@
 import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  images: {
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: '**.feishucdn.com',
+      },
+      {
+        protocol: 'https',
+        hostname: '**.bitablecdn.com',
+      },
+    ],
+    unoptimized: false,
+  },
 };
 
 export default nextConfig;

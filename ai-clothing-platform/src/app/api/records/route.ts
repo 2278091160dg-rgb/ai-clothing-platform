@@ -31,9 +31,11 @@ interface TaskRecord {
   ratio?: string;
   model?: string;
   created_time: number;
+  source?: string; // '网页端' or '表格端'
 }
 
-export async function GET(request: Request) {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export async function GET(_request: Request) {
   console.log('===== 开始获取记录列表 =====');
 
   try {
@@ -211,22 +213,42 @@ export async function GET(request: Request) {
         ratio: (fields['尺寸比例'] as string) || undefined,
         model: (fields['AI模型'] as string) || undefined,
         created_time: finalCreatedTime,
+        source: (fields['来源'] as string) || undefined,
       });
     }
 
     console.log('✅ 获取记录成功，返回', records.length, '条记录');
 
+    // 🔍 调试：打印每条记录的关键信息
+    console.log('📊 ===== 记录详情 =====');
+    records.forEach((record, index) => {
+      console.log(`记录 ${index + 1}/${records.length}:`);
+      console.log(`  - record_id: ${record.record_id}`);
+      console.log(`  - source: ${record.source || '(none)'}`);
+      console.log(`  - status: ${record.status}`);
+      console.log(`  - resultImageUrl: ${record.resultImageUrl ? 'YES' : 'NO'}`);
+      console.log(`  - sceneImageUrl: ${record.sceneImageUrl ? 'YES' : 'NO'}`);
+      console.log(`  - productImageUrl: ${record.productImageUrl ? 'YES' : 'NO'}`);
+    });
+    console.log('==================');
+
+    // 🔍 调试：打印返回给前端的数据样例
+    if (records.length > 0) {
+      console.log('📤 返回给前端的数据样例:');
+      console.log(JSON.stringify(records[0], null, 2));
+    }
+
     return NextResponse.json({
       success: true,
       data: records,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('❌ 获取记录失败:', error);
     return NextResponse.json(
       {
         success: false,
         error: 'Internal Server Error',
-        details: error.message,
+        details: error instanceof Error ? error.message : 'Unknown error',
       },
       { status: 500 }
     );

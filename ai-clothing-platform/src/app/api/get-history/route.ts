@@ -4,7 +4,6 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { getRecordStatus } from '@/lib/services/lark.service';
 
 /**
  * GET /api/get-history - 获取最近的任务历史
@@ -16,7 +15,8 @@ export async function GET(req: NextRequest) {
     // 从环境变量获取配置的记录ID列表（如果有的话）
     // 这里返回一个示例实现，实际应该从飞书表格查询
     const searchParams = req.nextUrl.searchParams;
-    const limit = parseInt(searchParams.get('limit') || '10', 10);
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const _limit = parseInt(searchParams.get('limit') || '10', 10);
 
     // 由于飞书API限制，这里返回空列表
     // 实际应该在前端维护一个本地存储的记录ID列表

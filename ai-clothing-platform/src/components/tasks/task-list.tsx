@@ -17,8 +17,6 @@ function formatTaskTime(date: Date): string {
   const now = new Date();
   const taskDate = new Date(date);
   const diffMs = now.getTime() - taskDate.getTime();
-  const diffMins = Math.floor(diffMs / 60000);
-  const diffHours = Math.floor(diffMs / 3600000);
   const diffDays = Math.floor(diffMs / 86400000);
 
   // 如果是今天，显示具体时间
@@ -63,11 +61,13 @@ interface TaskListProps {
 
 export function TaskList({
   tasks,
-  onPreview,
   onLoadToMainView,
   isBatchMode = false,
   selectedIds = new Set(),
   onToggleSelection,
+  // onPreview is kept for interface compatibility but not used in this component
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  onPreview: _onPreview,
 }: TaskListProps) {
   // 预览状态
   const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null);
@@ -220,9 +220,7 @@ function TaskItem({
                   : `任务 ${task.id.slice(0, 6)}`)}
             </p>
           </div>
-          <p className="text-xs text-muted-foreground truncate mt-1">
-            {task.prompt || '无提示词'}
-          </p>
+          <p className="text-xs text-muted-foreground truncate mt-1">{task.prompt || '无提示词'}</p>
           {/* 具体创建时间 */}
           {task.createdAt && (
             <p className="text-[10px] text-muted-foreground mt-0.5">

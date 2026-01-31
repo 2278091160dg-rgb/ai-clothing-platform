@@ -64,6 +64,7 @@ export interface TaskData {
   resultImages?: string[];
   createdAt: Date;
   source?: 'web' | 'feishu' | 'api'; // 任务来源：网页端/飞书表格端/API
+  type?: 'web' | 'feishu' | 'api'; // 🔧 任务类型（双重标记，用于过滤互斥）
 }
 
 // API配置

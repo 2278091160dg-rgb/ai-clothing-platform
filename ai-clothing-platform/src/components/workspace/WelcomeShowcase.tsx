@@ -44,9 +44,7 @@ export function WelcomeShowcase() {
         </h1>
 
         {/* 副标题 */}
-        <p className="text-slate-400 text-sm mb-12 font-light">
-          想都是问题 做就有答案
-        </p>
+        <p className="text-slate-400 text-sm mb-12 font-light">想都是问题 做就有答案</p>
 
         {/* 预设案例卡片组 */}
         <div className="flex items-center justify-center gap-4 mb-10">

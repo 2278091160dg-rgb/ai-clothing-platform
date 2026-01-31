@@ -307,7 +307,8 @@ export async function POST(request: Request) {
     let n8nData;
     try {
       n8nData = JSON.parse(n8nResponseText);
-    } catch (e) {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    } catch (_e) {
       n8nData = { message: n8nResponseText };
     }
 
@@ -322,14 +323,14 @@ export async function POST(request: Request) {
       scene_image_token: sceneImageToken,
       n8n_response: n8nData,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('❌ API 路由内部崩溃:', error);
-    console.error('   错误堆栈:', error.stack);
+    console.error('   错误堆栈:', error instanceof Error ? error.stack : 'No stack trace');
     return NextResponse.json(
       {
         error: 'Internal Server Error',
-        details: error.message,
-        stack: error.stack,
+        details: error instanceof Error ? error.message : 'Unknown error',
+        stack: error instanceof Error ? error.stack : undefined,
       },
       { status: 500 }
     );

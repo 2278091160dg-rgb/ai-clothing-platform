@@ -60,13 +60,7 @@ export function ImageComparison({ before, after, onDownload }: ImageComparisonPr
 function ComparisonImage({ src, label }: { src: string; label: string }) {
   return (
     <div className="relative w-full h-full">
-      <Image
-        src={getProxiedUrl(src)}
-        alt={label}
-        fill
-        className="object-contain"
-        unoptimized
-      />
+      <Image src={getProxiedUrl(src)} alt={label} fill className="object-contain" unoptimized />
       <div className="absolute bottom-4 left-4 bg-black/60 backdrop-blur-sm text-white px-3 py-1.5 rounded-full text-sm font-medium border border-white/20">
         {label}
       </div>

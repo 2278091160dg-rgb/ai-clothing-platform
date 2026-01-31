@@ -66,10 +66,13 @@ export async function GET(request: NextRequest) {
         'Cache-Control': 'public, max-age=3600',
       },
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('❌ 图片代理失败:', error);
     return NextResponse.json(
-      { error: 'Failed to proxy image', details: error.message },
+      {
+        error: 'Failed to proxy image',
+        details: error instanceof Error ? error.message : 'Unknown error',
+      },
       { status: 500 }
     );
   }

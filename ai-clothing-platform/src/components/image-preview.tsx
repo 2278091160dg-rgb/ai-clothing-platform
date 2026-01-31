@@ -8,7 +8,6 @@
 import { useEffect } from 'react';
 import { X, Download } from 'lucide-react';
 import Image from 'next/image';
-import { Button } from '@/components/ui/button';
 
 interface ImagePreviewProps {
   src: string;
