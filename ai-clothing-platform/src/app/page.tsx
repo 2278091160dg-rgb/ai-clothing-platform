@@ -8,6 +8,8 @@
  * - useTaskGeneration: 任务生成 Hook
  * - LoadingAnimation: 加载动画组件
  * - BeforeImagesPanel: 输入图片列组件
+ * - MainContentRenderer: 主内容渲染组件
+ * - page-data-transformers: 数据转换工具
  */
 
 'use client';
@@ -23,16 +25,15 @@ import type { TextModel, ImageModel } from '@/lib/types';
 import { WorkspaceHeader } from '@/components/workspace/WorkspaceHeader';
 import { UploadPanel } from '@/components/workspace/UploadPanel';
 import { ParamsPanel } from '@/components/workspace/ParamsPanel';
-import { WelcomeShowcase } from '@/components/workspace/WelcomeShowcase';
 import { SidebarTabs } from '@/components/workspace/SidebarTabs';
-import { CanvasView } from '@/components/CanvasView';
 import { useBrandConfig } from '@/hooks/use-brand-config';
 import { useImageUpload } from '@/hooks/use-image-upload';
 import { useCanvasViewMode, type ImageItem, type BatchObject } from '@/hooks/use-canvas-view-mode';
 import { useRecordsManagement } from '@/hooks/use-records-management';
 import { useTaskGeneration } from '@/hooks/use-task-generation';
 import { LoadingAnimation } from '@/components/workspace/LoadingAnimation';
-import { BeforeImagesPanel } from '@/components/workspace/BeforeImagesPanel';
+import { MainContentRenderer } from './page/MainContentRenderer';
+import { transformTasksToDisplayFormat } from './page/page-data-transformers';
 
 export default function HomePage() {
   // ========== UI 状态 ==========
@@ -117,10 +118,6 @@ export default function HomePage() {
       // Task completion handled by useRecordsManagement
     },
   });
-
-  // ========== 更新 historyTasks 的辅助函数 ==========
-  // 注意：setHistoryTasks 由 useRecordsManagement 管理
-  // 这里保留是为了向后兼容，实际更新应通过回调处理
 
   // ========== 同步状态 ==========
   useEffect(() => {
@@ -222,59 +219,7 @@ export default function HomePage() {
   ]);
 
   // ========== 数据转换 ==========
-  const displayTasks = historyTasks.map(task => ({
-    id: task.id,
-    productName: task.productName,
-    prompt: task.prompt,
-    productImage: task.productImagePreview,
-    sceneImage: task.sceneImagePreview,
-    config: {
-      textModel,
-      imageModel: task.config.imageModel,
-      aspectRatio: task.config.aspectRatio as '1:1' | '3:4' | '16:9' | '9:16',
-      imageCount: 1,
-      quality,
-    },
-    status: task.status as 'pending' | 'generating' | 'processing' | 'completed' | 'failed',
-    progress: task.progress,
-    resultImages: task.resultImages,
-    createdAt: task.createdAt,
-    source: (task.source || 'feishu') as 'web' | 'feishu' | 'api',
-    type: (task.type || task.source || 'feishu') as 'web' | 'feishu' | 'api',
-  }));
-
-  // ========== 渲染函数 ==========
-  const renderMainContent = () => {
-    const hasValidContent = viewMode !== 'single' || singleImage?.url || generatedImage;
-
-    if (hasValidContent) {
-      return (
-        <div className="flex-1 flex gap-4 h-full">
-          {/* 左侧栏 - 输入图列 */}
-          <div className="w-64 flex-shrink-0">
-            <BeforeImagesPanel
-              uploadedImage={uploadedImage}
-              sceneImagePreview={sceneImagePreview}
-            />
-          </div>
-
-          {/* 右侧栏 - 主舞台 */}
-          <CanvasView
-            viewMode={viewMode}
-            singleImageUrl={singleImage?.url || generatedImage || null}
-            originalImageUrl={uploadedImage}
-            isLoading={false}
-            aspectRatio={aspectRatio}
-            activeBatch={activeBatch}
-            compareImages={selectedImages}
-            onResetView={resetView}
-          />
-        </div>
-      );
-    }
-
-    return <WelcomeShowcase />;
-  };
+  const displayTasks = transformTasksToDisplayFormat(historyTasks, textModel, quality);
 
   // ========== JSX ==========
   return (
@@ -328,7 +273,19 @@ export default function HomePage() {
           </div>
 
           {/* 中间栏 - 结果展示 */}
-          <div className="flex-1 flex flex-col">{renderMainContent()}</div>
+          <div className="flex-1 flex flex-col">
+            <MainContentRenderer
+              viewMode={viewMode}
+              singleImage={singleImage}
+              generatedImage={generatedImage}
+              uploadedImage={uploadedImage}
+              sceneImagePreview={sceneImagePreview}
+              aspectRatio={aspectRatio}
+              activeBatch={activeBatch}
+              selectedImages={selectedImages}
+              resetView={resetView}
+            />
+          </div>
 
           {/* 右侧栏 - 历史记录 */}
           <div className="w-[300px] flex flex-col">
