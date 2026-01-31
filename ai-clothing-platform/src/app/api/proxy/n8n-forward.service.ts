@@ -10,8 +10,8 @@ import { NextResponse } from 'next/server';
  * 转发请求给N8N工作流
  */
 export async function forwardToN8N(
-  n8nPayload: N8NWebhookPayload
-  // recordId: string (保留用于未来可能需要的记录追踪)
+  n8nPayload: N8NWebhookPayload,
+  _recordId: string // 保留用于未来可能需要的记录追踪
 ): Promise<{ success: boolean; n8nResponse: unknown; error?: string }> {
   console.log('转发请求给 N8N...');
 
