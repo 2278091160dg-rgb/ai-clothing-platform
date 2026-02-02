@@ -44,9 +44,7 @@ function getSecondUploadLabel(mode: GenerationMode): { label: string; required: 
 
 interface UploadPanelProps {
   mode: GenerationMode;
-  productImage: File | null;
   productImagePreview: string;
-  sceneImage: File | null;
   sceneImagePreview: string;
   onProductUpload: () => void;
   onSceneUpload: () => void;
@@ -56,9 +54,7 @@ interface UploadPanelProps {
 
 export function UploadPanel({
   mode,
-  productImage,
   productImagePreview,
-  sceneImage,
   sceneImagePreview,
   onProductUpload,
   onSceneUpload,
@@ -79,8 +75,8 @@ export function UploadPanel({
         {/* 白底图上传 */}
         <div
           onClick={productImagePreview ? undefined : onProductUpload}
-          className={`w-full aspect-square rounded-xl overflow-hidden flex flex-col items-center justify-center transition-all cursor-pointer ${
-            productImage ? 'upload-zone-filled relative bg-card' : 'upload-zone'
+          className={`group w-full aspect-square rounded-xl overflow-hidden flex flex-col items-center justify-center transition-all cursor-pointer ${
+            productImagePreview ? 'upload-zone-filled relative bg-card' : 'upload-zone'
           }`}
         >
           {productImagePreview ? (
@@ -93,17 +89,17 @@ export function UploadPanel({
                 className="w-full h-full object-contain p-2"
                 unoptimized
               />
-              {/* 删除按钮 */}
+              {/* 删除按钮 - 仅在悬浮时显示 */}
               {onProductClear && (
                 <button
                   onClick={e => {
                     e.stopPropagation();
                     onProductClear();
                   }}
-                  className="absolute top-1 right-1 w-5 h-5 bg-red-500 hover:bg-red-600 rounded-full flex items-center justify-center shadow-lg transition-all hover:scale-110"
+                  className="absolute top-2 right-2 w-7 h-7 bg-black/50 hover:bg-red-500 backdrop-blur-sm rounded-full flex items-center justify-center shadow-lg transition-all opacity-0 group-hover:opacity-100 hover:scale-110"
                   title="删除图片"
                 >
-                  <X size={12} className="text-white" />
+                  <X size={14} className="text-white" />
                 </button>
               )}
               {/* 重新上传提示 */}
@@ -127,8 +123,8 @@ export function UploadPanel({
         {/* 辅助图上传 */}
         <div
           onClick={sceneImagePreview ? undefined : onSceneUpload}
-          className={`w-full aspect-square rounded-xl overflow-hidden flex flex-col items-center justify-center transition-all cursor-pointer ${
-            sceneImage ? 'upload-zone-filled relative bg-card' : 'upload-zone'
+          className={`group w-full aspect-square rounded-xl overflow-hidden flex flex-col items-center justify-center transition-all cursor-pointer ${
+            sceneImagePreview ? 'upload-zone-filled relative bg-card' : 'upload-zone'
           }`}
         >
           {sceneImagePreview ? (
@@ -141,17 +137,17 @@ export function UploadPanel({
                 className="w-full h-full object-contain p-2"
                 unoptimized
               />
-              {/* 删除按钮 */}
+              {/* 删除按钮 - 仅在悬浮时显示 */}
               {onSceneClear && (
                 <button
                   onClick={e => {
                     e.stopPropagation();
                     onSceneClear();
                   }}
-                  className="absolute top-1 right-1 w-5 h-5 bg-red-500 hover:bg-red-600 rounded-full flex items-center justify-center shadow-lg transition-all hover:scale-110"
+                  className="absolute top-2 right-2 w-7 h-7 bg-black/50 hover:bg-red-500 backdrop-blur-sm rounded-full flex items-center justify-center shadow-lg transition-all opacity-0 group-hover:opacity-100 hover:scale-110"
                   title="删除图片"
                 >
-                  <X size={12} className="text-white" />
+                  <X size={14} className="text-white" />
                 </button>
               )}
               {/* 重新上传提示 */}

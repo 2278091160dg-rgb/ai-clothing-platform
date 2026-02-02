@@ -5,7 +5,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import { ConfigManager } from '@/lib/config';
 
-interface BrandConfig {
+export interface BrandConfig {
   title: string;
   subtitle: string;
   icon: string;
