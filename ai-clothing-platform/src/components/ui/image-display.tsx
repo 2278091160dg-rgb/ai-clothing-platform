@@ -86,17 +86,17 @@ export function ImageDisplay({
           }}
         />
 
-        {/* 对比模式标签 */}
+        {/* 对比模式标签 - BEFORE（醒目橙色） */}
         {isComparing && (
-          <div className="absolute top-4 left-4 bg-gradient-to-r from-blue-500/90 to-cyan-500/90 backdrop-blur-sm rounded-lg px-3 py-1.5 shadow-lg pointer-events-none">
-            <p className="text-xs font-bold text-white tracking-wider">BEFORE</p>
+          <div className="absolute -top-2 -left-2 bg-gradient-to-r from-orange-500 to-amber-500 backdrop-blur-md rounded-lg px-4 py-2 shadow-xl pointer-events-none border-2 border-white/30">
+            <p className="text-sm font-black text-white tracking-widest drop-shadow-lg">BEFORE</p>
           </div>
         )}
 
-        {/* 正常模式标签 */}
+        {/* 正常模式标签 - AFTER（醒目绿色，突出显示） */}
         {!isComparing && (
-          <div className="absolute top-4 left-4 bg-gradient-to-r from-green-500/90 to-emerald-500/90 backdrop-blur-sm rounded-lg px-3 py-1.5 shadow-lg pointer-events-none">
-            <p className="text-xs font-bold text-white tracking-wider">AFTER</p>
+          <div className="absolute -top-2 -left-2 bg-gradient-to-r from-emerald-500 to-green-500 backdrop-blur-md rounded-lg px-4 py-2 shadow-xl pointer-events-none border-2 border-white/30">
+            <p className="text-sm font-black text-white tracking-widest drop-shadow-lg">AFTER</p>
           </div>
         )}
       </div>
