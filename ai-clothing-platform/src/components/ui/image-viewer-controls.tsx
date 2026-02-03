@@ -52,6 +52,22 @@ export function ImageViewerControls({
   const { scale } = zoomState;
   const { handleZoomIn, handleZoomOut, resetView } = zoomActions;
 
+  // 调试：验证按钮点击
+  const debugZoomIn = () => {
+    console.log('🔍 Zoom In clicked, current scale:', scale);
+    handleZoomIn();
+  };
+
+  const debugZoomOut = () => {
+    console.log('🔍 Zoom Out clicked, current scale:', scale);
+    handleZoomOut();
+  };
+
+  const debugReset = () => {
+    console.log('🔄 Reset clicked');
+    resetView();
+  };
+
   // 是否有多个对比源
   const hasMultipleCompareSources = hasOriginalImage && hasSceneImage;
 
@@ -78,7 +94,7 @@ export function ImageViewerControls({
           <button
             onClick={(e) => {
               e.stopPropagation();
-              handleZoomOut();
+              debugZoomOut();
             }}
             disabled={scale <= minScale}
             className="w-12 h-12 rounded-xl bg-gradient-to-br from-white/15 to-white/5 hover:from-white/25 hover:to-white/10 flex items-center justify-center transition-all duration-300 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-white/20 border border-white/20 shadow-lg active:scale-95 group"
@@ -98,7 +114,7 @@ export function ImageViewerControls({
           <button
             onClick={(e) => {
               e.stopPropagation();
-              handleZoomIn();
+              debugZoomIn();
             }}
             disabled={scale >= maxScale}
             className="w-12 h-12 rounded-xl bg-gradient-to-br from-white/15 to-white/5 hover:from-white/25 hover:to-white/10 flex items-center justify-center transition-all duration-300 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-white/20 border border-white/20 shadow-lg active:scale-95 group"
@@ -114,7 +130,7 @@ export function ImageViewerControls({
           <button
             onClick={(e) => {
               e.stopPropagation();
-              resetView();
+              debugReset();
             }}
             className="w-12 h-12 rounded-xl bg-gradient-to-br from-white/10 to-transparent hover:from-white/20 hover:to-white/5 border border-white/20 flex items-center justify-center transition-all duration-300 hover:border-white/30 active:scale-95 group"
             title="重置视图"

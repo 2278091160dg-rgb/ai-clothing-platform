@@ -102,10 +102,7 @@ export function ResultImageViewer({
   }, [resultImageUrl, originalImageUrl, downloadFileName]);
 
   return (
-    <div
-      className="relative w-full h-full bg-gradient-to-br from-gray-900 via-gray-950 to-black rounded-2xl"
-      onWheel={zoomActions.handleWheel}
-    >
+    <div className="relative w-full h-full bg-gradient-to-br from-gray-900 via-gray-950 to-black rounded-2xl overflow-hidden">
       {/* 背景网格装饰 */}
       <div className="absolute inset-0 rounded-2xl bg-grid-pattern opacity-20 pointer-events-none" />
 
