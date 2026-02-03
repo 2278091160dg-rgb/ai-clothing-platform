@@ -57,6 +57,8 @@ export default function HomePage() {
   const { historyTasks, fetchRecords, addTask } = useRecordsManagement({
     onNewCompletedTask: (completedTask, newRecord) => {
       console.log('✅ 新任务完成:', completedTask);
+      // 重置视图状态，确保显示新生成的图片
+      resetView();
       pageActions.setUploadedImage(newRecord.original);
       if (newRecord.sceneImage) {
         setSceneImagePreviewOnly(newRecord.sceneImage);
