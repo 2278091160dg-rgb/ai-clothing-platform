@@ -8,7 +8,7 @@
  * - 重置视图
  */
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 
 const MIN_SCALE = 0.5;
 const MAX_SCALE = 3;
@@ -36,10 +36,16 @@ export function useImageZoom() {
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
 
+  // 调试：监听 scale 变化
+  useEffect(() => {
+    console.log('🎯 Scale updated:', scale);
+  }, [scale]);
+
   /**
    * 重置视图
    */
   const resetView = useCallback(() => {
+    console.log('🔄 Resetting view');
     setScale(1);
     setPosition({ x: 0, y: 0 });
   }, []);
@@ -48,11 +54,21 @@ export function useImageZoom() {
    * 缩放处理
    */
   const handleZoomIn = useCallback(() => {
-    setScale(prev => Math.min(prev + SCALE_STEP, MAX_SCALE));
+    console.log('➕ handleZoomIn called');
+    setScale(prev => {
+      const newScale = Math.min(prev + SCALE_STEP, MAX_SCALE);
+      console.log('➕ Scale changing from', prev, 'to', newScale);
+      return newScale;
+    });
   }, []);
 
   const handleZoomOut = useCallback(() => {
-    setScale(prev => Math.max(prev - SCALE_STEP, MIN_SCALE));
+    console.log('➖ handleZoomOut called');
+    setScale(prev => {
+      const newScale = Math.max(prev - SCALE_STEP, MIN_SCALE);
+      console.log('➖ Scale changing from', prev, 'to', newScale);
+      return newScale;
+    });
   }, []);
 
   /**
@@ -60,8 +76,13 @@ export function useImageZoom() {
    */
   const handleWheel = useCallback((e: React.WheelEvent) => {
     e.preventDefault();
+    console.log('🖱️ Wheel event, deltaY:', e.deltaY);
     const delta = e.deltaY > 0 ? -SCALE_STEP : SCALE_STEP;
-    setScale(prev => Math.min(Math.max(prev + delta, MIN_SCALE), MAX_SCALE));
+    setScale(prev => {
+      const newScale = Math.min(Math.max(prev + delta, MIN_SCALE), MAX_SCALE);
+      console.log('🖱️ Scale changing from', prev, 'to', newScale);
+      return newScale;
+    });
   }, []);
 
   /**
