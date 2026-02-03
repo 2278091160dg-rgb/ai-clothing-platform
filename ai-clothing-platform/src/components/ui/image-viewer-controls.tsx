@@ -17,9 +17,12 @@ export interface ImageViewerControlsProps {
   zoomState: ImageZoomState;
   zoomActions: ImageZoomActions;
   hasOriginalImage: boolean;
+  hasSceneImage?: boolean;
   isComparing: boolean;
+  compareSource?: 'product' | 'scene';
   onCompareStart: () => void;
   onCompareEnd: () => void;
+  onCompareSourceChange?: (source: 'product' | 'scene') => void;
   onDownload: () => void;
   minScale?: number;
   maxScale?: number;
@@ -29,15 +32,21 @@ export function ImageViewerControls({
   zoomState,
   zoomActions,
   hasOriginalImage,
+  hasSceneImage = false,
   isComparing,
+  compareSource = 'product',
   onCompareStart,
   onCompareEnd,
+  onCompareSourceChange,
   onDownload,
   minScale = 0.5,
   maxScale = 3,
 }: ImageViewerControlsProps) {
   const { scale } = zoomState;
   const { handleZoomIn, handleZoomOut, resetView } = zoomActions;
+
+  // 是否有多个对比源
+  const hasMultipleCompareSources = hasOriginalImage && hasSceneImage;
 
   return (
     <>
@@ -92,21 +101,52 @@ export function ImageViewerControls({
         {/* 分隔线 */}
         <div className="w-px h-6 bg-white/20" />
 
-        {/* 对比按钮 - 只有当有原图时才显示 */}
-        {hasOriginalImage && (
-          <button
-            onMouseDown={onCompareStart}
-            onMouseUp={onCompareEnd}
-            onMouseLeave={onCompareEnd}
-            onTouchStart={onCompareStart}
-            onTouchEnd={onCompareEnd}
-            className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all ${
-              isComparing ? 'bg-blue-500 text-white' : 'bg-white/10 text-white hover:bg-white/20'
-            }`}
-            title="按住对比原图"
-          >
-            {isComparing ? '松开恢复' : '按住对比'}
-          </button>
+        {/* 对比按钮 - 只有当有原图或场景图时才显示 */}
+        {(hasOriginalImage || hasSceneImage) && (
+          <div className="flex items-center gap-2">
+            {/* 对比源切换 - 当有多个对比源时显示 */}
+            {hasMultipleCompareSources && onCompareSourceChange && (
+              <div className="flex gap-1">
+                <button
+                  onClick={() => onCompareSourceChange('product')}
+                  className={`px-2 py-1 rounded text-xs font-medium transition-all ${
+                    compareSource === 'product'
+                      ? 'bg-blue-500 text-white'
+                      : 'bg-white/10 text-white hover:bg-white/20'
+                  }`}
+                  title="对比素材A"
+                >
+                  素材A
+                </button>
+                <button
+                  onClick={() => onCompareSourceChange('scene')}
+                  className={`px-2 py-1 rounded text-xs font-medium transition-all ${
+                    compareSource === 'scene'
+                      ? 'bg-blue-500 text-white'
+                      : 'bg-white/10 text-white hover:bg-white/20'
+                  }`}
+                  title="对比素材B"
+                >
+                  素材B
+                </button>
+              </div>
+            )}
+
+            {/* 对比按钮 */}
+            <button
+              onMouseDown={onCompareStart}
+              onMouseUp={onCompareEnd}
+              onMouseLeave={onCompareEnd}
+              onTouchStart={onCompareStart}
+              onTouchEnd={onCompareEnd}
+              className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all ${
+                isComparing ? 'bg-blue-500 text-white' : 'bg-white/10 text-white hover:bg-white/20'
+              }`}
+              title={`按住对比${hasMultipleCompareSources ? (compareSource === 'product' ? '素材A' : '素材B') : '原图'}`}
+            >
+              {isComparing ? '松开恢复' : '按住对比'}
+            </button>
+          </div>
         )}
       </div>
 

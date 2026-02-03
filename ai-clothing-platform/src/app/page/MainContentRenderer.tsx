@@ -49,6 +49,7 @@ export function MainContentRenderer({
           viewMode={viewMode}
           singleImageUrl={singleImage?.url || generatedImage || null}
           originalImageUrl={uploadedImage}
+          sceneImageUrl={sceneImagePreview}
           isLoading={false}
           aspectRatio={aspectRatio}
           activeBatch={activeBatch}

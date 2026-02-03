@@ -19,6 +19,7 @@ interface CanvasViewProps {
   // 单图模式
   singleImageUrl: string | null;
   originalImageUrl?: string | null;
+  sceneImageUrl?: string | null;
   isLoading?: boolean;
   aspectRatio?: '1:1' | '3:4' | '16:9' | '9:16';
   // 网格模式
@@ -33,6 +34,7 @@ export function CanvasView({
   viewMode,
   singleImageUrl,
   originalImageUrl = null,
+  sceneImageUrl = null,
   isLoading = false,
   aspectRatio,
   activeBatch,
@@ -47,6 +49,7 @@ export function CanvasView({
       <ResultImageViewer
         resultImageUrl={singleImageUrl}
         originalImageUrl={originalImageUrl}
+        sceneImageUrl={sceneImageUrl}
         isLoading={isLoading}
         aspectRatio={aspectRatio}
         downloadFileName="ai-generated"

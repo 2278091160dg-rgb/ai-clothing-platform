@@ -24,8 +24,10 @@ import { ImageDisplay, getProxiedUrl } from '@/components/ui/image-display';
 export interface ResultImageViewerProps {
   /** 生成后的图片链接 */
   resultImageUrl: string | null;
-  /** 用于对比的原始底图链接 */
+  /** 用于对比的原始底图链接（素材A） */
   originalImageUrl: string | null;
+  /** 用于对比的场景图链接（素材B） */
+  sceneImageUrl?: string | null;
   /** 生成状态 */
   isLoading?: boolean;
   /** 图片比例（可选） */
@@ -37,6 +39,7 @@ export interface ResultImageViewerProps {
 export function ResultImageViewer({
   resultImageUrl,
   originalImageUrl,
+  sceneImageUrl = null,
   isLoading = false,
   aspectRatio,
   downloadFileName = 'ai-generated',
@@ -47,6 +50,8 @@ export function ResultImageViewer({
 
   // 对比状态
   const [isComparing, setIsComparing] = useState(false);
+  // 对比源选择：'product' = 素材A, 'scene' = 素材B
+  const [compareSource, setCompareSource] = useState<'product' | 'scene'>('product');
 
   /**
    * 当图片变化时重置视图
@@ -58,12 +63,21 @@ export function ResultImageViewer({
   /**
    * 判断当前应显示的图片
    */
-  const displayImageUrl = isComparing && originalImageUrl ? originalImageUrl : resultImageUrl;
+  const displayImageUrl = isComparing
+    ? compareSource === 'product'
+      ? originalImageUrl || resultImageUrl
+      : sceneImageUrl || resultImageUrl
+    : resultImageUrl;
 
   /**
    * 是否有有效图片
    */
   const hasValidImage = !!displayImageUrl;
+
+  /**
+   * 是否有素材B可用于对比
+   */
+  const hasSceneImage = !!sceneImageUrl;
 
   /**
    * 下载图片
@@ -123,9 +137,12 @@ export function ResultImageViewer({
             zoomState={zoomState}
             zoomActions={zoomActions}
             hasOriginalImage={!!originalImageUrl}
+            hasSceneImage={hasSceneImage}
             isComparing={isComparing}
+            compareSource={compareSource}
             onCompareStart={() => setIsComparing(true)}
             onCompareEnd={() => setIsComparing(false)}
+            onCompareSourceChange={setCompareSource}
             onDownload={handleDownload}
             minScale={constants.MIN_SCALE}
             maxScale={constants.MAX_SCALE}
