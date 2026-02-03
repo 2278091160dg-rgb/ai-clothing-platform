@@ -13,7 +13,7 @@ export interface UseRecordsPollingOptions {
 export function useRecordsPolling({
   onPoll,
   interval = 5000,
-  enabled = true,
+  enabled = false, // 默认禁用轮询，让用户主动开启
 }: UseRecordsPollingOptions) {
   const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const [isPolling, setIsPolling] = useState(false);
