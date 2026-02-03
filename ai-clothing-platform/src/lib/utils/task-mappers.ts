@@ -77,24 +77,29 @@ export function determineTaskStatus(record: FeishuRecord): {
     return { status: 'completed', progress: 100 };
   }
 
-  // 优先级 2: 有输入图但没有结果图 = 处理中
-  if (hasSceneImage || hasProductImage) {
-    return { status: 'processing', progress: 50 };
-  }
-
-  // 优先级 3: 无图时，根据飞书状态判断
+  // 优先级 2: 优先根据飞书状态判断（而不是图片）
   const rawStatus = record.status?.toLowerCase() || '';
+  if (rawStatus.includes('完成') || rawStatus.includes('completed')) {
+    return { status: 'completed', progress: 100 };
+  }
   if (
     rawStatus.includes('处理中') ||
     rawStatus.includes('processing') ||
     rawStatus.includes('generating')
   ) {
     return { status: 'processing', progress: 50 };
-  } else if (rawStatus.includes('完成') || rawStatus.includes('completed')) {
-    return { status: 'completed', progress: 100 };
-  } else {
-    return { status: 'pending', progress: 0 };
   }
+  if (rawStatus.includes('失败') || rawStatus.includes('failed')) {
+    return { status: 'failed', progress: 0 };
+  }
+
+  // 优先级 3: 有输入图但没有结果图且无明确状态 = 处理中
+  if (hasSceneImage || hasProductImage) {
+    return { status: 'processing', progress: 50 };
+  }
+
+  // 优先级 4: 默认待处理
+  return { status: 'pending', progress: 0 };
 }
 
 /**

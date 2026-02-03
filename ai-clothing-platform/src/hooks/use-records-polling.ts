@@ -36,7 +36,7 @@ export function useRecordsPolling({
       setIsPolling(true);
     }
 
-    console.log(`✅ 开始轮询记录状态 (${interval / 1000}秒间隔)`);
+    // console.log(`✅ 开始轮询记录状态 (${interval / 1000}秒间隔)`);
   }, [onPoll, interval, enabled, isPolling]);
 
   const stopPolling = useCallback(() => {

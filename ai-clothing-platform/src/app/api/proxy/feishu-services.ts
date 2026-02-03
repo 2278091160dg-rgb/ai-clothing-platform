@@ -124,7 +124,10 @@ export async function uploadImageToFeishu(
     throw new Error(`❌ 飞书返回成功但未提供 ${imageType} file_token`);
   }
 
-  console.log(`✅ ${imageType === 'product' ? '商品' : '场景'}图片上传成功, file_token =`, fileToken);
+  console.log(
+    `✅ ${imageType === 'product' ? '商品' : '场景'}图片上传成功, file_token =`,
+    fileToken
+  );
   return fileToken;
 }
 

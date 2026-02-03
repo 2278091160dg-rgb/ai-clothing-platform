@@ -8,6 +8,30 @@ import type { TaskData } from '@/lib/types';
 
 export class BatchDownloadService {
   /**
+   * 单图下载
+   */
+  static async downloadSingleImage(imageUrl: string, filename?: string): Promise<void> {
+    try {
+      // 使用代理下载以避免CORS问题
+      const proxyUrl = `/api/image-proxy?url=${encodeURIComponent(imageUrl)}`;
+      const response = await fetch(proxyUrl);
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch image: ${response.statusText}`);
+      }
+
+      const blob = await response.blob();
+      const defaultFilename = `ai-generated-${Date.now()}.png`;
+      const finalFilename = filename?.replace(/[^a-zA-Z0-9-_.]/g, '_') || defaultFilename;
+
+      saveAs(blob, finalFilename);
+    } catch (error) {
+      console.error('❌ 单图下载失败:', error);
+      throw error;
+    }
+  }
+
+  /**
    * 批量下载图片为ZIP
    */
   static async downloadAsZip(

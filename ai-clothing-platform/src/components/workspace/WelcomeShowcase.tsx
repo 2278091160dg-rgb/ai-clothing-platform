@@ -30,36 +30,36 @@ export function WelcomeShowcase() {
         </div>
 
         {/* 主标题 */}
-        <h2 className="text-3xl font-bold text-white mb-3 tracking-tight">
-          开始新创作
-        </h2>
+        <h2 className="text-3xl font-bold text-white mb-3 tracking-tight">开始新创作</h2>
 
         {/* 副标题 */}
-        <p className="text-white/50 text-lg mb-8 max-w-md">
-          上传商品图片，AI 自动生成电商场景图
-        </p>
+        <p className="text-white/50 text-lg mb-8 max-w-md">上传商品图片，AI 自动生成电商场景图</p>
 
         {/* 三步引导卡片 */}
         <div className="bg-white/5 border border-white/10 rounded-xl p-6 max-w-lg mx-auto mb-8">
           <div className="flex items-center justify-center gap-3 mb-4">
             <div className="w-2 h-2 rounded-full bg-blue-400 animate-pulse" />
-            <p className="text-white/60 text-sm font-medium">
-              三步快速生成
-            </p>
+            <p className="text-white/60 text-sm font-medium">三步快速生成</p>
           </div>
           <div className="flex items-center justify-center gap-3 text-sm">
             <div className="flex items-center gap-2 text-white/40">
-              <span className="w-6 h-6 rounded-full bg-white/10 flex items-center justify-center text-xs font-bold">1</span>
+              <span className="w-6 h-6 rounded-full bg-white/10 flex items-center justify-center text-xs font-bold">
+                1
+              </span>
               <span>上传素材</span>
             </div>
             <ArrowRight size={14} className="text-white/20" />
             <div className="flex items-center gap-2 text-white/40">
-              <span className="w-6 h-6 rounded-full bg-white/10 flex items-center justify-center text-xs font-bold">2</span>
+              <span className="w-6 h-6 rounded-full bg-white/10 flex items-center justify-center text-xs font-bold">
+                2
+              </span>
               <span>调整参数</span>
             </div>
             <ArrowRight size={14} className="text-white/20" />
             <div className="flex items-center gap-2 text-white/40">
-              <span className="w-6 h-6 rounded-full bg-white/10 flex items-center justify-center text-xs font-bold">3</span>
+              <span className="w-6 h-6 rounded-full bg-white/10 flex items-center justify-center text-xs font-bold">
+                3
+              </span>
               <span>生成场景</span>
             </div>
           </div>
@@ -71,9 +71,7 @@ export function WelcomeShowcase() {
             <span>📷</span>
             <span>拖拽图片到左侧上传区域，或点击选择文件</span>
           </p>
-          <p className="text-white/20 text-xs">
-            支持 JPG、PNG 格式，建议图片比例 3:4
-          </p>
+          <p className="text-white/20 text-xs">支持 JPG、PNG 格式，建议图片比例 3:4</p>
         </div>
 
         {/* 引导箭头 */}
@@ -83,9 +81,7 @@ export function WelcomeShowcase() {
         </div>
 
         {/* 历史记录提示 */}
-        <p className="text-xs text-white/30">
-          历史记录显示在左侧任务历史面板中
-        </p>
+        <p className="text-xs text-white/30">历史记录显示在左侧任务历史面板中</p>
       </div>
     </div>
   );

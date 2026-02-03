@@ -26,18 +26,20 @@ export class RecordsAPI {
   static async fetchAndTransformRecords(): Promise<HistoryTask[]> {
     const feishuRecords = await this.fetchRecords();
 
-    // 使用映射工具转换数据
-    const tasks: HistoryTask[] = feishuRecords
-      .map(mapFeishuRecordToHistoryTask)
-      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
-
     // 使用 Map 进行去重（基于 record_id）
     const tasksMap = new Map<string, HistoryTask>();
-    tasks.forEach(task => {
+    feishuRecords.forEach(record => {
+      const task = mapFeishuRecordToHistoryTask(record);
+      // 只保留最新版本
       tasksMap.set(task.recordId, task);
     });
 
-    return Array.from(tasksMap.values());
+    // 转换为数组并按创建时间降序排序（最新的在前）
+    const tasks = Array.from(tasksMap.values()).sort(
+      (a, b) => b.createdAt.getTime() - a.createdAt.getTime()
+    );
+
+    return tasks;
   }
 
   /**
@@ -62,10 +64,34 @@ export class RecordsAPI {
     localTasks: HistoryTask[]
   ): HistoryTask[] {
     const feishuRecordIds = new Set(feishuTasks.map(t => t.recordId));
-    const localProcessingTasks = localTasks.filter(
-      t => t.source === 'web' && t.status === 'processing' && !feishuRecordIds.has(t.recordId)
-    );
 
-    return [...localProcessingTasks, ...feishuTasks];
+    // 只保留本地处理中任务，且满足以下条件之一：
+    // 1. recordId 不在飞书任务中（避免重复）
+    // 2. 是临时任务（ID 以 temp- 开头），但需要检查是否有对应的真实任务
+    const localProcessingTasks = localTasks.filter(t => {
+      // 非网页端任务直接跳过
+      if (t.source !== 'web') return false;
+
+      // 非处理中任务跳过
+      if (t.status !== 'processing') return false;
+
+      // 如果 recordId 在飞书任务中，说明已被真实任务替代，跳过
+      if (feishuRecordIds.has(t.recordId)) return false;
+
+      // 临时任务（ID 以 temp- 开头）：检查是否有 prompt 相同的真实任务
+      // 如果有，说明临时任务已被替代，跳过
+      if (t.recordId.startsWith('temp-')) {
+        const hasMatchingFeishuTask = feishuTasks.some(
+          ft => ft.prompt === t.prompt && ft.source === 'web'
+        );
+        if (hasMatchingFeishuTask) return false;
+      }
+
+      return true;
+    });
+
+    // 合并后按创建时间降序排序（最新的在前）
+    const merged = [...localProcessingTasks, ...feishuTasks];
+    return merged.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
   }
 }

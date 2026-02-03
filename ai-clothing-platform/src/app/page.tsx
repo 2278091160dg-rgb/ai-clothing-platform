@@ -6,7 +6,7 @@
 
 'use client';
 
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 import { LoginSettings } from '@/components/login/LoginSettings';
 import { ConfigPanel } from '@/components/settings/config-panel';
 import { ImagePreview } from '@/components/image-preview';
@@ -54,24 +54,27 @@ export default function HomePage() {
   } = useCanvasViewMode();
 
   // ========== 记录管理 ==========
-  const { historyTasks, fetchRecords, addTask } = useRecordsManagement({
-    onNewCompletedTask: (completedTask, newRecord) => {
-      console.log('✅ 新任务完成:', completedTask);
-      // 重置视图状态，确保显示新生成的图片
-      resetView();
-      pageActions.setUploadedImage(newRecord.original);
-      if (newRecord.sceneImage) {
-        setSceneImagePreviewOnly(newRecord.sceneImage);
-      }
-      pageActions.setGeneratedImage(newRecord.generated);
-    },
-    onHistoryTasksChange: () => {
-      // 可以在这里添加额外逻辑
-    },
-  });
+  const { historyTasks, fetchRecords, addTask, hideTask, unhideTask, hiddenTaskIds } =
+    useRecordsManagement({
+      onNewCompletedTask: (completedTask, newRecord) => {
+        console.log('✅ 新任务完成:', completedTask);
+        // 重置视图状态，确保显示新生成的图片
+        resetView();
+        pageActions.setUploadedImage(newRecord.original);
+        if (newRecord.sceneImage) {
+          setSceneImagePreviewOnly(newRecord.sceneImage);
+        }
+        pageActions.setGeneratedImage(newRecord.generated);
+        // 立即清除生成状态，这样中间区域会显示结果而不是加载动画
+        clearPendingTask();
+      },
+      onHistoryTasksChange: () => {
+        // 可以在这里添加额外逻辑
+      },
+    });
 
   // ========== 任务生成 ==========
-  const { isGenerating, generateTask } = useTaskGeneration({
+  const { isGenerating, generateTask, clearPendingTask } = useTaskGeneration({
     onTaskStart: tempTask => {
       addTask(tempTask);
       pageActions.setActiveTab('web');
@@ -103,12 +106,15 @@ export default function HomePage() {
   const pageHandlers = usePageHandlers();
   const handleClosePreview = useCallback(() => pageActions.setPreviewImage(null), [pageActions]);
 
-  const handleModeChangeWrapped = useCallback((newMode: 'scene' | 'tryon' | 'wear' | 'combine') => {
-    pageHandlers.handleModeChange(newMode, {
-      setMode: pageActions.setMode,
-      setPrompt: pageActions.setPrompt,
-    });
-  }, [pageHandlers, pageActions]);
+  const handleModeChangeWrapped = useCallback(
+    (newMode: 'scene' | 'tryon' | 'wear' | 'combine') => {
+      pageHandlers.handleModeChange(newMode, {
+        setMode: pageActions.setMode,
+        setPrompt: pageActions.setPrompt,
+      });
+    },
+    [pageHandlers, pageActions]
+  );
 
   const handleImageClickWrapped = useCallback(
     (image: ImageItem) => {
@@ -136,14 +142,16 @@ export default function HomePage() {
     await handleLogout();
   }, []);
 
-  const saveLoginConfigWrapped = useCallback(async (newConfig: typeof pageState.loginConfig) => {
-    await saveLoginConfig(
-      newConfig,
-      config => pageActions.setLoginConfig(config),
-      errorMsg => alert(`❌ 保存失败：${errorMsg}`)
-    );
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pageActions]);
+  const saveLoginConfigWrapped = useCallback(
+    async (newConfig: typeof pageState.loginConfig) => {
+      await saveLoginConfig(
+        newConfig,
+        config => pageActions.setLoginConfig(config),
+        errorMsg => alert(`❌ 保存失败：${errorMsg}`)
+      );
+    },
+    [pageActions]
+  );
 
   const handleGenerateClick = useCallback(async () => {
     await generateTask({
@@ -155,8 +163,13 @@ export default function HomePage() {
       sceneImage,
       productImagePreview,
     });
+    // 依赖 pageState 的具体属性而不是整个对象，避免每次渲染都重新创建函数
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
-    pageState,
+    pageState.mode,
+    pageState.prompt,
+    pageState.imageModel,
+    pageState.aspectRatio,
     productImage,
     sceneImage,
     productImagePreview,
@@ -164,7 +177,27 @@ export default function HomePage() {
   ]);
 
   // ========== 数据转换 ==========
-  const displayTasks = transformTasksToDisplayFormat(historyTasks, pageState.textModel, pageState.quality);
+  const displayTasks = useMemo(
+    () => transformTasksToDisplayFormat(historyTasks, pageState.textModel, pageState.quality),
+    [historyTasks, pageState.textModel, pageState.quality]
+  );
+
+  // ========== 隐藏/显示任务 ==========
+  const handleHideTask = useCallback(
+    (taskId: string) => {
+      hideTask(taskId);
+      console.log('👁️ 隐藏任务:', taskId);
+    },
+    [hideTask]
+  );
+
+  const handleUnhideTask = useCallback(
+    (taskId: string) => {
+      unhideTask(taskId);
+      console.log('👁️ 显示任务:', taskId);
+    },
+    [unhideTask]
+  );
 
   // ========== JSX ==========
   return (
@@ -197,7 +230,12 @@ export default function HomePage() {
       onImageClick={handleImageClickWrapped}
       onBatchClick={handleBatchClickWrapped}
       onTabChange={pageActions.setActiveTab}
-      configPanel={<ConfigPanel onClose={() => pageActions.setShowConfig(false)} onSave={loadBrandConfig} />}
+      onHideTask={handleHideTask}
+      hiddenTaskIds={hiddenTaskIds}
+      onUnhideTask={handleUnhideTask}
+      configPanel={
+        <ConfigPanel onClose={() => pageActions.setShowConfig(false)} onSave={loadBrandConfig} />
+      }
       loginSettings={
         <LoginSettings
           isOpen={pageState.showLoginSettings}
@@ -206,7 +244,11 @@ export default function HomePage() {
           currentConfig={pageState.loginConfig}
         />
       }
-      imagePreview={pageState.previewImage && <ImagePreview src={pageState.previewImage} onClose={handleClosePreview} />}
+      imagePreview={
+        pageState.previewImage && (
+          <ImagePreview src={pageState.previewImage} onClose={handleClosePreview} />
+        )
+      }
       displayTasks={displayTasks}
     />
   );

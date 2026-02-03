@@ -51,15 +51,15 @@ export function ImageViewerControls({
 
   return (
     <>
-      {/* 右上角下载按钮 - 精致隐藏，悬停显示 */}
-      <div className="absolute top-3 right-3 z-50 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+      {/* 右上角下载按钮 - 始终可见 */}
+      <div className="absolute top-3 right-3 z-50">
         <button
-          onClick={(e) => {
+          onClick={e => {
             e.stopPropagation();
             onDownload();
           }}
-          className="w-8 h-8 bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/20 rounded-lg flex items-center justify-center text-white transition-all duration-200 hover:scale-105 active:scale-95 shadow-lg"
-          title="下载"
+          className="w-9 h-9 bg-primary/90 hover:bg-primary text-white backdrop-blur-md border border-white/20 rounded-lg flex items-center justify-center transition-all duration-200 hover:scale-105 active:scale-95 shadow-lg"
+          title="下载图片"
         >
           <Download size={16} />
         </button>
@@ -78,7 +78,7 @@ export function ImageViewerControls({
             {hasMultipleCompareSources && onCompareSourceChange && (
               <div className="flex gap-1 bg-white/5 rounded-md p-0.5 border border-white/10">
                 <button
-                  onClick={(e) => {
+                  onClick={e => {
                     e.stopPropagation();
                     onCompareSourceChange('product');
                   }}
@@ -92,7 +92,7 @@ export function ImageViewerControls({
                   <ImageIcon size={12} />
                 </button>
                 <button
-                  onClick={(e) => {
+                  onClick={e => {
                     e.stopPropagation();
                     onCompareSourceChange('scene');
                   }}
@@ -110,23 +110,23 @@ export function ImageViewerControls({
 
             {/* 对比按钮 */}
             <button
-              onMouseDown={(e) => {
+              onMouseDown={e => {
                 e.stopPropagation();
                 onCompareStart();
               }}
-              onMouseUp={(e) => {
+              onMouseUp={e => {
                 e.stopPropagation();
                 onCompareEnd();
               }}
-              onMouseLeave={(e) => {
+              onMouseLeave={e => {
                 e.stopPropagation();
                 onCompareEnd();
               }}
-              onTouchStart={(e) => {
+              onTouchStart={e => {
                 e.stopPropagation();
                 onCompareStart();
               }}
-              onTouchEnd={(e) => {
+              onTouchEnd={e => {
                 e.stopPropagation();
                 onCompareEnd();
               }}
@@ -148,7 +148,7 @@ export function ImageViewerControls({
           <div className="bg-black/80 backdrop-blur-xl border border-white/10 rounded-lg px-3 py-2 flex items-center gap-2 text-white shadow-xl">
             {/* 缩小按钮 */}
             <button
-              onClick={(e) => {
+              onClick={e => {
                 e.stopPropagation();
                 handleZoomOut();
               }}
@@ -166,7 +166,7 @@ export function ImageViewerControls({
 
             {/* 放大按钮 */}
             <button
-              onClick={(e) => {
+              onClick={e => {
                 e.stopPropagation();
                 handleZoomIn();
               }}
@@ -182,7 +182,7 @@ export function ImageViewerControls({
 
             {/* 重置按钮 */}
             <button
-              onClick={(e) => {
+              onClick={e => {
                 e.stopPropagation();
                 resetView();
               }}
@@ -202,7 +202,7 @@ export function ImageViewerControls({
                 {hasMultipleCompareSources && onCompareSourceChange && (
                   <div className="flex gap-1 bg-white/5 rounded-md p-0.5 border border-white/10">
                     <button
-                      onClick={(e) => {
+                      onClick={e => {
                         e.stopPropagation();
                         onCompareSourceChange('product');
                       }}
@@ -217,7 +217,7 @@ export function ImageViewerControls({
                       <span>A</span>
                     </button>
                     <button
-                      onClick={(e) => {
+                      onClick={e => {
                         e.stopPropagation();
                         onCompareSourceChange('scene');
                       }}
@@ -236,23 +236,23 @@ export function ImageViewerControls({
 
                 {/* 对比按钮 */}
                 <button
-                  onMouseDown={(e) => {
+                  onMouseDown={e => {
                     e.stopPropagation();
                     onCompareStart();
                   }}
-                  onMouseUp={(e) => {
+                  onMouseUp={e => {
                     e.stopPropagation();
                     onCompareEnd();
                   }}
-                  onMouseLeave={(e) => {
+                  onMouseLeave={e => {
                     e.stopPropagation();
                     onCompareEnd();
                   }}
-                  onTouchStart={(e) => {
+                  onTouchStart={e => {
                     e.stopPropagation();
                     onCompareStart();
                   }}
-                  onTouchEnd={(e) => {
+                  onTouchEnd={e => {
                     e.stopPropagation();
                     onCompareEnd();
                   }}

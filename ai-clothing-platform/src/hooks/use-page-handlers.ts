@@ -15,31 +15,7 @@ import type { LoginConfig } from '@/config/login-defaults';
 import type { GenerationMode } from '@/components/workspace/params-panel-constants';
 
 interface UsePageHandlersResult {
-  handleImageClick: (image: ImageItem, selectedImages: ImageItem[], callbacks: {
-    toggleImageSelection: (image: ImageItem) => void;
-    setSingleImage: (image: ImageItem) => void;
-    setViewMode: (mode: 'single' | 'grid') => void;
-  }) => void;
-  handleBatchClick: (batch: BatchObject, callbacks: {
-    setActiveBatch: (batch: BatchObject) => void;
-    setViewMode: (mode: 'single' | 'grid') => void;
-    clearSelection: () => void;
-  }) => void;
-  handleModeChange: (newMode: GenerationMode, callbacks: {
-    setMode: (mode: GenerationMode) => void;
-    setPrompt: (prompt: string) => void;
-  }) => void;
-}
-
-/**
- * 主页面事件处理 Hook
- */
-export function usePageHandlers(): UsePageHandlersResult {
-
-  /**
-   * 处理图片点击事件
-   */
-  const handleImageClick = useCallback((
+  handleImageClick: (
     image: ImageItem,
     selectedImages: ImageItem[],
     callbacks: {
@@ -47,47 +23,89 @@ export function usePageHandlers(): UsePageHandlersResult {
       setSingleImage: (image: ImageItem) => void;
       setViewMode: (mode: 'single' | 'grid') => void;
     }
-  ) => {
-    const isSelected = selectedImages.some(img => img.id === image.id);
-    callbacks.toggleImageSelection(image);
-
-    if (!isSelected) {
-      callbacks.setSingleImage(image);
-      callbacks.setViewMode('single');
-    } else if (selectedImages.length <= 1) {
-      callbacks.setViewMode('single');
-    }
-  }, []);
-
-  /**
-   * 处理批次点击事件
-   */
-  const handleBatchClick = useCallback((
+  ) => void;
+  handleBatchClick: (
     batch: BatchObject,
     callbacks: {
       setActiveBatch: (batch: BatchObject) => void;
       setViewMode: (mode: 'single' | 'grid') => void;
       clearSelection: () => void;
     }
-  ) => {
-    callbacks.setActiveBatch(batch);
-    callbacks.setViewMode('grid');
-    callbacks.clearSelection();
-  }, []);
-
-  /**
-   * 处理模式切换事件
-   */
-  const handleModeChange = useCallback((
+  ) => void;
+  handleModeChange: (
     newMode: GenerationMode,
     callbacks: {
       setMode: (mode: GenerationMode) => void;
       setPrompt: (prompt: string) => void;
     }
-  ) => {
-    callbacks.setMode(newMode);
-    callbacks.setPrompt('');
-  }, []);
+  ) => void;
+}
+
+/**
+ * 主页面事件处理 Hook
+ */
+export function usePageHandlers(): UsePageHandlersResult {
+  /**
+   * 处理图片点击事件
+   */
+  const handleImageClick = useCallback(
+    (
+      image: ImageItem,
+      selectedImages: ImageItem[],
+      callbacks: {
+        toggleImageSelection: (image: ImageItem) => void;
+        setSingleImage: (image: ImageItem) => void;
+        setViewMode: (mode: 'single' | 'grid') => void;
+      }
+    ) => {
+      const isSelected = selectedImages.some(img => img.id === image.id);
+      callbacks.toggleImageSelection(image);
+
+      if (!isSelected) {
+        callbacks.setSingleImage(image);
+        callbacks.setViewMode('single');
+      } else if (selectedImages.length <= 1) {
+        callbacks.setViewMode('single');
+      }
+    },
+    []
+  );
+
+  /**
+   * 处理批次点击事件
+   */
+  const handleBatchClick = useCallback(
+    (
+      batch: BatchObject,
+      callbacks: {
+        setActiveBatch: (batch: BatchObject) => void;
+        setViewMode: (mode: 'single' | 'grid') => void;
+        clearSelection: () => void;
+      }
+    ) => {
+      callbacks.setActiveBatch(batch);
+      callbacks.setViewMode('grid');
+      callbacks.clearSelection();
+    },
+    []
+  );
+
+  /**
+   * 处理模式切换事件
+   */
+  const handleModeChange = useCallback(
+    (
+      newMode: GenerationMode,
+      callbacks: {
+        setMode: (mode: GenerationMode) => void;
+        setPrompt: (prompt: string) => void;
+      }
+    ) => {
+      callbacks.setMode(newMode);
+      callbacks.setPrompt('');
+    },
+    []
+  );
 
   return {
     handleImageClick,
@@ -138,8 +156,7 @@ export async function saveLoginConfig(
     alert(`✅ ${data.message || '登录页面配置已保存成功！'}`);
   } catch (error) {
     console.error('Save login config error:', error);
-    const errorMessage =
-      `❌ 保存配置失败：${error instanceof Error ? error.message : '未知错误'}\n\n请检查网络连接或稍后重试。`;
+    const errorMessage = `❌ 保存配置失败：${error instanceof Error ? error.message : '未知错误'}\n\n请检查网络连接或稍后重试。`;
     onError?.(errorMessage);
   }
 }

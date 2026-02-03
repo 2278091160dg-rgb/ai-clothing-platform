@@ -9,7 +9,6 @@ import { WorkspaceHeader } from '@/components/workspace/WorkspaceHeader';
 import { UploadPanel } from '@/components/workspace/UploadPanel';
 import { ParamsPanel } from '@/components/workspace/ParamsPanel';
 import { SidebarTabs } from '@/components/workspace/SidebarTabs';
-import { LoadingAnimation } from '@/components/workspace/LoadingAnimation';
 import { MainContentRenderer } from './MainContentRenderer';
 import type { PageState } from '@/hooks/use-page-state';
 import type { BrandConfig } from '@/hooks/use-brand-config';
@@ -57,6 +56,9 @@ interface PageLayoutProps {
   onImageClick: (image: ImageItem) => void;
   onBatchClick: (batch: BatchObject) => void;
   onTabChange: (tab: 'web' | 'table') => void;
+  onHideTask?: (taskId: string) => void;
+  hiddenTaskIds?: Set<string>;
+  onUnhideTask?: (taskId: string) => void;
 
   // 其他组件
   configPanel: React.ReactNode;
@@ -95,6 +97,9 @@ export function PageLayout({
   onImageClick,
   onBatchClick,
   onTabChange,
+  onHideTask,
+  hiddenTaskIds,
+  onUnhideTask,
   configPanel,
   loginSettings,
   imagePreview,
@@ -106,7 +111,9 @@ export function PageLayout({
 
       {/* 顶部导航栏 */}
       <WorkspaceHeader
-        brandConfig={brandConfig || { title: 'AI场景图生成器', subtitle: '智能电商商拍工具', icon: '🎨' }}
+        brandConfig={
+          brandConfig || { title: 'AI场景图生成器', subtitle: '智能电商商拍工具', icon: '🎨' }
+        }
         onLoginSettings={onLoginSettings}
         onConfig={onConfig}
         onLogout={onLogout}
@@ -144,7 +151,6 @@ export function PageLayout({
                 isConfigured={isConfigured}
                 isGenerating={isGenerating}
               />
-              {isGenerating && <LoadingAnimation isGenerating={isGenerating} />}
             </div>
           </div>
 
@@ -160,6 +166,11 @@ export function PageLayout({
               activeBatch={activeBatch}
               selectedImages={selectedImages}
               resetView={resetView}
+              isGenerating={isGenerating}
+              mode={pageState.mode}
+              prompt={pageState.prompt}
+              imageModel={pageState.imageModel}
+              quality={pageState.quality}
             />
           </div>
 
@@ -172,6 +183,9 @@ export function PageLayout({
               selectedImageIds={selectedImages.map(img => img.id)}
               activeTab={pageState.activeTab}
               onTabChange={onTabChange}
+              onHideTask={onHideTask}
+              hiddenTaskIds={hiddenTaskIds ?? new Set()}
+              onUnhideTask={onUnhideTask}
             />
           </div>
         </div>

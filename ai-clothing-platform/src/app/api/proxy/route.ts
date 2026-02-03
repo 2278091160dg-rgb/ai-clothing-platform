@@ -9,10 +9,7 @@
  */
 
 import { NextResponse } from 'next/server';
-import type {
-  ProxyResponseData,
-  N8NWebhookPayload,
-} from './proxy-types';
+import type { ProxyResponseData, N8NWebhookPayload } from './proxy-types';
 import { getFeishuToken, uploadImageToFeishu, createFeishuRecord } from './feishu-services';
 import { forwardToN8N, createN8NErrorResponse } from './n8n-forward.service';
 
@@ -65,7 +62,12 @@ export async function POST(request: Request) {
     let sceneImageToken: string | undefined;
 
     if (productImage) {
-      productImageToken = await uploadImageToFeishu(productImage, tenantAccessToken, baseId, 'product');
+      productImageToken = await uploadImageToFeishu(
+        productImage,
+        tenantAccessToken,
+        baseId,
+        'product'
+      );
     }
 
     if (sceneImage) {
@@ -103,11 +105,7 @@ export async function POST(request: Request) {
     const n8nResult = await forwardToN8N(n8nPayload, recordId);
 
     if (!n8nResult.success) {
-      return createN8NErrorResponse(
-        500,
-        n8nResult.error || 'Unknown N8N error',
-        recordId
-      );
+      return createN8NErrorResponse(500, n8nResult.error || 'Unknown N8N error', recordId);
     }
 
     console.log('===== 全流程完成 =====');

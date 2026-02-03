@@ -8,26 +8,22 @@
 
 import { type TaskData } from '@/lib/types';
 import { type ImageItem } from '@/hooks/use-canvas-view-mode';
+import { EyeOff, Check } from 'lucide-react';
 import Image from 'next/image';
 
 interface WebTabContentProps {
   tasks: TaskData[];
   onImageClick: (image: ImageItem) => void;
   selectedImageIds: string[];
+  onDeleteTask?: (taskId: string) => void;
 }
 
-export function WebTabContent({ tasks, onImageClick, selectedImageIds }: WebTabContentProps) {
-  console.log('🔍 [DEBUG WebTabContent] 渲染:', {
-    tasksCount: tasks.length,
-    tasks: tasks.map(t => ({
-      id: t.id,
-      status: t.status,
-      source: t.source,
-      type: t.type,
-      hasImage: !!t.resultImages?.[0],
-    })),
-  });
-
+export function WebTabContent({
+  tasks,
+  onImageClick,
+  selectedImageIds,
+  onDeleteTask,
+}: WebTabContentProps) {
   if (tasks.length === 0) {
     return (
       <div className="flex items-center justify-center h-40 text-sm text-muted-foreground">
@@ -108,6 +104,21 @@ export function WebTabContent({ tasks, onImageClick, selectedImageIds }: WebTabC
                 className="w-full h-full object-cover"
                 unoptimized
               />
+
+              {/* 隐藏按钮 */}
+              {onDeleteTask && (
+                <button
+                  onClick={e => {
+                    e.stopPropagation();
+                    onDeleteTask(task.id);
+                  }}
+                  className="absolute top-2 left-2 w-7 h-7 rounded-md bg-black/50 hover:bg-black/70 text-white/80 hover:text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all shadow-lg backdrop-blur-sm border border-white/20"
+                  title="隐藏任务"
+                >
+                  <EyeOff size={14} />
+                </button>
+              )}
+
               {/* 对比复选框 */}
               <div
                 className={`absolute top-2 right-2 w-6 h-6 rounded-md border-2 flex items-center justify-center transition-all ${
@@ -127,7 +138,7 @@ export function WebTabContent({ tasks, onImageClick, selectedImageIds }: WebTabC
                   });
                 }}
               >
-                {isSelected && <span className="text-white text-xs">✓</span>}
+                {isSelected && <Check size={12} className="text-white" />}
               </div>
             </div>
 
