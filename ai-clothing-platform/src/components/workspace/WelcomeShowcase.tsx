@@ -1,96 +1,98 @@
 /**
- * WelcomeShowcase - 欢迎展示组件（空闲状态）
+ * WelcomeShowcase - 欢迎界面组件
+ *
+ * 方案3：智能混合空状态
+ * - 清晰的引导
+ * - 拖拽上传提示
+ * - 历史记录入口
+ * - 简洁优雅的设计
  */
 
-import { Package, User, Palette, ArrowLeft } from 'lucide-react';
-import { useState } from 'react';
+'use client';
 
-const FEATURE_CARDS = [
-  {
-    icon: Package,
-    emoji: '🛍️',
-    label: '商品图',
-    description: '智能场景生成',
-  },
-  {
-    icon: User,
-    emoji: '👗',
-    label: '模特图',
-    description: '虚拟试穿效果',
-  },
-  {
-    icon: Palette,
-    emoji: '🎨',
-    label: '创意图',
-    description: '自由创作模式',
-  },
-];
+import { Sparkles, Clock, ArrowLeft, ArrowRight } from 'lucide-react';
+import Link from 'next/link';
 
 export function WelcomeShowcase() {
-  const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
-
   return (
-    <div className="flex-1 theme-card rounded-2xl p-8 flex flex-col items-center justify-center relative overflow-hidden">
-      {/* 背景装饰 */}
-      <div className="absolute inset-0 bg-grid-pattern opacity-30" />
-      <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-gradient-to-br from-blue-500/10 via-purple-500/10 to-pink-500/10 rounded-full blur-3xl" />
-      <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-gradient-to-tr from-cyan-500/5 to-blue-500/5 rounded-full blur-3xl" />
+    <div className="flex-1 flex items-center justify-center bg-gradient-to-br from-gray-900 via-gray-950 to-black rounded-2xl relative overflow-hidden">
+      {/* 背景网格装饰 */}
+      <div className="absolute inset-0 bg-grid-pattern opacity-10 pointer-events-none" />
 
-      {/* 主内容区 */}
-      <div className="relative z-10 text-center max-w-2xl mx-auto">
-        {/* 主标题 */}
-        <h1 className="text-5xl font-bold mb-4 bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent leading-tight">
-          AI 已来 马上开启
-        </h1>
+      {/* 装饰性光晕 - 更柔和 */}
+      <div className="absolute top-0 left-1/4 w-96 h-96 bg-blue-500/5 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-purple-500/5 rounded-full blur-3xl pointer-events-none" />
 
-        {/* 副标题 */}
-        <p className="text-slate-400 text-sm mb-12 font-light">想都是问题 做就有答案</p>
-
-        {/* 预设案例卡片组 */}
-        <div className="flex items-center justify-center gap-4 mb-10">
-          {FEATURE_CARDS.map((card, index) => {
-            const Icon = card.icon;
-            const isHovered = hoveredIndex === index;
-            return (
-              <div
-                key={card.label}
-                onMouseEnter={() => setHoveredIndex(index)}
-                onMouseLeave={() => setHoveredIndex(null)}
-                className="group relative bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl p-5 min-w-[140px] transition-all duration-300 hover:bg-white/10 hover:border-white/20 hover:scale-105 hover:shadow-xl cursor-pointer"
-                style={{
-                  transform: isHovered ? 'translateY(-8px)' : 'translateY(0)',
-                }}
-              >
-                {/* 图标 */}
-                <div className="mb-3 flex justify-center">
-                  <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500/20 to-purple-500/20 flex items-center justify-center group-hover:from-blue-500/30 group-hover:to-purple-500/30 transition-all">
-                    <Icon size={24} className="text-blue-400" />
-                  </div>
-                </div>
-
-                {/* 标签 */}
-                <p className="text-sm font-semibold text-foreground mb-1">{card.label}</p>
-
-                {/* 描述 */}
-                <p className="text-xs text-muted-foreground">{card.description}</p>
-
-                {/* 高亮光晕 */}
-                {isHovered && (
-                  <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 via-purple-500/10 to-pink-500/10 rounded-xl blur-md -z-10 transition-opacity duration-300" />
-                )}
-              </div>
-            );
-          })}
+      {/* 主要内容 */}
+      <div className="relative z-10 text-center px-8">
+        {/* 大图标 */}
+        <div className="w-20 h-20 mx-auto mb-6 bg-white/5 rounded-2xl flex items-center justify-center border border-white/10 shadow-2xl">
+          <Sparkles size={40} className="text-white/40" />
         </div>
 
-        {/* 引导动画 */}
-        <div className="flex items-center justify-center gap-3 text-slate-400">
-          <span className="text-sm">从左侧开始上传</span>
-          <div className="relative">
-            <ArrowLeft size={20} className="text-blue-400 animate-pulse" />
-            {/* 箭头光晕 */}
-            <div className="absolute inset-0 bg-blue-400/20 blur-md animate-pulse" />
+        {/* 主标题 */}
+        <h2 className="text-3xl font-bold text-white mb-3 tracking-tight">
+          开始新创作
+        </h2>
+
+        {/* 副标题 */}
+        <p className="text-white/50 text-lg mb-8 max-w-md">
+          上传商品图片，AI 自动生成电商场景图
+        </p>
+
+        {/* 三步引导卡片 */}
+        <div className="bg-white/5 border border-white/10 rounded-xl p-6 max-w-lg mx-auto mb-8">
+          <div className="flex items-center justify-center gap-3 mb-4">
+            <div className="w-2 h-2 rounded-full bg-blue-400 animate-pulse" />
+            <p className="text-white/60 text-sm font-medium">
+              三步快速生成
+            </p>
           </div>
+          <div className="flex items-center justify-center gap-3 text-sm">
+            <div className="flex items-center gap-2 text-white/40">
+              <span className="w-6 h-6 rounded-full bg-white/10 flex items-center justify-center text-xs font-bold">1</span>
+              <span>上传素材</span>
+            </div>
+            <ArrowRight size={14} className="text-white/20" />
+            <div className="flex items-center gap-2 text-white/40">
+              <span className="w-6 h-6 rounded-full bg-white/10 flex items-center justify-center text-xs font-bold">2</span>
+              <span>调整参数</span>
+            </div>
+            <ArrowRight size={14} className="text-white/20" />
+            <div className="flex items-center gap-2 text-white/40">
+              <span className="w-6 h-6 rounded-full bg-white/10 flex items-center justify-center text-xs font-bold">3</span>
+              <span>生成场景</span>
+            </div>
+          </div>
+        </div>
+
+        {/* 操作提示 */}
+        <div className="space-y-2 max-w-md mx-auto mb-10">
+          <p className="text-white/30 text-sm flex items-center justify-center gap-2">
+            <span>📷</span>
+            <span>拖拽图片到左侧上传区域，或点击选择文件</span>
+          </p>
+          <p className="text-white/20 text-xs">
+            支持 JPG、PNG 格式，建议图片比例 3:4
+          </p>
+        </div>
+
+        {/* 引导箭头 */}
+        <div className="flex items-center justify-center gap-2 text-white/30 mb-8">
+          <span className="text-sm">从左侧开始</span>
+          <ArrowLeft size={18} className="text-blue-400 animate-pulse" />
+        </div>
+
+        {/* 历史入口 */}
+        <div>
+          <Link
+            href="/tasks"
+            className="inline-flex items-center gap-2 text-white/40 hover:text-white text-sm transition-all duration-200 group"
+          >
+            <Clock size={16} className="group-hover:scale-110 transition-transform" />
+            <span>查看历史记录</span>
+            <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
+          </Link>
         </div>
       </div>
     </div>
