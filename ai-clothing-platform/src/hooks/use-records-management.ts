@@ -12,7 +12,7 @@
  * - records-api.ts: API 服务
  */
 
-import { useState, useCallback, useEffect, useRef } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import type { HistoryTask, HistoryRecord } from '@/lib/types/history.types';
 import { RecordsAPI } from '@/lib/services/records-api';
 import { useRecordsPolling } from './use-records-polling';
@@ -127,12 +127,6 @@ export function useRecordsManagement({
   const addTask = useCallback((task: HistoryTask) => {
     setHistoryTasks(prev => [task, ...prev]);
   }, []);
-
-  // 组件挂载时获取记录
-  useEffect(() => {
-    fetchRecords();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // 只在挂载时执行一次
 
   return {
     historyTasks,
