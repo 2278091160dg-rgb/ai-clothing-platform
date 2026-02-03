@@ -41,6 +41,7 @@ export function MainContentRenderer({
           <BeforeImagesPanel
             uploadedImage={uploadedImage}
             sceneImagePreview={sceneImagePreview}
+            aspectRatio={aspectRatio}
           />
         </div>
 
