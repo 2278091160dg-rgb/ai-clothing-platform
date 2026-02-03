@@ -53,13 +53,14 @@ export function ImageDisplay({
   const proxiedUrl = getProxiedUrl(imageUrl);
 
   return (
-    <div className="absolute inset-0 rounded-2xl flex items-center justify-center overflow-hidden">
+    <div className="absolute inset-0 rounded-2xl flex items-center justify-center overflow-visible">
       <div
         ref={imageRef}
         className="relative"
         style={{
           transform: `translate(${position.x}px, ${position.y}px) scale(${scale})`,
-          transition: isDragging ? 'none' : 'transform 0.1s ease-out',
+          transformOrigin: 'center center',
+          transition: isDragging ? 'none' : 'transform 0.2s ease-out',
           cursor: scale > 1 ? (isDragging ? 'grabbing' : 'grab') : 'default',
         }}
         onMouseDown={handleDragStart}

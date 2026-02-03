@@ -103,7 +103,7 @@ export function ResultImageViewer({
 
   return (
     <div
-      className="relative w-full h-full bg-gradient-to-br from-gray-900 via-gray-950 to-black overflow-hidden rounded-2xl"
+      className="relative w-full h-full bg-gradient-to-br from-gray-900 via-gray-950 to-black rounded-2xl"
       onWheel={zoomActions.handleWheel}
     >
       {/* 背景网格装饰 */}
