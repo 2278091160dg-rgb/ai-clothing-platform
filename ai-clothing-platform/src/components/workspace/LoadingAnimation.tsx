@@ -11,6 +11,7 @@
 'use client';
 
 import { useEffect, useState, useRef } from 'react';
+import Image from 'next/image';
 import { Sparkles, Image as ImageIcon, Zap, Clock, Upload } from 'lucide-react';
 
 interface LoadingAnimationProps {
@@ -167,10 +168,13 @@ export function LoadingAnimation({ isGenerating, previewUrl }: LoadingAnimationP
                 <span className="font-medium">快速预览（正在优化...）</span>
               </p>
               <div className="aspect-square relative bg-black/50 p-4">
-                <img
+                <Image
                   src={previewUrl}
                   alt="预览"
+                  width={300}
+                  height={300}
                   className="w-full h-full object-contain opacity-80 rounded-lg"
+                  unoptimized
                 />
               </div>
             </div>

@@ -3,57 +3,7 @@
  * 负责与n8n工作流引擎通信
  */
 
-/* eslint-disable @typescript-eslint/no-unused-vars */
-interface N8nConfig {
-  webhookUrl: string;
-  apiKey: string;
-}
-
-interface GenerationRequest {
-  taskId: string;
-  userId: string;
-  mode: 'scene' | 'tryon' | 'wear' | 'combine';
-  productImageUrl: string;
-  sceneImageUrl?: string;
-  prompt: string;
-  negativePrompt?: string;
-  aiModel: string;
-  aspectRatio: string;
-  imageCount: number;
-  quality: string;
-  deerApiKey?: string; // 前端传递的DeerAPI密钥（可选）
-  callbackUrl?: string; // 自定义回调URL（可选）
-
-  // 虚拟试衣参数
-  clothingImageUrl?: string;
-  clothingDescription?: string;
-  tryonReferenceImageUrl?: string;
-  tryonModelImageUrl?: string;
-  modelDescription?: string;
-  sceneDescription?: string;
-  tryonMode?: 'single' | 'multi';
-
-  // 智能穿戴参数
-  wearProductImageUrl?: string;
-  wearProductDescription?: string;
-  wearReferenceImageUrl?: string;
-  wearReferenceDescription?: string;
-  productType?: 'shoes' | 'bag' | 'watch' | 'jewelry' | 'hat' | 'scarf';
-  viewType?: 'single' | 'multi';
-
-  // 自由搭配参数
-  materialImageUrls?: string[];
-  combinationCount?: number;
-  modelType?: 'any' | 'adult' | 'child' | 'male' | 'female';
-  stylePreference?: 'casual' | 'formal' | 'sporty' | 'elegant' | 'minimalist';
-
-  // 优化后的提示词
-  finalPrompt?: string;
-  finalNegativePrompt?: string;
-}
-
-// interface GenerationResponse 未使用，已删除
-type GenerationStatus = 'pending' | 'processing' | 'completed' | 'failed';
+import type { N8nConfig, GenerationRequest, N8nCallback } from './n8n/n8n.types';
 
 export class N8nService {
   private config: N8nConfig;
@@ -62,19 +12,14 @@ export class N8nService {
     this.config = config;
   }
 
-  /**
-   * 触发AI图片生成工作流
-   */
   async triggerGeneration(request: GenerationRequest): Promise<void> {
-    // 确定回调 URL：使用传入的 callbackUrl 或默认值
     const callbackUrl =
       request.callbackUrl || `${process.env.NEXT_PUBLIC_APP_URL}/api/webhooks/n8n/callback`;
 
     const payload = {
       ...request,
       apiKey: this.config.apiKey,
-      callbackUrl, // 使用确定的回调 URL
-      // 将前端传递的DeerAPI Key传递给N8N工作流
+      callbackUrl,
       deerApiKey: request.deerApiKey || '',
     };
 
@@ -87,33 +32,28 @@ export class N8nService {
 
       const response = await fetch(this.config.webhookUrl, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       });
 
       console.log('[N8n] Response status:', response.status, response.statusText);
 
       if (!response.ok) {
-        // 尝试读取错误响应体
         const errorText = await response.text();
         console.error('[N8n] Webhook error response:', errorText);
         throw new Error(`n8n webhook failed: ${response.statusText} - ${errorText}`);
       }
 
-      // 处理空响应（N8N 可能是 "Fire and Forget" 模式）
       const text = await response.text();
       if (!text || text.trim() === '') {
         console.log('[N8n] ✅ Webhook accepted (empty response - fire-and-forget mode)');
         return;
       }
 
-      // 解析 JSON 响应
       let data;
       try {
         data = JSON.parse(text);
-      } catch (_parseError) {
+      } catch {
         console.error('[N8n] Failed to parse response:', text);
         throw new Error(`n8n returned invalid JSON: ${text.substring(0, 200)}`);
       }
@@ -129,20 +69,9 @@ export class N8nService {
     }
   }
 
-  /**
-   * 处理n8n回调
-   */
-  async handleCallback(callback: {
-    taskId: string;
-    status: GenerationStatus;
-    resultImageUrls?: string[];
-    resultImageTokens?: string[];
-    error?: string;
-    progress?: number;
-  }): Promise<void> {
+  async handleCallback(callback: N8nCallback): Promise<void> {
     const { taskId, status, resultImageUrls, resultImageTokens, error, progress } = callback;
 
-    // 导入仓储和事件发布器（避免循环依赖）
     const { getTaskRepository } = await import('../repositories/task.repository');
     const { eventPublisher } = await import('../events/handlers');
 
@@ -150,24 +79,16 @@ export class N8nService {
 
     try {
       const task = await taskRepo.findById(taskId);
-
       if (!task) {
         throw new Error(`Task not found: ${taskId}`);
       }
 
       if (status === 'processing' || status === 'pending') {
-        // 更新进度
         if (progress !== undefined) {
           await taskRepo.updateProgress(taskId, progress);
-          eventPublisher.taskProgress({
-            taskId,
-            userId: task.userId,
-            progress,
-            status,
-          });
+          eventPublisher.taskProgress({ taskId, userId: task.userId, progress, status });
         }
       } else if (status === 'completed') {
-        // 标记为完成
         if (resultImageUrls && resultImageTokens) {
           await taskRepo.markAsCompleted(taskId, resultImageUrls, resultImageTokens);
           eventPublisher.taskCompleted({
@@ -179,7 +100,6 @@ export class N8nService {
           });
         }
       } else if (status === 'failed') {
-        // 标记为失败
         await taskRepo.markAsFailed(taskId, error || 'Unknown error');
         eventPublisher.taskFailed({
           taskId,
@@ -193,35 +113,22 @@ export class N8nService {
     }
   }
 
-  /**
-   * 批量触发生成工作流
-   */
   async triggerBatchGeneration(requests: GenerationRequest[]): Promise<void> {
-    // 并发触发所有工作流
     await Promise.allSettled(requests.map(request => this.triggerGeneration(request)));
   }
 
-  /**
-   * 检查工作流健康状态
-   */
   async healthCheck(): Promise<boolean> {
     try {
       const response = await fetch(`${this.config.webhookUrl}/health`, {
         method: 'GET',
-        headers: {
-          Authorization: `Bearer ${this.config.apiKey}`,
-        },
+        headers: { Authorization: `Bearer ${this.config.apiKey}` },
       });
-
       return response.ok;
     } catch {
       return false;
     }
   }
 
-  /**
-   * 获取工作流状态
-   */
   async getWorkflowStatus(workflowId: string): Promise<{
     status: string;
     progress: number;
@@ -230,9 +137,7 @@ export class N8nService {
     try {
       const response = await fetch(`${this.config.webhookUrl}/status/${workflowId}`, {
         method: 'GET',
-        headers: {
-          Authorization: `Bearer ${this.config.apiKey}`,
-        },
+        headers: { Authorization: `Bearer ${this.config.apiKey}` },
       });
 
       if (!response.ok) {
@@ -247,7 +152,6 @@ export class N8nService {
   }
 }
 
-// 创建单例实例
 let n8nServiceInstance: N8nService | null = null;
 
 export function getN8nService(): N8nService {
@@ -259,28 +163,22 @@ export function getN8nService(): N8nService {
       throw new Error('n8n configuration not found');
     }
 
-    n8nServiceInstance = new N8nService({
-      webhookUrl,
-      apiKey,
-    });
+    n8nServiceInstance = new N8nService({ webhookUrl, apiKey });
   }
 
   return n8nServiceInstance;
 }
 
-/**
- * API路由处理函数 - 接收n8n回调
- */
 export async function handleN8nCallback(request: Request) {
   try {
     const body = await request.json();
     const n8nService = getN8nService();
-
     await n8nService.handleCallback(body);
-
     return Response.json({ success: true });
   } catch (error) {
     console.error('[API] Failed to handle n8n callback:', error);
     return Response.json({ success: false, error: 'Failed to process callback' }, { status: 500 });
   }
 }
+
+export type { GenerationRequest, GenerationStatus, N8nCallback } from './n8n/n8n.types';

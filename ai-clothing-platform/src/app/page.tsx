@@ -1,9 +1,3 @@
-/**
- * 深蓝色科技风主页 - AI电商商拍平台
- * Dark Mode + Future Tech + Bento Grid
- * 集成飞书 Bitable + N8N 工作流
- */
-
 'use client';
 
 import { useCallback, useEffect, useMemo } from 'react';
@@ -23,10 +17,7 @@ import { PageLayout } from './page/PageLayout';
 import { transformTasksToDisplayFormat } from './page/page-data-transformers';
 
 export default function HomePage() {
-  // ========== 页面状态管理 ==========
   const { state: pageState, actions: pageActions } = usePageState();
-
-  // ========== 自定义 hooks ==========
   const { brandConfig, loadBrandConfig } = useBrandConfig();
   const {
     productImage,
@@ -40,20 +31,8 @@ export default function HomePage() {
     setSceneImagePreviewOnly,
   } = useImageUpload();
 
-  const {
-    viewMode,
-    setViewMode,
-    singleImage,
-    setSingleImage,
-    activeBatch,
-    setActiveBatch,
-    selectedImages,
-    toggleImageSelection,
-    clearSelection,
-    resetView,
-  } = useCanvasViewMode();
+  const { viewMode, setViewMode, singleImage, setSingleImage, activeBatch, setActiveBatch, selectedImages, toggleImageSelection, clearSelection, resetView } = useCanvasViewMode();
 
-  // ========== 记录管理 ==========
   const { historyTasks, fetchRecords, addTask, hideTask, unhideTask, hiddenTaskIds } =
     useRecordsManagement({
       onNewCompletedTask: (completedTask, newRecord) => {
@@ -150,6 +129,7 @@ export default function HomePage() {
         errorMsg => alert(`❌ 保存失败：${errorMsg}`)
       );
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [pageActions]
   );
 
@@ -163,8 +143,6 @@ export default function HomePage() {
       sceneImage,
       productImagePreview,
     });
-    // 依赖 pageState 的具体属性而不是整个对象，避免每次渲染都重新创建函数
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     pageState.mode,
     pageState.prompt,

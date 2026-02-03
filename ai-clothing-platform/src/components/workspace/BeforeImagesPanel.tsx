@@ -13,7 +13,6 @@
 
 import Image from 'next/image';
 import { Settings, Clock, Sparkles } from 'lucide-react';
-import type { MouseEventHandler } from 'react';
 import type { ImageModel } from '@/lib/types';
 
 interface BeforeImagesPanelProps {
