@@ -19,11 +19,18 @@ interface UseTaskPollingOptions {
   onStatusUpdate?: (status: string, resultUrl?: string) => void;
   onError?: (error: Error) => void;
   onComplete?: () => void;
+  timeoutMs?: number; // 轮询超时时间（毫秒），默认 10 分钟
 }
 
 export function useTaskPolling(options?: UseTaskPollingOptions) {
   const [pollingIntervalId, setPollingIntervalId] = useState<NodeJS.Timeout | null>(null);
   const pollingRecordIdRef = useRef<string | null>(null);
+  const pollingStartTimeRef = useRef<number | null>(null);
+  const timeoutIdRef = useRef<NodeJS.Timeout | null>(null);
+
+  // 默认超时时间：10 分钟
+  const DEFAULT_TIMEOUT_MS = 10 * 60 * 1000;
+  const timeoutMs = options?.timeoutMs ?? DEFAULT_TIMEOUT_MS;
 
   // 开始轮询任务状态
   const startPolling = useCallback(
@@ -32,12 +39,38 @@ export function useTaskPolling(options?: UseTaskPollingOptions) {
       checkStatus: TaskStatusUpdate,
       updateTask: (updater: (prev: Task | null) => Task | null) => void
     ) => {
-      // 清除之前的轮询
+      // 清除之前的轮询和超时
       if (pollingIntervalId) {
         clearInterval(pollingIntervalId);
       }
+      if (timeoutIdRef.current) {
+        clearTimeout(timeoutIdRef.current);
+      }
 
       pollingRecordIdRef.current = recordId;
+      pollingStartTimeRef.current = Date.now();
+
+      // 设置超时定时器
+      timeoutIdRef.current = setTimeout(() => {
+        console.warn(`⚠️ 任务轮询超时 (${timeoutMs / 1000}秒): ${recordId}`);
+        updateTask(prev => {
+          if (!prev) return null;
+          return {
+            ...prev,
+            status: 'failed',
+            error: `任务超时 (${timeoutMs / 60000}分钟未完成)`,
+          };
+        });
+        // 停止轮询
+        if (pollingIntervalId) {
+          clearInterval(pollingIntervalId);
+          setPollingIntervalId(null);
+        }
+        pollingRecordIdRef.current = null;
+        pollingStartTimeRef.current = null;
+        timeoutIdRef.current = null;
+        options?.onError?.(new Error(`任务轮询超时 (${timeoutMs / 60000}分钟)`));
+      }, timeoutMs);
 
       const intervalId = setInterval(async () => {
         try {
@@ -71,7 +104,7 @@ export function useTaskPolling(options?: UseTaskPollingOptions) {
 
           options?.onStatusUpdate?.(status, resultUrl || undefined);
 
-          // 如果完成或失败，停止轮询
+          // 如果完成或失败，停止轮询和超时定时器
           if (
             status === '完成' ||
             status === 'completed' ||
@@ -80,7 +113,12 @@ export function useTaskPolling(options?: UseTaskPollingOptions) {
           ) {
             clearInterval(intervalId);
             setPollingIntervalId(null);
+            if (timeoutIdRef.current) {
+              clearTimeout(timeoutIdRef.current);
+              timeoutIdRef.current = null;
+            }
             pollingRecordIdRef.current = null;
+            pollingStartTimeRef.current = null;
             options?.onComplete?.();
           }
         } catch (error) {
@@ -95,14 +133,19 @@ export function useTaskPolling(options?: UseTaskPollingOptions) {
           });
           clearInterval(intervalId);
           setPollingIntervalId(null);
+          if (timeoutIdRef.current) {
+            clearTimeout(timeoutIdRef.current);
+            timeoutIdRef.current = null;
+          }
           pollingRecordIdRef.current = null;
+          pollingStartTimeRef.current = null;
           options?.onError?.(error as Error);
         }
       }, 3000); // 每3秒轮询一次
 
       setPollingIntervalId(intervalId);
     },
-    [pollingIntervalId, options]
+    [pollingIntervalId, options, timeoutMs]
   );
 
   // 停止轮询
@@ -111,7 +154,12 @@ export function useTaskPolling(options?: UseTaskPollingOptions) {
       clearInterval(pollingIntervalId);
       setPollingIntervalId(null);
     }
+    if (timeoutIdRef.current) {
+      clearTimeout(timeoutIdRef.current);
+      timeoutIdRef.current = null;
+    }
     pollingRecordIdRef.current = null;
+    pollingStartTimeRef.current = null;
   }, [pollingIntervalId]);
 
   return {
