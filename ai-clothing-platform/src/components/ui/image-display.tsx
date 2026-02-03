@@ -5,6 +5,7 @@
  * - 显示图片（支持代理）
  * - Before/After 标签
  * - 缩放和拖拽支持
+ * - 滚轮缩放
  */
 
 'use client';
@@ -38,7 +39,7 @@ export function ImageDisplay({
   imageRef,
 }: ImageDisplayProps) {
   const { scale, position, isDragging } = zoomState;
-  const { handleDragStart, handleDragMove, handleDragEnd } = zoomActions;
+  const { handleDragStart, handleDragMove, handleDragEnd, handleWheel } = zoomActions;
 
   if (!imageUrl) {
     return (
@@ -53,10 +54,13 @@ export function ImageDisplay({
   const proxiedUrl = getProxiedUrl(imageUrl);
 
   return (
-    <div className="absolute inset-0 rounded-2xl flex items-center justify-center overflow-visible">
+    <div
+      className="absolute inset-0 rounded-2xl flex items-center justify-center overflow-visible"
+      onWheel={handleWheel}
+    >
       <div
         ref={imageRef}
-        className="relative"
+        className="relative select-none"
         style={{
           transform: `translate(${position.x}px, ${position.y}px) scale(${scale})`,
           transformOrigin: 'center center',
@@ -73,9 +77,9 @@ export function ImageDisplay({
           alt="AI 生成结果"
           width={1200}
           height={1200}
-          className="max-w-full max-h-full object-contain shadow-2xl rounded-lg"
-          draggable={false}
+          className="max-w-full max-h-full object-contain shadow-2xl rounded-lg pointer-events-none"
           unoptimized
+          draggable={false}
           style={{
             maxHeight: '100%',
             maxWidth: '100%',
@@ -84,14 +88,14 @@ export function ImageDisplay({
 
         {/* 对比模式标签 */}
         {isComparing && (
-          <div className="absolute top-4 left-4 bg-gradient-to-r from-blue-500/90 to-cyan-500/90 backdrop-blur-sm rounded-lg px-3 py-1.5 shadow-lg">
+          <div className="absolute top-4 left-4 bg-gradient-to-r from-blue-500/90 to-cyan-500/90 backdrop-blur-sm rounded-lg px-3 py-1.5 shadow-lg pointer-events-none">
             <p className="text-xs font-bold text-white tracking-wider">BEFORE</p>
           </div>
         )}
 
         {/* 正常模式标签 */}
         {!isComparing && (
-          <div className="absolute top-4 left-4 bg-gradient-to-r from-green-500/90 to-emerald-500/90 backdrop-blur-sm rounded-lg px-3 py-1.5 shadow-lg">
+          <div className="absolute top-4 left-4 bg-gradient-to-r from-green-500/90 to-emerald-500/90 backdrop-blur-sm rounded-lg px-3 py-1.5 shadow-lg pointer-events-none">
             <p className="text-xs font-bold text-white tracking-wider">AFTER</p>
           </div>
         )}
