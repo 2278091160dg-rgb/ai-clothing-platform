@@ -8,7 +8,7 @@
  * - 重置视图
  */
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback } from 'react';
 
 const MIN_SCALE = 0.5;
 const MAX_SCALE = 3;
@@ -35,11 +35,6 @@ export function useImageZoom() {
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
-
-  // 调试：监听 scale 变化
-  useEffect(() => {
-    console.log('🎯 Scale updated:', scale);
-  }, [scale]);
 
   /**
    * 重置视图

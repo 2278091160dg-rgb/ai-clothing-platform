@@ -58,7 +58,8 @@ export function ResultImageViewer({
    */
   useEffect(() => {
     zoomActions.resetView();
-  }, [resultImageUrl, zoomActions]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [resultImageUrl]); // 只监听 resultImageUrl，不监听 zoomActions 对象
 
   /**
    * 判断当前应显示的图片
