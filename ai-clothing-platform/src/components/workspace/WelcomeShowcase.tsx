@@ -10,8 +10,7 @@
 
 'use client';
 
-import { Sparkles, Clock, ArrowLeft, ArrowRight } from 'lucide-react';
-import Link from 'next/link';
+import { Sparkles, ArrowLeft, ArrowRight } from 'lucide-react';
 
 export function WelcomeShowcase() {
   return (
@@ -83,17 +82,10 @@ export function WelcomeShowcase() {
           <ArrowLeft size={18} className="text-blue-400 animate-pulse" />
         </div>
 
-        {/* 历史入口 */}
-        <div>
-          <Link
-            href="/tasks"
-            className="inline-flex items-center gap-2 text-white/40 hover:text-white text-sm transition-all duration-200 group"
-          >
-            <Clock size={16} className="group-hover:scale-110 transition-transform" />
-            <span>查看历史记录</span>
-            <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
-          </Link>
-        </div>
+        {/* 历史记录提示 */}
+        <p className="text-xs text-white/30">
+          历史记录显示在左侧任务历史面板中
+        </p>
       </div>
     </div>
   );
